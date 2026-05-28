@@ -1,0 +1,9 @@
+<!-- views/emails/magic-link.eta -->
+<!doctype html>
+<html><body style="font-family: -apple-system, system-ui, sans-serif; max-width: 480px; margin: 32px auto; color: #222;">
+<h2 style="margin-bottom: 8px;">Sign in to Sprint Suite</h2>
+<p>Click the link below to sign in. It expires in 15 minutes.</p>
+<p><a href="<%= it.url %>" style="display: inline-block; background: #2563eb; color: white; padding: 12px 24px; border-radius: 6px; text-decoration: none;">Sign in</a></p>
+<p style="color: #666; font-size: 14px;">If you didn't request this, you can safely ignore this email.</p>
+<p style="color: #999; font-size: 12px; margin-top: 32px;">Sprint Suite · sprintsuite.uk</p>
+</body></html>
