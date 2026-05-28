@@ -1,3 +1,13 @@
+> ## ⚠️ Status: cancelled May 2026
+>
+> This umbrella project aimed to unify four agile apps (Sprintraid, Sprintsignal, Sprintretro, Sprintpoker) under shared Clerk auth at `sprintsuite.uk`. Cross-TLD SSO turned out to require Clerk's paid Pro plan + Satellite Domains (~£50/mo), disproportionate for a one-user hobby project.
+>
+> **No application code was touched** — only Clerk dashboard / Google Cloud / Azure / Ionos DNS setup was created and then reverted. The four app repos at `/var/www/{raid,signal,retrospective,scrumpoker}` remain untouched, each tagged `pre-clerk-baseline` as a no-op reference point.
+>
+> The docs in this repo (`docs/clerk_setup.md`, `docs/claude.md`, `docs/rollback.md`, the four `integrations/` trigger files) are retained as a reference for the architecture that was attempted and the gotchas encountered along the way — particularly the Clerk subdomain conventions (`clerk.` for the Frontend API / JWT issuer, `accounts.` for the hosted sign-in UI, with `auth.` not achievable on standard plans). If you ever pick this up again, the free-tier-compatible path would be moving all four apps to subdomains of one root domain (e.g. `raid.sprintsuite.uk`).
+
+---
+
 # Integration Triggers
 
 > **For:** Human operator + Claude Code CLI
