@@ -1,0 +1,32 @@
+[Unit]
+Description=Sprint Suite Hub — central auth + dashboard for sprintsuite.uk
+After=network.target
+
+[Service]
+Type=simple
+WorkingDirectory=/var/www/suite/hub
+EnvironmentFile=/var/www/suite/hub/.env
+ExecStart=/usr/bin/node server.js
+Restart=always
+RestartSec=5
+
+# Run as a dedicated, unprivileged user. Create it once with:
+#   sudo useradd --system --no-create-home --shell /usr/sbin/nologin suite-hub
+#   sudo chown -R $USER:suite-hub /var/www/suite
+#   sudo chmod -R g+rX /var/www/suite
+#   sudo chown -R suite-hub:suite-hub /var/www/suite/hub/data
+User=suite-hub
+Group=suite-hub
+
+# Hardening.
+NoNewPrivileges=true
+PrivateTmp=true
+ProtectSystem=full
+ProtectHome=true
+# The hub writes to its sqlite DB under data/ and to logs/.
+# ProtectSystem=full makes /usr,/boot,/efi read-only; we still need write access
+# to our own dir.
+ReadWritePaths=/var/www/suite/hub
+
+[Install]
+WantedBy=multi-user.target
