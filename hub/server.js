@@ -10,6 +10,7 @@ import { mountLogin } from "./routes/login.js";
 import { mountMagic } from "./routes/magic.js";
 import { mountDashboard } from "./routes/dashboard.js";
 import { mountLaunch } from "./routes/launch.js";
+import { mountApiSessions } from "./routes/api-sessions.js";
 import { createEmailSender } from "./lib/email.js";
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
@@ -42,6 +43,7 @@ mountLogin(app, { emailSender });
 mountMagic(app);
 mountDashboard(app);
 mountLaunch(app);
+mountApiSessions(app);
 app.get("/healthz", (_req, res) => res.json({ ok: true }));
 
 app.listen(config.port, () => console.log(`hub listening on ${config.port}`));
