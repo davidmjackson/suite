@@ -1,0 +1,10 @@
+{
+	"folders": [
+    { "name": "🏠 SprintSuite (Umbrella)", "path": "/var/www/suite" },
+    { "name": "🎴 SprintPoker", "path": "/var/www/scrumpoker" },
+    { "name": "🔄 SprintRetro", "path": "/var/www/retrospective" },
+    { "name": "📡 SprintSignal", "path": "/var/www/signal" },
+    { "name": "⚠️ SprintRaid", "path": "/var/www/raid" }
+  ],
+	"settings": {}
+}
