@@ -1,0 +1,8 @@
+<!-- views/check-email.eta -->
+<%~ include("partials/header", { title: "Check your email" }) %>
+<div class="card" style="max-width:420px;margin:48px auto;text-align:center;">
+<h1>Check your email</h1>
+<p>A sign-in link is on its way to <strong><%= it.email %></strong>. It expires in 15 minutes.</p>
+<p><a href="/login">Use a different email</a></p>
+</div>
+<%~ include("partials/footer") %>
