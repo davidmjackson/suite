@@ -1,0 +1,25 @@
+{
+  "name": "@suite/hub",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js",
+    "test": "node --test tests/",
+    "create-admin": "node scripts/create-admin.js",
+    "prune": "node scripts/prune.js"
+  },
+  "engines": {
+    "node": ">=20"
+  },
+  "dependencies": {
+    "better-sqlite3": "^12.10.0",
+    "eta": "^3.5.0",
+    "express": "^5.1.0",
+    "resend": "^4.0.0"
+  },
+  "devDependencies": {
+    "supertest": "^7.0.0"
+  }
+}
