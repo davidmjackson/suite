@@ -1,8 +1,35 @@
+// server.js
 import express from "express";
+import { Eta } from "eta";
+import path from "node:path";
+import { fileURLToPath } from "node:url";
+import config from "./config.js";
+import { openDb } from "./db/index.js";
 
+const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const app = express();
-const PORT = process.env.PORT || 3000;
 
+// Views
+const eta = new Eta({ views: path.join(__dirname, "views"), cache: config.nodeEnv === "production" });
+app.engine("eta", (filePath, opts, cb) => {
+  eta.renderAsync(path.basename(filePath, ".eta"), opts).then(html => cb(null, html)).catch(cb);
+});
+app.set("view engine", "eta");
+app.set("views", path.join(__dirname, "views"));
+
+// Static
+app.use(express.static(path.join(__dirname, "public")));
+
+// Body parsing
+app.use(express.urlencoded({ extended: false }));
+app.use(express.json());
+
+// DB
+const db = openDb(config.dbPath);
+app.locals.db = db;
+app.locals.config = config;
+
+// Routes (added in later tasks)
 app.get("/healthz", (_req, res) => res.json({ ok: true }));
 
-app.listen(PORT, () => console.log(`hub listening on ${PORT}`));
+app.listen(config.port, () => console.log(`hub listening on ${config.port}`));

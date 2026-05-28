@@ -1,0 +1,8 @@
+<!-- views/error.eta -->
+<%~ include("partials/header", { title: it.title || "Error" }) %>
+<div class="card">
+<h1><%= it.title || "Something went wrong" %></h1>
+<p><%= it.message %></p>
+<% if (it.backHref) { %><p><a href="<%= it.backHref %>">Back</a></p><% } %>
+</div>
+<%~ include("partials/footer") %>
