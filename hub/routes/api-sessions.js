@@ -34,4 +34,24 @@ export function mountApiSessions(app) {
       central_session_id: row.central_session_id,
     });
   });
+
+  app.post("/api/sessions/:id/heartbeat", requireApiKey, (req, res) => {
+    const sid = req.params.id;
+    const t = now();
+    const idleCutoff = t - config.sessionIdleMs;
+    const r = db.prepare(`
+      UPDATE central_sessions SET last_heartbeat_at = ?
+      WHERE id = ? AND expires_at > ? AND last_heartbeat_at > ?
+    `).run(t, sid, t, idleCutoff);
+    if (r.changes === 0) return res.status(404).json({ error: "session_not_found" });
+    res.status(200).json({ ok: true });
+  });
+
+  app.delete("/api/sessions/:id", requireApiKey, (req, res) => {
+    const sid = req.params.id;
+    const sess = db.prepare("SELECT user_id FROM central_sessions WHERE id = ?").get(sid);
+    db.prepare("DELETE FROM central_sessions WHERE id = ?").run(sid);
+    if (sess) audit.log({ userId: sess.user_id, eventType: "logged_out", app: req.callingApp, ip: req.ip });
+    res.status(204).end();
+  });
 }
