@@ -33,8 +33,8 @@ Create `/var/www/signal/.env`:
 # /var/www/signal/.env
 CLERK_PUBLISHABLE_KEY=<from-clerk-dashboard-sprintsignal-app>
 CLERK_SECRET_KEY=<from-clerk-dashboard-sprintsignal-app>
-CLERK_JWT_ISSUER=https://auth.sprintsuite.uk
-CLERK_JWKS_URL=https://auth.sprintsuite.uk/.well-known/jwks.json
+CLERK_JWT_ISSUER=https://clerk.sprintsuite.uk
+CLERK_JWKS_URL=https://clerk.sprintsuite.uk/.well-known/jwks.json
 APP_NAME=sprintsignal
 APP_BASE_URL=https://sprintsignal.uk
 SESSION_COOKIE_NAME=__sprintsuite_session
@@ -125,7 +125,7 @@ Beyond the generic CLAUDE.md Section 10 checks:
 - [ ] `curl -I https://sprintsignal.uk` returns 200 or 302
 - [ ] `curl -I http://127.0.0.1:3003/health` returns 200 locally
 - [ ] `pm2 logs sprintsignal --lines 20` shows clean startup
-- [ ] Visiting `sprintsignal.uk` in incognito redirects to `auth.sprintsuite.uk`
+- [ ] Visiting `sprintsignal.uk` in incognito redirects to `accounts.sprintsuite.uk`
 - [ ] After login on Sprintraid, navigating directly to `sprintsignal.uk` does **not** require re-login (this is the SSO confirmation, the critical test for app 2+)
 - [ ] **Existing Sprintsignal functionality still works**
 

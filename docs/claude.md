@@ -24,7 +24,7 @@
 ### Identity Provider
 
 - **Provider:** Clerk (managed SaaS)
-- **Auth subdomain:** `auth.sprintsuite.uk` (custom domain pointed at Clerk)
+- **Auth subdomain:** `accounts.sprintsuite.uk` (custom domain pointed at Clerk)
 - **Methods enabled:** Passkeys (primary), Google SSO, Microsoft SSO, magic link (email fallback)
 - **No passwords**
 
@@ -33,7 +33,7 @@
 - Apps remain autonomous for domain data (rooms, boards, signals, raid logs)
 - All four apps share one Clerk instance, registered as separate applications
 - Apps validate JWTs **locally** using JWKS, no per-request calls to Clerk
-- Sessions are SSO across the suite, log in once at `auth.sprintsuite.uk`, access all four apps
+- Sessions are SSO across the suite, log in once at `accounts.sprintsuite.uk`, access all four apps
 
 ---
 
@@ -86,8 +86,8 @@ Create a `.env` file in each app directory. Values come from the Clerk dashboard
 # /var/www/<app>/.env
 CLERK_PUBLISHABLE_KEY=pk_live_xxxxxxxxxxxxx
 CLERK_SECRET_KEY=sk_live_xxxxxxxxxxxxx
-CLERK_JWT_ISSUER=https://auth.sprintsuite.uk
-CLERK_JWKS_URL=https://auth.sprintsuite.uk/.well-known/jwks.json
+CLERK_JWT_ISSUER=https://clerk.sprintsuite.uk
+CLERK_JWKS_URL=https://clerk.sprintsuite.uk/.well-known/jwks.json
 APP_NAME=sprintpoker            # Change per app
 APP_BASE_URL=https://sprintpoker.uk
 SESSION_COOKIE_NAME=__sprint_session
@@ -313,7 +313,7 @@ pm2 save
 These steps happen in the Clerk dashboard, not in code. Do them before running the integration end-to-end.
 
 1. Create a new Clerk instance, name it `sprint-suite`
-2. Under **Domains**, add the custom domain `auth.sprintsuite.uk` and follow Clerk's DNS instructions (CNAME records)
+2. Under **Domains**, add the custom domain `accounts.sprintsuite.uk` and follow Clerk's DNS instructions (CNAME records)
 3. Under **Applications**, register four applications:
    - `sprintpoker` with redirect URI `https://sprintpoker.uk/auth/callback`
    - `sprintretro` with redirect URI `https://sprintretro.uk/auth/callback`
@@ -336,12 +336,12 @@ These steps happen in the Clerk dashboard, not in code. Do them before running t
 
 After implementation, run through each item. Do not consider the work complete until all pass.
 
-- [ ] `auth.sprintsuite.uk` resolves and shows the Clerk-hosted login page
+- [ ] `accounts.sprintsuite.uk` resolves and shows the Clerk-hosted login page
 - [ ] Passkey registration works on a modern browser
 - [ ] Google SSO completes the round-trip
 - [ ] Microsoft SSO completes the round-trip
 - [ ] Magic link email arrives within 30 seconds
-- [ ] Visiting `sprintpoker.uk` while logged out redirects to `auth.sprintsuite.uk`
+- [ ] Visiting `sprintpoker.uk` while logged out redirects to `accounts.sprintsuite.uk`
 - [ ] After login, the user lands back on the originally requested URL
 - [ ] After logging into Poker, visiting Retro, Signal, and Raid does **not** require re-login
 - [ ] Logout at any app clears the session across all four apps

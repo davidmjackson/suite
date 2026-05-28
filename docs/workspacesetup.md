@@ -152,7 +152,7 @@ Umbrella project for the Sprint agile toolkit. Centralises shared concerns (auth
 ## Domains
 
 - `sprintsuite.uk`, umbrella brand and marketing
-- `auth.sprintsuite.uk`, Clerk-hosted login (centralised identity)
+- `accounts.sprintsuite.uk`, Clerk-hosted login (centralised identity)
 - The four `.uk` domains above for the apps themselves
 
 ## Repository Layout
@@ -207,7 +207,7 @@ Landing page for `sprintsuite.uk`. To be developed.
 Suggested initial content:
 - Hero section introducing the Sprint suite
 - Cards linking to each of the four apps
-- Sign-in CTA pointing to auth.sprintsuite.uk
+- Sign-in CTA pointing to accounts.sprintsuite.uk
 EOF
 
 cat > /var/www/suite/shared/README.md << 'EOF'
@@ -312,11 +312,11 @@ done
 # Auth domain
 echo ""
 echo "--- Auth subdomain ---"
-code=$(curl -s -o /dev/null -w "%{http_code}" -m 5 https://auth.sprintsuite.uk)
+code=$(curl -s -o /dev/null -w "%{http_code}" -m 5 https://accounts.sprintsuite.uk)
 if [ "$code" = "200" ] || [ "$code" = "302" ]; then
-  echo "  ✓ auth.sprintsuite.uk → $code"
+  echo "  ✓ accounts.sprintsuite.uk → $code"
 else
-  echo "  ✗ auth.sprintsuite.uk → $code (not yet configured?)"
+  echo "  ✗ accounts.sprintsuite.uk → $code (not yet configured?)"
 fi
 
 # Node processes

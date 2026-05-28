@@ -25,7 +25,7 @@ This directory contains four integration trigger files, one per Sprint app. Each
 ### Prerequisites (do once, before any integration)
 
 1. `../docs/CLERK_SETUP.md` completed end-to-end
-2. `auth.sprintsuite.uk` verified working
+2. `accounts.sprintsuite.uk` verified working
 3. `../scripts/healthcheck.sh` runs cleanly
 4. All four apps under git with `pre-clerk-baseline` tag (handled by `WORKSPACE_SETUP.md`)
 5. VM snapshot taken via Ionos panel

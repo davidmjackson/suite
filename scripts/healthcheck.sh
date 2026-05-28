@@ -20,11 +20,11 @@ done
 # Auth domain
 echo ""
 echo "--- Auth subdomain ---"
-code=$(curl -s -o /dev/null -w "%{http_code}" -m 5 https://auth.sprintsuite.uk)
+code=$(curl -s -o /dev/null -w "%{http_code}" -m 5 https://accounts.sprintsuite.uk)
 if [ "$code" = "200" ] || [ "$code" = "302" ]; then
-  echo "  ✓ auth.sprintsuite.uk → $code"
+  echo "  ✓ accounts.sprintsuite.uk → $code"
 else
-  echo "  ✗ auth.sprintsuite.uk → $code (not yet configured?)"
+  echo "  ✗ accounts.sprintsuite.uk → $code (not yet configured?)"
 fi
 
 # Node processes

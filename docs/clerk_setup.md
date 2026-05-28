@@ -97,7 +97,7 @@ The dashboard shows two keys by default:
 8. **Create Credentials** → **OAuth client ID**
 9. **Application type:** Web application
 10. **Name:** Sprint Suite Clerk
-11. **Authorized redirect URIs:** Paste the redirect URI Clerk shows on its Google config screen (it looks like `https://accounts.sprintsuite.uk/v1/oauth_callback`)
+11. **Authorized redirect URIs:** Paste the redirect URI Clerk shows on its Google config screen (it looks like `https://clerk.sprintsuite.uk/v1/oauth_callback` — the Frontend API host, not the Account Portal)
 12. Save, copy the **Client ID** and **Client secret**
 13. Back in Clerk, paste these into the Google connector form
 14. Click **Save**
@@ -124,7 +124,7 @@ The dashboard shows two keys by default:
 
 ## Stage 4, Custom Domain Setup
 
-This makes login appear at `auth.sprintsuite.uk` instead of `sprint-suite.clerk.accounts.dev`.
+This makes login appear at `accounts.sprintsuite.uk` instead of `sprint-suite.clerk.accounts.dev`.
 
 ### 4.1 Add Domain in Clerk
 
@@ -162,16 +162,16 @@ This makes login appear at `auth.sprintsuite.uk` instead of `sprint-suite.clerk.
 3. When all records show green checkmarks, Clerk will automatically provision SSL certificates for the subdomains
 4. **Test:** Visit `https://accounts.sprintsuite.uk` in a browser. You should see Clerk's sign-in page branded with your app name.
 
-### 4.4 Configure Custom Auth Subdomain
+### 4.4 Subdomain Naming, Reference
 
-By default Clerk uses `accounts.sprintsuite.uk`. To use `auth.sprintsuite.uk` instead:
+Clerk hardcodes two subdomain conventions when you attach a custom domain. You can't rename them in the Domains panel.
 
-1. In **Domains** settings, find **Frontend API host**
-2. Change `accounts.sprintsuite.uk` → `auth.sprintsuite.uk`
-3. Add an additional CNAME at Ionos: `auth` → `accounts.clerk.services`
-4. Wait for verification
+| Subdomain | Purpose |
+|---|---|
+| `clerk.sprintsuite.uk` | **Frontend API**, the host your apps' SDKs talk to. JWT `iss` claim. JWKS endpoint at `/.well-known/jwks.json`. OAuth callback for social providers at `/v1/oauth_callback`. |
+| `accounts.sprintsuite.uk` | **Account Portal**, the hosted sign-in/sign-up/profile pages users visit. |
 
-**Test:** `https://auth.sprintsuite.uk` shows the Clerk sign-in page.
+The original plan referenced `auth.sprintsuite.uk` as the user-facing login URL — that's not achievable without building a custom sign-in page on a self-hosted subdomain. Stick with `accounts.sprintsuite.uk` for the hosted Clerk UI; the `accounts.` prefix is professional enough.
 
 ---
 
@@ -193,8 +193,8 @@ These are the same four `.env` files for all four apps (same Clerk instance, sam
 ```bash
 CLERK_PUBLISHABLE_KEY=pk_live_xxxxxxxxxxxxx
 CLERK_SECRET_KEY=sk_live_xxxxxxxxxxxxx
-CLERK_JWT_ISSUER=https://auth.sprintsuite.uk
-CLERK_JWKS_URL=https://auth.sprintsuite.uk/.well-known/jwks.json
+CLERK_JWT_ISSUER=https://clerk.sprintsuite.uk
+CLERK_JWKS_URL=https://clerk.sprintsuite.uk/.well-known/jwks.json
 ```
 
 **Save the secret key somewhere safe.** Clerk will show it once. If you lose it, you have to rotate.
@@ -251,7 +251,7 @@ Magic-link emails should look like they come from Sprint, not Clerk.
 
 ## Stage 9, Hosted UI Branding
 
-The sign-in page at `auth.sprintsuite.uk` should also look like Sprint.
+The sign-in page at `accounts.sprintsuite.uk` should also look like Sprint.
 
 1. Left sidebar → **Customization** → **Account Portal** / **Components**
 2. Upload Sprint logo (square, 256x256 PNG recommended)
@@ -264,7 +264,7 @@ The sign-in page at `auth.sprintsuite.uk` should also look like Sprint.
 
 Before handing the keys to Claude Code, verify:
 
-- [ ] `https://auth.sprintsuite.uk` shows the Sprint-branded sign-in page
+- [ ] `https://accounts.sprintsuite.uk` shows the Sprint-branded sign-in page
 - [ ] Passkey option appears on the sign-in page
 - [ ] Google button appears and clicking it opens Google's consent screen
 - [ ] Microsoft button appears and clicking it opens Microsoft's login

@@ -34,8 +34,8 @@ Create `/var/www/raid/.env` with these exact values. Replace `<from-clerk-dashbo
 # /var/www/raid/.env
 CLERK_PUBLISHABLE_KEY=<from-clerk-dashboard>
 CLERK_SECRET_KEY=<from-clerk-dashboard>
-CLERK_JWT_ISSUER=https://auth.sprintsuite.uk
-CLERK_JWKS_URL=https://auth.sprintsuite.uk/.well-known/jwks.json
+CLERK_JWT_ISSUER=https://clerk.sprintsuite.uk
+CLERK_JWKS_URL=https://clerk.sprintsuite.uk/.well-known/jwks.json
 APP_NAME=sprintraid
 APP_BASE_URL=https://sprintraid.uk
 SESSION_COOKIE_NAME=__sprintsuite_session
@@ -141,11 +141,11 @@ All work happens on the `clerk-integration` branch. The `pre-clerk-baseline` tag
 
 In addition to the generic verification in CLAUDE.md Section 10, verify these Sprintraid-specific items:
 
-- [ ] `curl -I https://sprintraid.uk` returns 200 (logged in) or 302 to `auth.sprintsuite.uk` (logged out)
+- [ ] `curl -I https://sprintraid.uk` returns 200 (logged in) or 302 to `accounts.sprintsuite.uk` (logged out)
 - [ ] `curl -I http://127.0.0.1:3004/health` returns 200 from the VM itself
 - [ ] `pm2 logs sprintraid --lines 20` shows clean startup, no auth errors
 - [ ] Apache error log `/var/log/apache2/sprintraid.error.log` shows no proxy errors after first request
-- [ ] Visiting `sprintraid.uk` in a fresh incognito window redirects to `auth.sprintsuite.uk`
+- [ ] Visiting `sprintraid.uk` in a fresh incognito window redirects to `accounts.sprintsuite.uk`
 - [ ] After logging in via Clerk, the redirect lands back on `sprintraid.uk` correctly
 - [ ] `req.auth.userId` is populated in any test route that requires auth
 - [ ] **Existing Sprintraid functionality still works** after auth is added (this is critical, do not just verify auth, verify the app itself)

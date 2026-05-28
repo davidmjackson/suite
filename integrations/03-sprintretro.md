@@ -35,8 +35,8 @@ Create `/var/www/retrospective/.env`:
 # /var/www/retrospective/.env
 CLERK_PUBLISHABLE_KEY=<from-clerk-dashboard-sprintretro-app>
 CLERK_SECRET_KEY=<from-clerk-dashboard-sprintretro-app>
-CLERK_JWT_ISSUER=https://auth.sprintsuite.uk
-CLERK_JWKS_URL=https://auth.sprintsuite.uk/.well-known/jwks.json
+CLERK_JWT_ISSUER=https://clerk.sprintsuite.uk
+CLERK_JWKS_URL=https://clerk.sprintsuite.uk/.well-known/jwks.json
 APP_NAME=sprintretro
 APP_BASE_URL=https://sprintretro.uk
 SESSION_COOKIE_NAME=__sprintsuite_session
@@ -123,7 +123,7 @@ git status
 - [ ] `curl -I https://sprintretro.uk` returns 200 or 302
 - [ ] `curl -I http://127.0.0.1:3002/health` returns 200 locally
 - [ ] `pm2 logs sprintretro --lines 20` shows clean startup
-- [ ] Visiting `sprintretro.uk` in incognito redirects to `auth.sprintsuite.uk`
+- [ ] Visiting `sprintretro.uk` in incognito redirects to `accounts.sprintsuite.uk`
 - [ ] **3-way SSO test:** Sign into Sprintraid, then navigate to Sprintsignal (no re-login), then navigate to Sprintretro (no re-login). All three apps share session.
 - [ ] **Existing Sprintretro functionality still works**
 

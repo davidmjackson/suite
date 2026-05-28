@@ -35,8 +35,8 @@ Create `/var/www/scrumpoker/.env`:
 # /var/www/scrumpoker/.env
 CLERK_PUBLISHABLE_KEY=<from-clerk-dashboard-sprintpoker-app>
 CLERK_SECRET_KEY=<from-clerk-dashboard-sprintpoker-app>
-CLERK_JWT_ISSUER=https://auth.sprintsuite.uk
-CLERK_JWKS_URL=https://auth.sprintsuite.uk/.well-known/jwks.json
+CLERK_JWT_ISSUER=https://clerk.sprintsuite.uk
+CLERK_JWKS_URL=https://clerk.sprintsuite.uk/.well-known/jwks.json
 APP_NAME=sprintpoker
 APP_BASE_URL=https://sprintpoker.uk
 SESSION_COOKIE_NAME=__sprintsuite_session
@@ -119,7 +119,7 @@ git status
 - [ ] `curl -I https://sprintpoker.uk` returns 200 or 302
 - [ ] `curl -I http://127.0.0.1:3001/health` returns 200 locally
 - [ ] `pm2 logs sprintpoker --lines 20` shows clean startup
-- [ ] Visiting `sprintpoker.uk` in incognito redirects to `auth.sprintsuite.uk`
+- [ ] Visiting `sprintpoker.uk` in incognito redirects to `accounts.sprintsuite.uk`
 - [ ] **Full suite SSO test (4-way):** Sign into Sprintraid, then navigate in sequence to Sprintsignal, Sprintretro, Sprintpoker. All four apps share session, no re-login required at any step.
 - [ ] **Existing Sprintpoker functionality still works** (room creation, vote casting, reveal, etc.)
 

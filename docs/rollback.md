@@ -146,7 +146,7 @@ systemctl is-active apache2
 echo ""
 echo "=== Clerk reachability ==="
 curl -s -o /dev/null -w "Clerk API: %{http_code}\n" https://api.clerk.com
-curl -s -o /dev/null -w "auth.sprintsuite.uk: %{http_code}\n" https://auth.sprintsuite.uk
+curl -s -o /dev/null -w "accounts.sprintsuite.uk: %{http_code}\n" https://accounts.sprintsuite.uk
 ```
 
 ```bash
@@ -275,15 +275,15 @@ Sometimes the right move is to **fix forward**, not roll back. Here are the most
 
 ### 4.1 "Infinite Redirect Loop"
 
-**Symptom:** Visiting any app bounces between app → `auth.sprintsuite.uk` → app → `auth.sprintsuite.uk`.
+**Symptom:** Visiting any app bounces between app → `accounts.sprintsuite.uk` → app → `accounts.sprintsuite.uk`.
 
-**Likely cause:** JWT cookie domain mismatch. The cookie is being set for `auth.sprintsuite.uk` but apps expect it on `sprintpoker.uk` etc.
+**Likely cause:** JWT cookie domain mismatch. Clerk sets the session cookie on `clerk.sprintsuite.uk` (the Frontend API host); the apps live on different root domains (`sprintpoker.uk` etc.) so the cookie isn't sent with the request.
 
 **Diagnose:**
 
 ```bash
-# Check what cookies are being set
-curl -I -c - https://auth.sprintsuite.uk
+# Check what cookies are being set by the Frontend API
+curl -I -c - https://clerk.sprintsuite.uk
 ```
 
 **Fix:** In Clerk dashboard → Sessions → ensure **cookie domain** is set to `.sprintsuite.uk` (with leading dot, so subdomains share).
@@ -298,12 +298,12 @@ curl -I -c - https://auth.sprintsuite.uk
 
 ```bash
 # Verify the JWKS endpoint responds correctly
-curl https://auth.sprintsuite.uk/.well-known/jwks.json | jq .
+curl https://clerk.sprintsuite.uk/.well-known/jwks.json | jq .
 ```
 
 If that returns 404, the custom domain isn't fully configured. If it returns JSON, the issue is in app config.
 
-**Fix:** Confirm `CLERK_JWT_ISSUER` in each `.env` exactly matches `https://auth.sprintsuite.uk` (no trailing slash). Restart apps:
+**Fix:** Confirm `CLERK_JWT_ISSUER` in each `.env` exactly matches `https://clerk.sprintsuite.uk` (no trailing slash). Restart apps:
 
 ```bash
 pm2 restart all
