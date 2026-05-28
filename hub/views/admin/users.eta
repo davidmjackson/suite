@@ -1,0 +1,38 @@
+<%~ include("../partials/header", { title: "Admin · Users", user: it.user }) %>
+<nav style="margin-bottom:24px;">
+<a href="/admin">Users</a> · <a href="/admin/sessions">Active sessions</a> · <a href="/admin/audit">Audit log</a>
+</nav>
+<div class="card">
+<h2>Add user</h2>
+<form method="POST" action="/admin/users">
+<p><input type="email" name="email" placeholder="email@example.com" required></p>
+<p><input type="text" name="display_name" placeholder="Display name (optional)"></p>
+<p><label><input type="checkbox" name="is_admin" value="1"> Admin</label></p>
+<p><button class="btn" type="submit">Add user</button></p>
+</form>
+</div>
+<div class="card">
+<h2>Users (<%= it.users.length %>)</h2>
+<table>
+<thead><tr><th>Email</th><th>Name</th><th>Admin</th><th>Sessions</th><th>Status</th><th></th></tr></thead>
+<tbody>
+<% for (const u of it.users) { %>
+<tr>
+<td><%= u.email %></td>
+<td><%= u.display_name || "—" %></td>
+<td><%= u.is_admin ? "✓" : "" %></td>
+<td><%= u.session_count %></td>
+<td><%= u.disabled_at ? "disabled" : "active" %></td>
+<td>
+<% if (!u.disabled_at) { %>
+<form method="POST" action="/admin/users/<%= u.id %>/disable" style="display:inline;"><button class="btn">Disable</button></form>
+<% } else { %>
+<form method="POST" action="/admin/users/<%= u.id %>/enable" style="display:inline;"><button class="btn">Enable</button></form>
+<% } %>
+<form method="POST" action="/admin/users/<%= u.id %>/delete" style="display:inline;" onsubmit="return confirm('Delete <%= u.email %>?')"><button class="btn danger">Delete</button></form>
+</td>
+</tr>
+<% } %>
+</tbody></table>
+</div>
+<%~ include("../partials/footer") %>

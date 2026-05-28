@@ -12,18 +12,21 @@ import { mountDashboard } from "./routes/dashboard.js";
 import { mountLaunch } from "./routes/launch.js";
 import { mountApiSessions } from "./routes/api-sessions.js";
 import { mountLogout } from "./routes/logout.js";
+import { mountAdmin } from "./routes/admin.js";
 import { createEmailSender } from "./lib/email.js";
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const app = express();
 
 // Views
-const eta = new Eta({ views: path.join(__dirname, "views"), cache: config.nodeEnv === "production" });
+const viewsDir = path.join(__dirname, "views");
+const eta = new Eta({ views: viewsDir, cache: config.nodeEnv === "production" });
 app.engine("eta", (filePath, opts, cb) => {
-  eta.renderAsync(path.basename(filePath, ".eta"), opts).then(html => cb(null, html)).catch(cb);
+  const name = path.relative(viewsDir, filePath).replace(/\.eta$/, "");
+  eta.renderAsync(name, opts).then(html => cb(null, html)).catch(cb);
 });
 app.set("view engine", "eta");
-app.set("views", path.join(__dirname, "views"));
+app.set("views", viewsDir);
 
 // Static
 app.use(express.static(path.join(__dirname, "public")));
@@ -46,6 +49,7 @@ mountDashboard(app);
 mountLaunch(app);
 mountApiSessions(app);
 mountLogout(app);
+mountAdmin(app);
 app.get("/healthz", (_req, res) => res.json({ ok: true }));
 
 app.listen(config.port, () => console.log(`hub listening on ${config.port}`));

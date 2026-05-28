@@ -22,8 +22,12 @@ export async function buildTestApp({ env = {} } = {}) {
 
   const { default: config } = await import("../config.js?t=" + Date.now());
   const app = express();
-  const eta = new Eta({ views: path.join(__dirname, "../views"), cache: false });
-  app.engine("eta", (fp, opts, cb) => eta.renderAsync(path.basename(fp, ".eta"), opts).then(html => cb(null, html)).catch(cb));
+  const viewsDir = path.join(__dirname, "../views");
+  const eta = new Eta({ views: viewsDir, cache: false });
+  app.engine("eta", (fp, opts, cb) => {
+    const name = path.relative(viewsDir, fp).replace(/\.eta$/, "");
+    eta.renderAsync(name, opts).then(html => cb(null, html)).catch(cb);
+  });
   app.set("view engine", "eta");
   app.set("views", path.join(__dirname, "../views"));
   app.use(express.static(path.join(__dirname, "../public")));
