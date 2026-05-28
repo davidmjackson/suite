@@ -17,16 +17,6 @@ for site in sprintpoker.uk sprintretro.uk sprintsignal.uk sprintraid.uk; do
   fi
 done
 
-# Auth domain
-echo ""
-echo "--- Auth subdomain ---"
-code=$(curl -s -o /dev/null -w "%{http_code}" -m 5 https://accounts.sprintsuite.uk)
-if [ "$code" = "200" ] || [ "$code" = "302" ]; then
-  echo "  ✓ accounts.sprintsuite.uk → $code"
-else
-  echo "  ✗ accounts.sprintsuite.uk → $code (not yet configured?)"
-fi
-
 # Node processes
 echo ""
 echo "--- Node processes (pm2) ---"
@@ -41,7 +31,3 @@ echo ""
 echo "--- Apache status ---"
 systemctl is-active apache2
 
-# Clerk reachability
-echo ""
-echo "--- External dependencies ---"
-curl -s -o /dev/null -w "  Clerk API: %{http_code}\n" -m 5 https://api.clerk.com
