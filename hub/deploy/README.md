@@ -25,37 +25,40 @@ sudo useradd --system --no-create-home --shell /usr/sbin/nologin suite-hub
 
 ## 2. Clone the repo and install
 
-The repo is private. Use the **SSH URL** to match the rest of the suite — the
-IONOS box already has an SSH key registered with GitHub, so no extra credential
-setup is needed.
+The repo is private but cloning works over **HTTPS** because the IONOS box
+already has a credential helper / `gh auth` set up for `github.com/davidmjackson/*`
+(same pattern used to clone raid, scrumpoker, etc. directly into their
+`/var/www/...` dirs).
+
+`/var/www/suite/` already exists but is empty. Take ownership first so you
+don't have to `sudo` the clone (sudo runs as root, which has no GitHub auth):
 
 ```bash
-# As yourself, NOT sudo — sudo runs as root and root doesn't have your SSH key.
-cd ~
-git clone git@github.com:davidmjackson/suite.git
-cd suite
+sudo chown -R $USER:$USER /var/www/suite
+cd /var/www/suite
+git clone https://github.com/davidmjackson/suite.git .
 git checkout feat/auth-hub   # until this merges to main
 
-# /var/www/suite already exists (empty). Replace it with the clone:
-sudo rmdir /var/www/suite                    # only succeeds if truly empty
-sudo mv ~/suite /var/www/suite
-sudo chown -R $USER:suite-hub /var/www/suite # you own files, suite-hub is the group
-sudo chmod -R g+rX /var/www/suite            # group can read + enter dirs
+# Now hand the group over to suite-hub so the service can read everything:
+sudo chown -R $USER:suite-hub /var/www/suite
+sudo chmod -R g+rX /var/www/suite
 
 cd /var/www/suite/hub
 npm install --omit=dev
 ```
 
-If the IONOS box doesn't have SSH set up for GitHub yet, fall back to
-HTTPS with a credential helper:
+If `git clone` prompts for a username/password, the credential helper isn't
+finding a cached token. Easiest fix:
 
 ```bash
+gh auth login                              # if gh is installed; pick HTTPS
+# OR set up a Personal Access Token once:
 git config --global credential.helper store
-gh auth login                              # if gh is installed
-# OR enter a Personal Access Token when prompted on the first pull
+# Then re-run the clone; enter your username + PAT when prompted; it'll be
+# cached in ~/.git-credentials for next time.
 ```
 
-Avoid `sudo git clone` either way — root has no GitHub auth.
+Either way, avoid `sudo git clone` — root has no GitHub auth.
 
 ## 3. Create the `.env` file
 
@@ -228,6 +231,6 @@ design. Central sessions live in sqlite and survive restarts.
 - `git pull` says "Permission denied" → the working tree is owned by
   `suite-hub`, not by you. Fix once:
   `sudo chown -R $USER:suite-hub /var/www/suite && sudo chmod -R g+rX /var/www/suite`.
-- `git clone` prompts for username/password → the repo is private and you
-  used the HTTPS URL. Use `git@github.com:...` instead, or run
-  `git remote set-url origin git@github.com:davidmjackson/suite.git`.
+- `git clone` prompts for username/password every time → credential helper
+  isn't cached. Run `gh auth login` (pick HTTPS), or set up a PAT once with
+  `git config --global credential.helper store` and enter it on the next pull.
