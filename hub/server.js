@@ -7,6 +7,7 @@ import config from "./config.js";
 import { openDb } from "./db/index.js";
 import { mountLanding } from "./routes/landing.js";
 import { mountLogin } from "./routes/login.js";
+import { mountMagic } from "./routes/magic.js";
 import { createEmailSender } from "./lib/email.js";
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
@@ -36,6 +37,7 @@ app.locals.config = config;
 const emailSender = createEmailSender({ apiKey: config.resendApiKey, from: config.fromEmail });
 mountLanding(app);
 mountLogin(app, { emailSender });
+mountMagic(app);
 app.get("/healthz", (_req, res) => res.json({ ok: true }));
 
 app.listen(config.port, () => console.log(`hub listening on ${config.port}`));

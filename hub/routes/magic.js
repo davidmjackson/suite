@@ -1,0 +1,56 @@
+// routes/magic.js
+import { randomToken, now } from "../lib/tokens.js";
+import { setSessionCookie } from "../lib/cookies.js";
+import { createAuditLogger } from "../lib/audit.js";
+
+const APP_BY_DOMAIN = {
+  "sprintraid.uk": "raid",
+  "sprintsignal.uk": "signal",
+  "sprintretro.uk": "retro",
+  "sprintpoker.uk": "poker",
+};
+
+export function mountMagic(app) {
+  const db = app.locals.db;
+  const config = app.locals.config;
+  const audit = createAuditLogger(db);
+
+  app.get("/auth/magic", (req, res) => {
+    const token = req.query.token;
+    if (!token || typeof token !== "string") {
+      return res.status(400).render("error", { title: "Invalid link", message: "This sign-in link is malformed." });
+    }
+    const t = now();
+    const consumed = db.prepare(`
+      UPDATE magic_link_tokens SET consumed_at = ?
+      WHERE token = ? AND consumed_at IS NULL AND expires_at > ?
+    `).run(t, token, t);
+    if (consumed.changes === 0) {
+      return res.status(400).render("error", { title: "Link expired", message: "This sign-in link is expired or has already been used.", backHref: "/login" });
+    }
+    const tokRow = db.prepare("SELECT email, return_to FROM magic_link_tokens WHERE token = ?").get(token);
+    const user = db.prepare("SELECT id, disabled_at FROM users WHERE email = ?").get(tokRow.email);
+    if (!user || user.disabled_at) {
+      return res.status(403).render("error", { title: "Account disabled", message: "Your account is no longer active." });
+    }
+    const sid = randomToken();
+    db.prepare(`
+      INSERT INTO central_sessions (id, user_id, created_at, last_heartbeat_at, expires_at, user_agent, ip)
+      VALUES (?, ?, ?, ?, ?, ?, ?)
+    `).run(sid, user.id, t, t, t + config.sessionMaxMs, req.headers["user-agent"] || null, req.ip);
+
+    audit.log({ userId: user.id, eventType: "session_created", ip: req.ip });
+    setSessionCookie(res, "hub_session", sid, { secure: config.nodeEnv === "production" });
+
+    if (tokRow.return_to) {
+      try {
+        const host = new URL(tokRow.return_to).host;
+        const appName = APP_BY_DOMAIN[host];
+        if (appName) {
+          return res.redirect(`/launch/${appName}?return_to=${encodeURIComponent(tokRow.return_to)}`);
+        }
+      } catch {}
+    }
+    res.redirect("/dashboard");
+  });
+}
