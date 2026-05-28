@@ -60,4 +60,28 @@ export function mountAdmin(app) {
     audit.log({ userId: req.user.id, eventType: "user_deleted", metadata: { target: id }, ip: req.ip });
     res.redirect("/admin");
   });
+
+  app.get("/admin/sessions", requireSession, requireAdmin, (req, res) => {
+    const sessions = db.prepare(`
+      SELECT cs.id, cs.created_at, cs.last_heartbeat_at, cs.ip, u.email
+      FROM central_sessions cs JOIN users u ON u.id = cs.user_id
+      ORDER BY cs.last_heartbeat_at DESC
+    `).all();
+    res.render("admin/sessions", { user: req.user, sessions });
+  });
+
+  app.post("/admin/sessions/:id/kill", requireSession, requireAdmin, (req, res) => {
+    db.prepare("DELETE FROM central_sessions WHERE id = ?").run(req.params.id);
+    audit.log({ userId: req.user.id, eventType: "session_killed", metadata: { target: req.params.id }, ip: req.ip });
+    res.redirect("/admin/sessions");
+  });
+
+  app.get("/admin/audit", requireSession, requireAdmin, (req, res) => {
+    const events = db.prepare(`
+      SELECT ae.id, ae.user_id, ae.event_type, ae.app, ae.ip, ae.created_at, u.email
+      FROM audit_events ae LEFT JOIN users u ON u.id = ae.user_id
+      ORDER BY ae.id DESC LIMIT 200
+    `).all();
+    res.render("admin/audit", { user: req.user, events });
+  });
 }

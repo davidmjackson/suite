@@ -1,0 +1,21 @@
+<%~ include("../partials/header", { title: "Admin · Sessions", user: it.user }) %>
+<nav style="margin-bottom:24px;">
+<a href="/admin">Users</a> · <a href="/admin/sessions">Active sessions</a> · <a href="/admin/audit">Audit log</a>
+</nav>
+<div class="card">
+<h2>Active sessions (<%= it.sessions.length %>)</h2>
+<table>
+<thead><tr><th>User</th><th>Created</th><th>Last heartbeat</th><th>IP</th><th></th></tr></thead>
+<tbody>
+<% for (const s of it.sessions) { %>
+<tr>
+<td><%= s.email %></td>
+<td><%= new Date(s.created_at).toISOString().slice(0,19).replace("T"," ") %></td>
+<td><%= new Date(s.last_heartbeat_at).toISOString().slice(0,19).replace("T"," ") %></td>
+<td class="muted"><%= s.ip || "—" %></td>
+<td><form method="POST" action="/admin/sessions/<%= s.id %>/kill" style="display:inline;"><button class="btn danger">Kill</button></form></td>
+</tr>
+<% } %>
+</tbody></table>
+</div>
+<%~ include("../partials/footer") %>

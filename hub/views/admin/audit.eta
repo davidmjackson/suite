@@ -1,0 +1,21 @@
+<%~ include("../partials/header", { title: "Admin · Audit", user: it.user }) %>
+<nav style="margin-bottom:24px;">
+<a href="/admin">Users</a> · <a href="/admin/sessions">Active sessions</a> · <a href="/admin/audit">Audit log</a>
+</nav>
+<div class="card">
+<h2>Recent audit events</h2>
+<table>
+<thead><tr><th>When</th><th>Event</th><th>User</th><th>App</th><th>IP</th></tr></thead>
+<tbody>
+<% for (const e of it.events) { %>
+<tr>
+<td><%= new Date(e.created_at).toISOString().slice(0,19).replace("T"," ") %></td>
+<td><%= e.event_type %></td>
+<td class="muted"><%= e.email || e.user_id || "—" %></td>
+<td><%= e.app || "—" %></td>
+<td class="muted"><%= e.ip || "—" %></td>
+</tr>
+<% } %>
+</tbody></table>
+</div>
+<%~ include("../partials/footer") %>
