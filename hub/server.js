@@ -5,6 +5,7 @@ import path from "node:path";
 import { fileURLToPath } from "node:url";
 import config from "./config.js";
 import { openDb } from "./db/index.js";
+import { mountLanding } from "./routes/landing.js";
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const app = express();
@@ -29,7 +30,8 @@ const db = openDb(config.dbPath);
 app.locals.db = db;
 app.locals.config = config;
 
-// Routes (added in later tasks)
+// Routes
+mountLanding(app);
 app.get("/healthz", (_req, res) => res.json({ ok: true }));
 
 app.listen(config.port, () => console.log(`hub listening on ${config.port}`));
