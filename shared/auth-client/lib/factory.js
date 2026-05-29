@@ -11,7 +11,7 @@ function createAuthClient(options) {
   for (const k of required) if (!options[k]) throw new Error(`createAuthClient: missing ${k}`);
 
   const store = createSessionsStore(options.dbPath);
-  const hubApi = createHubApi({ baseUrl: options.hubBaseUrl, apiKey: options.hubApiKey });
+  const hubApi = createHubApi({ baseUrl: options.hubBaseUrl, apiKey: options.hubApiKey, appName: options.appName });
   const ctx = {
     ...options,
     store,

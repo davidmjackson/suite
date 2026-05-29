@@ -1,5 +1,5 @@
 // lib/hub-api.js
-function createHubApi({ baseUrl, apiKey, fetchImpl = globalThis.fetch }) {
+function createHubApi({ baseUrl, apiKey, appName, fetchImpl = globalThis.fetch }) {
   const headers = {
     Authorization: `Bearer ${apiKey}`,
     "Content-Type": "application/json",
@@ -24,6 +24,22 @@ function createHubApi({ baseUrl, apiKey, fetchImpl = globalThis.fetch }) {
         return "error";
       } catch {
         return "unreachable";
+      }
+    },
+    async consume(centralSessionId) {
+      try {
+        const res = await fetchImpl(`${baseUrl}/api/apps/${appName}/consume`, {
+          method: "POST",
+          headers,
+          body: JSON.stringify({ central_session_id: centralSessionId }),
+        });
+        const body = await res.json().catch(() => ({}));
+        if (res.status === 200) return { ok: true, remaining: body.remaining ?? null };
+        if (res.status === 402) return { ok: false, reason: "quota_exceeded" };
+        if (res.status === 403) return { ok: false, reason: body.reason || "not_entitled" };
+        return { ok: false, reason: "error" };
+      } catch {
+        return { ok: false, reason: "unreachable" };
       }
     },
     async deleteSession(centralSessionId) {
