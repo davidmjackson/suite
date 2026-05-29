@@ -23,8 +23,37 @@ export function createOrg(db) {
     db.prepare("UPDATE companies SET status = 'suspended' WHERE id = ?").run(id);
   }
 
+  function addCompanyMember({ userId, companyId, role }) {
+    if (!COMPANY_ROLES.has(role)) throw new Error("invalid_company_role");
+    if (!getCompany(companyId)) throw new Error("company_not_found");
+    db.prepare("INSERT INTO company_members (user_id,company_id,role,created_at) VALUES (?,?,?,?)")
+      .run(userId, companyId, role, now());
+  }
+
+  function setCompanyMemberRole({ userId, companyId, role }) {
+    if (!COMPANY_ROLES.has(role)) throw new Error("invalid_company_role");
+    const current = db.prepare("SELECT role FROM company_members WHERE user_id=? AND company_id=?").get(userId, companyId);
+    if (!current) throw new Error("not_a_member");
+    if (current.role === "owner" && role !== "owner" && ownerCount(companyId) <= 1) {
+      throw new Error("last_owner");
+    }
+    db.prepare("UPDATE company_members SET role=? WHERE user_id=? AND company_id=?").run(role, userId, companyId);
+  }
+
+  const removeCompanyMember = db.transaction(({ userId, companyId }) => {
+    const current = db.prepare("SELECT role FROM company_members WHERE user_id=? AND company_id=?").get(userId, companyId);
+    if (!current) return;
+    if (current.role === "owner" && ownerCount(companyId) <= 1) throw new Error("last_owner");
+    db.prepare(`
+      DELETE FROM team_members
+      WHERE user_id = ? AND team_id IN (SELECT id FROM teams WHERE company_id = ?)
+    `).run(userId, companyId);
+    db.prepare("DELETE FROM company_members WHERE user_id=? AND company_id=?").run(userId, companyId);
+  });
+
   return {
     createCompany, getCompany, getCompanyBySlug, suspendCompany, getTeam, ownerCount,
+    addCompanyMember, setCompanyMemberRole, removeCompanyMember,
     COMPANY_ROLES, TEAM_ROLES,
   };
 }

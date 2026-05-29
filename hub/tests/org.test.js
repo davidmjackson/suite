@@ -41,3 +41,52 @@ test("getCompany returns null when missing", () => {
   assert.equal(org.getCompany("nope"), null);
   db.close();
 });
+
+// --- company members ---
+function seedUser(db, id, email) {
+  db.prepare("INSERT INTO users (id,email,created_at) VALUES (?,?,?)").run(id, email, Date.now());
+}
+
+test("addCompanyMember adds with a valid role; invalid role throws", () => {
+  const db = openDb(":memory:");
+  const org = createOrg(db);
+  seedUser(db, "u1", "a@b.c");
+  const c = org.createCompany({ name: "Acme", slug: "acme" });
+  org.addCompanyMember({ userId: "u1", companyId: c.id, role: "owner" });
+  const row = db.prepare("SELECT role FROM company_members WHERE user_id=? AND company_id=?").get("u1", c.id);
+  assert.equal(row.role, "owner");
+  assert.throws(() => org.addCompanyMember({ userId: "u1", companyId: c.id, role: "boss" }), /invalid_company_role/);
+  db.close();
+});
+
+test("addCompanyMember to a missing company throws", () => {
+  const db = openDb(":memory:");
+  const org = createOrg(db);
+  seedUser(db, "u1", "a@b.c");
+  assert.throws(() => org.addCompanyMember({ userId: "u1", companyId: "nope", role: "member" }), /company_not_found/);
+  db.close();
+});
+
+test("cannot demote or remove the last owner", () => {
+  const db = openDb(":memory:");
+  const org = createOrg(db);
+  seedUser(db, "u1", "a@b.c");
+  const c = org.createCompany({ name: "Acme", slug: "acme" });
+  org.addCompanyMember({ userId: "u1", companyId: c.id, role: "owner" });
+  assert.throws(() => org.setCompanyMemberRole({ userId: "u1", companyId: c.id, role: "admin" }), /last_owner/);
+  assert.throws(() => org.removeCompanyMember({ userId: "u1", companyId: c.id }), /last_owner/);
+  db.close();
+});
+
+test("can demote an owner when another owner exists", () => {
+  const db = openDb(":memory:");
+  const org = createOrg(db);
+  seedUser(db, "u1", "a@b.c"); seedUser(db, "u2", "d@e.f");
+  const c = org.createCompany({ name: "Acme", slug: "acme" });
+  org.addCompanyMember({ userId: "u1", companyId: c.id, role: "owner" });
+  org.addCompanyMember({ userId: "u2", companyId: c.id, role: "owner" });
+  org.setCompanyMemberRole({ userId: "u1", companyId: c.id, role: "admin" });
+  const row = db.prepare("SELECT role FROM company_members WHERE user_id=? AND company_id=?").get("u1", c.id);
+  assert.equal(row.role, "admin");
+  db.close();
+});
