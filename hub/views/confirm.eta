@@ -1,0 +1,11 @@
+<!-- views/confirm.eta -->
+<%~ include("partials/header", { title: "Confirm sign in" }) %>
+<div class="card" style="max-width:420px;margin:48px auto;text-align:center;">
+<h1>Confirm sign in</h1>
+<p class="muted">Click below to finish signing in to Sprint Suite.</p>
+<form method="POST" action="/auth/magic">
+<input type="hidden" name="token" value="<%= it.token %>">
+<p><button class="btn" type="submit">Sign in</button></p>
+</form>
+</div>
+<%~ include("partials/footer") %>
