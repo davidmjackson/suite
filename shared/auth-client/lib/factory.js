@@ -27,6 +27,7 @@ function createAuthClient(options) {
     handleLogout: createLogoutHandler(ctx),
     handleHeartbeat: createHeartbeatHandler(ctx),
     getCurrentUser: (req) => req.user || null,
+    consume: (centralSessionId) => ctx.hubApi.consume(centralSessionId),
     _ctx: ctx,
   };
 }
