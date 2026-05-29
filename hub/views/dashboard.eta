@@ -1,14 +1,15 @@
 <%~ include("partials/header", { title: "Dashboard", user: it.user }) %>
 <h1>Your apps</h1>
 <section class="grid-4">
-<form method="POST" action="/launch/raid"><button class="tile" type="submit" style="width:100%;text-align:left;cursor:pointer;border:1px solid var(--border);">
-<h3>🛡 Sprintraid</h3><p>Risks/Issues</p></button></form>
-<form method="POST" action="/launch/signal"><button class="tile" type="submit" style="width:100%;text-align:left;cursor:pointer;border:1px solid var(--border);">
-<h3>📡 Sprintsignal</h3><p>Team signals</p></button></form>
-<form method="POST" action="/launch/retro"><button class="tile" type="submit" style="width:100%;text-align:left;cursor:pointer;border:1px solid var(--border);">
-<h3>🔄 Sprintretro</h3><p>Retrospectives</p></button></form>
-<form method="POST" action="/launch/poker"><button class="tile" type="submit" style="width:100%;text-align:left;cursor:pointer;border:1px solid var(--border);">
-<h3>🎴 Sprintpoker</h3><p>Planning poker</p></button></form>
+<% it.apps.forEach(function (a) { %>
+  <% if (a.entitled) { %>
+  <form method="POST" action="/launch/<%= a.key %>"><button class="tile" type="submit" style="width:100%;text-align:left;cursor:pointer;border:1px solid var(--border);">
+  <h3><%= a.icon %> <%= a.name %></h3><p><%= a.desc %></p></button></form>
+  <% } else { %>
+  <div class="tile" style="width:100%;text-align:left;border:1px solid var(--border);opacity:0.55;">
+  <h3><%= a.icon %> <%= a.name %></h3><p><%= a.desc %></p><p><em>Request access</em></p></div>
+  <% } %>
+<% }); %>
 </section>
 <% if (it.user.isAdmin) { %><p style="margin-top:32px;"><a href="/admin">Admin</a></p><% } %>
 <%~ include("partials/footer") %>
