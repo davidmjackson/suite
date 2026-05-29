@@ -143,3 +143,66 @@ test("suspended grant is ignored", () => {
   assert.equal(ent.resolveEntitlement("u1", "signal").entitled, false);
   db.close();
 });
+
+// --- consume ---
+test("consume on unlimited grant returns ok with remaining null, no counter row", () => {
+  const db = openDb(":memory:");
+  const ent = createEntitlements(db);
+  seedUser(db, "u1", "a@b.c");
+  ent.grantEntitlement({ app: "signal", principalType: "user", principalId: "u1" });
+  const r = ent.consume("u1", "signal");
+  assert.deepEqual(r, { ok: true, remaining: null });
+  const usage = db.prepare("SELECT COUNT(*) AS n FROM app_usage").get().n;
+  assert.equal(usage, 0);
+  db.close();
+});
+
+test("consume with no grant -> not_entitled", () => {
+  const db = openDb(":memory:");
+  const ent = createEntitlements(db);
+  seedUser(db, "u1", "a@b.c");
+  assert.deepEqual(ent.consume("u1", "raid"), { ok: false, reason: "not_entitled" });
+  db.close();
+});
+
+test("consume increments the counter and reports remaining", () => {
+  const db = openDb(":memory:");
+  const ent = createEntitlements(db);
+  seedUser(db, "u1", "a@b.c");
+  ent.grantEntitlement({ app: "raid", principalType: "user", principalId: "u1", quotaLimit: 3, quotaPeriod: "month" });
+  const t = Date.UTC(2026, 4, 9);
+  assert.deepEqual(ent.consume("u1", "raid", t), { ok: true, remaining: 2 });
+  assert.deepEqual(ent.consume("u1", "raid", t), { ok: true, remaining: 1 });
+  assert.deepEqual(ent.consume("u1", "raid", t), { ok: true, remaining: 0 });
+  assert.deepEqual(ent.consume("u1", "raid", t), { ok: false, reason: "quota_exceeded" });
+  const count = db.prepare("SELECT count FROM app_usage WHERE app='raid' AND principal_type='user' AND principal_id='u1'").get().count;
+  assert.equal(count, 3); // never exceeded the limit
+  db.close();
+});
+
+test("consume never exceeds the limit across many calls (atomic check+increment)", () => {
+  const db = openDb(":memory:");
+  const ent = createEntitlements(db);
+  seedUser(db, "u1", "a@b.c");
+  ent.grantEntitlement({ app: "raid", principalType: "user", principalId: "u1", quotaLimit: 10, quotaPeriod: "month" });
+  const t = Date.UTC(2026, 4, 9);
+  let ok = 0;
+  for (let i = 0; i < 25; i++) if (ent.consume("u1", "raid", t).ok) ok++;
+  assert.equal(ok, 10);
+  const count = db.prepare("SELECT count FROM app_usage WHERE principal_id='u1'").get().count;
+  assert.equal(count, 10);
+  db.close();
+});
+
+test("consume buckets by period_key (new month resets)", () => {
+  const db = openDb(":memory:");
+  const ent = createEntitlements(db);
+  seedUser(db, "u1", "a@b.c");
+  ent.grantEntitlement({ app: "raid", principalType: "user", principalId: "u1", quotaLimit: 1, quotaPeriod: "month" });
+  const may = Date.UTC(2026, 4, 9);
+  const jun = Date.UTC(2026, 5, 2);
+  assert.equal(ent.consume("u1", "raid", may).ok, true);
+  assert.equal(ent.consume("u1", "raid", may).ok, false); // May exhausted
+  assert.equal(ent.consume("u1", "raid", jun).ok, true);   // June fresh bucket
+  db.close();
+});

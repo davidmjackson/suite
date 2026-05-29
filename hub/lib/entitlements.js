@@ -85,5 +85,25 @@ export function createEntitlements(db) {
     return { entitled: true, principal, quota: { limit: e.quota_limit, period: e.quota_period, remaining: sel.remaining } };
   }
 
-  return { principalsForUser, grantEntitlement, revokeEntitlement, resolveEntitlement };
+  const consumeTx = db.transaction((userId, app, t) => {
+    const sel = select(userId, app, t);
+    if (!sel) return { ok: false, reason: "not_entitled" };
+    const e = sel.entitlement;
+    if (e.quota_limit == null) return { ok: true, remaining: null };
+    const pk = periodKey(e.quota_period || "month", t);
+    const count = usageCount(e.app, e.principal_type, e.principal_id, pk);
+    if (count >= e.quota_limit) return { ok: false, reason: "quota_exceeded" };
+    db.prepare(`
+      INSERT INTO app_usage (app,principal_type,principal_id,period_key,count)
+      VALUES (?,?,?,?,1)
+      ON CONFLICT(app,principal_type,principal_id,period_key) DO UPDATE SET count = count + 1
+    `).run(e.app, e.principal_type, e.principal_id, pk);
+    return { ok: true, remaining: e.quota_limit - (count + 1) };
+  });
+
+  function consume(userId, app, t = now()) {
+    return consumeTx(userId, app, t);
+  }
+
+  return { principalsForUser, grantEntitlement, revokeEntitlement, resolveEntitlement, consume };
 }
