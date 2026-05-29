@@ -77,3 +77,48 @@ test("rejects already-consumed token", async () => {
 
   assert.equal(res.status, 400);
 });
+
+test("exchange includes an entitlement block scoped to the target app", async () => {
+  const { app, db } = await buildWithApi();
+  db.prepare("INSERT INTO users (id,email,display_name,created_at) VALUES (?,?,?,?)")
+    .run("u1", "a@b.c", "Alice", now());
+  // grant raid to the user, unlimited
+  const { createEntitlements } = await import("../lib/entitlements.js?t=" + Date.now());
+  createEntitlements(db).grantEntitlement({ app: "raid", principalType: "user", principalId: "u1" });
+
+  const sid = randomToken();
+  db.prepare("INSERT INTO central_sessions (id,user_id,created_at,last_heartbeat_at,expires_at) VALUES (?,?,?,?,?)")
+    .run(sid, "u1", now(), now(), now() + 60_000);
+  const tok = randomToken();
+  db.prepare("INSERT INTO launch_tokens (token,central_session_id,target_app,created_at,expires_at) VALUES (?,?,?,?,?)")
+    .run(tok, sid, "raid", now(), now() + 30_000);
+
+  const res = await request(app)
+    .post("/api/sessions/exchange")
+    .set("Authorization", "Bearer k-raid")
+    .send({ launch_token: tok });
+
+  assert.equal(res.status, 200);
+  assert.equal(res.body.entitlement.entitled, true);
+  assert.deepEqual(res.body.entitlement.principal, { type: "user", id: "u1" });
+  assert.equal(res.body.entitlement.quota, null);
+});
+
+test("exchange returns entitled:false when the user has no grant for the app", async () => {
+  const { app, db } = await buildWithApi();
+  db.prepare("INSERT INTO users (id,email,created_at) VALUES (?,?,?)").run("u1", "a@b.c", now());
+  const sid = randomToken();
+  db.prepare("INSERT INTO central_sessions (id,user_id,created_at,last_heartbeat_at,expires_at) VALUES (?,?,?,?,?)")
+    .run(sid, "u1", now(), now(), now() + 60_000);
+  const tok = randomToken();
+  db.prepare("INSERT INTO launch_tokens (token,central_session_id,target_app,created_at,expires_at) VALUES (?,?,?,?,?)")
+    .run(tok, sid, "raid", now(), now() + 30_000);
+
+  const res = await request(app)
+    .post("/api/sessions/exchange")
+    .set("Authorization", "Bearer k-raid")
+    .send({ launch_token: tok });
+
+  assert.equal(res.status, 200);
+  assert.equal(res.body.entitlement.entitled, false);
+});

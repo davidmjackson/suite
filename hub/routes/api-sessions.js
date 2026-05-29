@@ -2,12 +2,14 @@
 import { now } from "../lib/tokens.js";
 import { createRequireApiKey } from "../middleware/requireApiKey.js";
 import { createAuditLogger } from "../lib/audit.js";
+import { createEntitlements } from "../lib/entitlements.js";
 
 export function mountApiSessions(app) {
   const db = app.locals.db;
   const config = app.locals.config;
   const requireApiKey = createRequireApiKey(config);
   const audit = createAuditLogger(db);
+  const entitlements = createEntitlements(db);
 
   app.post("/api/sessions/exchange", requireApiKey, (req, res) => {
     const { launch_token } = req.body || {};
@@ -28,10 +30,12 @@ export function mountApiSessions(app) {
     if (!row) return res.status(400).json({ error: "token_invalid" });
     if (row.target_app !== req.callingApp) return res.status(403).json({ error: "wrong_app" });
     if (row.disabled_at) return res.status(403).json({ error: "user_disabled" });
+    const entitlement = entitlements.resolveEntitlement(row.user_id, row.target_app);
     audit.log({ userId: row.user_id, eventType: "session_exchanged", app: req.callingApp, ip: req.ip });
     res.json({
       user: { id: row.user_id, email: row.email, displayName: row.display_name },
       central_session_id: row.central_session_id,
+      entitlement,
     });
   });
 
