@@ -47,5 +47,43 @@ export function createEntitlements(db) {
       .run(app, principalType, principalId);
   }
 
-  return { principalsForUser, grantEntitlement, revokeEntitlement };
+  const usageCount = (app, principalType, principalId, pk) => {
+    const row = db.prepare(
+      "SELECT count FROM app_usage WHERE app=? AND principal_type=? AND principal_id=? AND period_key=?"
+    ).get(app, principalType, principalId, pk);
+    return row ? row.count : 0;
+  };
+
+  // Returns the chosen entitlement row + computed remaining (null when unlimited), or null when none.
+  const select = (userId, app, t) => {
+    const principals = principalsForUser(userId);
+    const matches = [];
+    for (const p of principals) {
+      const e = db.prepare(
+        "SELECT * FROM app_entitlements WHERE app=? AND principal_type=? AND principal_id=? AND status='active'"
+      ).get(app, p.type, p.id);
+      if (e) matches.push(e);
+    }
+    if (matches.length === 0) return null;
+    const unlimited = matches.find((e) => e.quota_limit == null);
+    if (unlimited) return { entitlement: unlimited, remaining: null };
+    let best = null;
+    for (const e of matches) {
+      const pk = periodKey(e.quota_period || "month", t);
+      const remaining = e.quota_limit - usageCount(e.app, e.principal_type, e.principal_id, pk);
+      if (best === null || remaining > best.remaining) best = { entitlement: e, remaining };
+    }
+    return best;
+  };
+
+  function resolveEntitlement(userId, app, t = now()) {
+    const sel = select(userId, app, t);
+    if (!sel) return { entitled: false, principal: null, quota: null };
+    const e = sel.entitlement;
+    const principal = { type: e.principal_type, id: e.principal_id };
+    if (e.quota_limit == null) return { entitled: true, principal, quota: null };
+    return { entitled: true, principal, quota: { limit: e.quota_limit, period: e.quota_period, remaining: sel.remaining } };
+  }
+
+  return { principalsForUser, grantEntitlement, revokeEntitlement, resolveEntitlement };
 }

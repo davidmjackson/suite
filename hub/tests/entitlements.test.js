@@ -63,3 +63,83 @@ test("principalsForUser returns user + teams + companies", () => {
   assert.ok(ps.some(p => p.type === "team" && p.id === t.id));
   db.close();
 });
+
+// --- resolveEntitlement ---
+test("no grant -> denied", () => {
+  const db = openDb(":memory:");
+  const ent = createEntitlements(db);
+  seedUser(db, "u1", "a@b.c");
+  assert.deepEqual(ent.resolveEntitlement("u1", "raid"), { entitled: false, principal: null, quota: null });
+  db.close();
+});
+
+test("user-level unlimited grant -> entitled, quota null", () => {
+  const db = openDb(":memory:");
+  const ent = createEntitlements(db);
+  seedUser(db, "u1", "a@b.c");
+  ent.grantEntitlement({ app: "signal", principalType: "user", principalId: "u1" });
+  const r = ent.resolveEntitlement("u1", "signal");
+  assert.equal(r.entitled, true);
+  assert.deepEqual(r.principal, { type: "user", id: "u1" });
+  assert.equal(r.quota, null);
+  db.close();
+});
+
+test("company-level quota grant -> remaining = limit - usage", () => {
+  const db = openDb(":memory:");
+  const org = createOrg(db);
+  const ent = createEntitlements(db);
+  seedUser(db, "u1", "a@b.c");
+  const c = org.createCompany({ name: "Acme", slug: "acme" });
+  org.addCompanyMember({ userId: "u1", companyId: c.id, role: "owner" });
+  ent.grantEntitlement({ app: "raid", principalType: "company", principalId: c.id, quotaLimit: 100, quotaPeriod: "month" });
+  const t = Date.UTC(2026, 4, 9);
+  // seed 13 used in this period
+  db.prepare("INSERT INTO app_usage (app,principal_type,principal_id,period_key,count) VALUES ('raid','company',?,?,13)")
+    .run(c.id, periodKey("month", t));
+  const r = ent.resolveEntitlement("u1", "raid", t);
+  assert.equal(r.entitled, true);
+  assert.deepEqual(r.principal, { type: "company", id: c.id });
+  assert.deepEqual(r.quota, { limit: 100, period: "month", remaining: 87 });
+  db.close();
+});
+
+test("multiple matches: unlimited wins over quota'd", () => {
+  const db = openDb(":memory:");
+  const org = createOrg(db);
+  const ent = createEntitlements(db);
+  seedUser(db, "u1", "a@b.c");
+  const c = org.createCompany({ name: "Acme", slug: "acme" });
+  org.addCompanyMember({ userId: "u1", companyId: c.id, role: "owner" });
+  ent.grantEntitlement({ app: "raid", principalType: "user", principalId: "u1", quotaLimit: 5, quotaPeriod: "month" });
+  ent.grantEntitlement({ app: "raid", principalType: "company", principalId: c.id }); // unlimited
+  const r = ent.resolveEntitlement("u1", "raid");
+  assert.equal(r.entitled, true);
+  assert.equal(r.quota, null); // unlimited preferred
+  db.close();
+});
+
+test("multiple quota'd matches: most-remaining wins", () => {
+  const db = openDb(":memory:");
+  const org = createOrg(db);
+  const ent = createEntitlements(db);
+  seedUser(db, "u1", "a@b.c");
+  const c = org.createCompany({ name: "Acme", slug: "acme" });
+  org.addCompanyMember({ userId: "u1", companyId: c.id, role: "owner" });
+  ent.grantEntitlement({ app: "raid", principalType: "user", principalId: "u1", quotaLimit: 10, quotaPeriod: "month" });
+  ent.grantEntitlement({ app: "raid", principalType: "company", principalId: c.id, quotaLimit: 100, quotaPeriod: "month" });
+  const r = ent.resolveEntitlement("u1", "raid");
+  assert.deepEqual(r.principal, { type: "company", id: c.id }); // 100 remaining > 10
+  assert.equal(r.quota.remaining, 100);
+  db.close();
+});
+
+test("suspended grant is ignored", () => {
+  const db = openDb(":memory:");
+  const ent = createEntitlements(db);
+  seedUser(db, "u1", "a@b.c");
+  ent.grantEntitlement({ app: "signal", principalType: "user", principalId: "u1" });
+  ent.revokeEntitlement({ app: "signal", principalType: "user", principalId: "u1" });
+  assert.equal(ent.resolveEntitlement("u1", "signal").entitled, false);
+  db.close();
+});
