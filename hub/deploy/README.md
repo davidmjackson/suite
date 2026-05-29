@@ -6,6 +6,25 @@ The hub follows the same pattern as raid/scrumpoker/signal/retrospective:
 **you** own the code under `/var/www/suite`, the system user `suite-hub` only
 reads it (plus a small `ReadWritePaths` carve-out for the SQLite DB and logs).
 
+## Go-live status (2026-05-29)
+
+The hub is **LIVE and fully operational** at https://sprintsuite.uk. All steps
+below are done: service + Apache + TLS up, admin user bootstrapped, Resend
+verified (region `eu-west-1`; DKIM `resend._domainkey` + SPF on `send` —
+Resend did not require DMARC), real API key in `.env`, hourly prune cron
+running, and **end-to-end magic-link login confirmed working**.
+
+Remaining project work is **Phase 3** — wiring the four apps
+(`raid → signal → retro → poker`) to `@suite/auth-client`; see
+`docs/superpowers/plans/2026-05-28-sprint-suite-auth-hub.md`.
+
+Operational gotchas learned during deploy:
+- **Magic-link verify is a GET→confirm-page→POST flow** (see step 10) so mailbox
+  scanners can't consume the one-time token.
+- **Cached GitHub PATs expire**, breaking `git pull` on the box with "Password
+  authentication is not supported". Re-auth with `git config credential.helper
+  store` then a `git pull` (username + fresh PAT) — it re-caches.
+
 ## Prerequisites
 
 - Apache 2.4+ with `proxy`, `proxy_http`, `headers`, `ssl`, `rewrite` modules enabled:
@@ -171,20 +190,25 @@ in place (or create `sprintsuite-le-ssl.conf`).
 The hub ships a prune script that removes expired sessions, expired
 magic/launch tokens, and audit events older than 90 days.
 
-```bash
-( crontab -l 2>/dev/null; echo "*/5 * * * * cd /var/www/suite/hub && /usr/bin/node --env-file=.env scripts/prune.js >> /tmp/suite-hub-prune.log 2>&1" ) | crontab -
-crontab -l | grep prune
-```
+Run it as the **`suite-hub`** user (the DELETEs need write access to the DB, which `suite-hub` owns). Hourly is ample — sessions live 30 days, audit rows 90 days, tokens ~15 min; there's no need for the every-5-minutes the design draft suggested.
 
-Note: this cron runs as **your** user, which is fine for read-only reporting,
-but the actual DELETE statements require write access to the sqlite DB. If
-your user isn't in the `suite-hub` group, run the cron as the `suite-hub` user
-via root crontab instead:
+First create the log file `suite-hub` will append to (it can't create a file in `/var/log` itself):
 
 ```bash
-sudo crontab -e -u suite-hub
-# Add: */5 * * * * cd /var/www/suite/hub && /usr/bin/node --env-file=.env scripts/prune.js >> /var/log/suite-hub-prune.log 2>&1
+sudo touch /var/log/suite-hub-prune.log
+sudo chown suite-hub:suite-hub /var/log/suite-hub-prune.log
 ```
+
+Then install the cron non-interactively (avoids the `crontab -e` editor) and verify:
+
+```bash
+printf '%s\n' '0 * * * * cd /var/www/suite/hub && /usr/bin/node --env-file=.env scripts/prune.js >> /var/log/suite-hub-prune.log 2>&1' | sudo crontab -u suite-hub -
+sudo crontab -u suite-hub -l
+systemctl is-active cron     # the daemon must be active or the crontab never fires
+```
+
+Sanity-check the script once by hand before relying on the schedule:
+`sudo -u suite-hub bash -c 'cd /var/www/suite/hub && node --env-file=.env scripts/prune.js'`
 
 ## 10. Verify end-to-end
 
@@ -193,7 +217,8 @@ Visit `https://sprintsuite.uk/`:
 - Landing page renders, four tiles visible.
 - Click "Sign in" → enter your admin email.
 - Inbox: magic-link email arrives via Resend.
-- Click the link → land on `/dashboard`.
+- Click the link → a **Confirm sign in** page appears → click the **Sign in** button → land on `/dashboard`.
+  (The link GET is deliberately side-effect-free: mailbox URL scanners such as Microsoft/Outlook "Safe Links" pre-fetch every link in an email, and if the GET consumed the one-time token they'd burn it before you clicked — "expired or already used". The token is consumed by the POST behind the button instead, which scanners don't submit. See commit `244ba6b`.)
 - Bottom of dashboard: "Admin" link visible (because you bootstrapped admin in step 6).
 - `/admin` shows your user; `/admin/sessions` shows your live session; `/admin/audit` shows the events emitted so far.
 
