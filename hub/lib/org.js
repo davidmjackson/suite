@@ -51,9 +51,22 @@ export function createOrg(db) {
     db.prepare("DELETE FROM company_members WHERE user_id=? AND company_id=?").run(userId, companyId);
   });
 
+  function createTeam({ companyId, name }) {
+    if (!getCompany(companyId)) throw new Error("company_not_found");
+    const id = randomId();
+    db.prepare("INSERT INTO teams (id,company_id,name,created_at) VALUES (?,?,?,?)")
+      .run(id, companyId, name, now());
+    return getTeam(id);
+  }
+
+  function listTeams(companyId) {
+    return db.prepare("SELECT * FROM teams WHERE company_id=? ORDER BY name").all(companyId);
+  }
+
   return {
     createCompany, getCompany, getCompanyBySlug, suspendCompany, getTeam, ownerCount,
     addCompanyMember, setCompanyMemberRole, removeCompanyMember,
+    createTeam, listTeams,
     COMPANY_ROLES, TEAM_ROLES,
   };
 }

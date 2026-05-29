@@ -90,3 +90,36 @@ test("can demote an owner when another owner exists", () => {
   assert.equal(row.role, "admin");
   db.close();
 });
+
+// --- teams ---
+test("createTeam scopes name per company; duplicate name in same company throws", () => {
+  const db = openDb(":memory:");
+  const org = createOrg(db);
+  const c1 = org.createCompany({ name: "Acme", slug: "acme" });
+  const c2 = org.createCompany({ name: "Globex", slug: "globex" });
+  const t = org.createTeam({ companyId: c1.id, name: "Platform" });
+  assert.equal(t.company_id, c1.id);
+  assert.equal(t.name, "Platform");
+  // same name, different company is fine
+  org.createTeam({ companyId: c2.id, name: "Platform" });
+  // same name, same company collides
+  assert.throws(() => org.createTeam({ companyId: c1.id, name: "Platform" }), /UNIQUE/);
+  db.close();
+});
+
+test("createTeam in a missing company throws", () => {
+  const db = openDb(":memory:");
+  const org = createOrg(db);
+  assert.throws(() => org.createTeam({ companyId: "nope", name: "X" }), /company_not_found/);
+  db.close();
+});
+
+test("listTeams returns a company's teams sorted by name", () => {
+  const db = openDb(":memory:");
+  const org = createOrg(db);
+  const c = org.createCompany({ name: "Acme", slug: "acme" });
+  org.createTeam({ companyId: c.id, name: "Zeta" });
+  org.createTeam({ companyId: c.id, name: "Alpha" });
+  assert.deepEqual(org.listTeams(c.id).map(t => t.name), ["Alpha", "Zeta"]);
+  db.close();
+});
