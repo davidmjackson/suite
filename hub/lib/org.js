@@ -63,10 +63,26 @@ export function createOrg(db) {
     return db.prepare("SELECT * FROM teams WHERE company_id=? ORDER BY name").all(companyId);
   }
 
+  function addTeamMember({ userId, teamId, role }) {
+    if (!TEAM_ROLES.has(role)) throw new Error("invalid_team_role");
+    const team = getTeam(teamId);
+    if (!team) throw new Error("team_not_found");
+    const isMember = db.prepare("SELECT 1 FROM company_members WHERE user_id=? AND company_id=?")
+      .get(userId, team.company_id);
+    if (!isMember) throw new Error("not_company_member");
+    db.prepare("INSERT INTO team_members (user_id,team_id,role,created_at) VALUES (?,?,?,?)")
+      .run(userId, teamId, role, now());
+  }
+
+  function removeTeamMember({ userId, teamId }) {
+    db.prepare("DELETE FROM team_members WHERE user_id=? AND team_id=?").run(userId, teamId);
+  }
+
   return {
     createCompany, getCompany, getCompanyBySlug, suspendCompany, getTeam, ownerCount,
     addCompanyMember, setCompanyMemberRole, removeCompanyMember,
     createTeam, listTeams,
+    addTeamMember, removeTeamMember,
     COMPANY_ROLES, TEAM_ROLES,
   };
 }

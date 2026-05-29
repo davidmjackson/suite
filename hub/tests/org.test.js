@@ -123,3 +123,46 @@ test("listTeams returns a company's teams sorted by name", () => {
   assert.deepEqual(org.listTeams(c.id).map(t => t.name), ["Alpha", "Zeta"]);
   db.close();
 });
+
+// --- team members ---
+test("addTeamMember requires company membership; otherwise throws", () => {
+  const db = openDb(":memory:");
+  const org = createOrg(db);
+  seedUser(db, "u1", "a@b.c");
+  const c = org.createCompany({ name: "Acme", slug: "acme" });
+  const t = org.createTeam({ companyId: c.id, name: "Platform" });
+  // not yet a company member
+  assert.throws(() => org.addTeamMember({ userId: "u1", teamId: t.id, role: "member" }), /not_company_member/);
+  // become a member, then it works
+  org.addCompanyMember({ userId: "u1", companyId: c.id, role: "member" });
+  org.addTeamMember({ userId: "u1", teamId: t.id, role: "lead" });
+  const row = db.prepare("SELECT role FROM team_members WHERE user_id=? AND team_id=?").get("u1", t.id);
+  assert.equal(row.role, "lead");
+  db.close();
+});
+
+test("addTeamMember rejects invalid role and missing team", () => {
+  const db = openDb(":memory:");
+  const org = createOrg(db);
+  seedUser(db, "u1", "a@b.c");
+  const c = org.createCompany({ name: "Acme", slug: "acme" });
+  org.addCompanyMember({ userId: "u1", companyId: c.id, role: "member" });
+  const t = org.createTeam({ companyId: c.id, name: "Platform" });
+  assert.throws(() => org.addTeamMember({ userId: "u1", teamId: t.id, role: "captain" }), /invalid_team_role/);
+  assert.throws(() => org.addTeamMember({ userId: "u1", teamId: "nope", role: "member" }), /team_not_found/);
+  db.close();
+});
+
+test("removeTeamMember deletes the row", () => {
+  const db = openDb(":memory:");
+  const org = createOrg(db);
+  seedUser(db, "u1", "a@b.c");
+  const c = org.createCompany({ name: "Acme", slug: "acme" });
+  org.addCompanyMember({ userId: "u1", companyId: c.id, role: "member" });
+  const t = org.createTeam({ companyId: c.id, name: "Platform" });
+  org.addTeamMember({ userId: "u1", teamId: t.id, role: "member" });
+  org.removeTeamMember({ userId: "u1", teamId: t.id });
+  const row = db.prepare("SELECT 1 FROM team_members WHERE user_id=? AND team_id=?").get("u1", t.id);
+  assert.equal(row, undefined);
+  db.close();
+});
