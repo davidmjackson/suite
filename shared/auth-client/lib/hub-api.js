@@ -1,5 +1,5 @@
 // lib/hub-api.js
-export function createHubApi({ baseUrl, apiKey, fetchImpl = globalThis.fetch }) {
+function createHubApi({ baseUrl, apiKey, fetchImpl = globalThis.fetch }) {
   const headers = {
     Authorization: `Bearer ${apiKey}`,
     "Content-Type": "application/json",
@@ -33,3 +33,5 @@ export function createHubApi({ baseUrl, apiKey, fetchImpl = globalThis.fetch }) 
     },
   };
 }
+
+module.exports = { createHubApi };

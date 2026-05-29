@@ -1,8 +1,8 @@
 // handlers/launch.js
-import { setSessionCookie } from "../lib/cookies.js";
-import { randomBytes } from "node:crypto";
+const { setSessionCookie } = require("../lib/cookies.js");
+const { randomBytes } = require("node:crypto");
 
-export function createLaunchHandler(ctx) {
+function createLaunchHandler(ctx) {
   return async function handleLaunch(req, res) {
     const token = req.query?.token;
     if (!token || typeof token !== "string") {
@@ -32,3 +32,5 @@ export function createLaunchHandler(ctx) {
     res.redirect(302, dest);
   };
 }
+
+module.exports = { createLaunchHandler };

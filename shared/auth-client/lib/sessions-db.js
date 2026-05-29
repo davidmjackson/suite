@@ -1,9 +1,9 @@
 // lib/sessions-db.js
-import Database from "better-sqlite3";
-import fs from "node:fs";
-import path from "node:path";
+const Database = require("better-sqlite3");
+const fs = require("node:fs");
+const path = require("node:path");
 
-export function createSessionsStore(dbPath) {
+function createSessionsStore(dbPath) {
   if (dbPath !== ":memory:") {
     const dir = path.dirname(dbPath);
     if (!fs.existsSync(dir)) fs.mkdirSync(dir, { recursive: true });
@@ -41,3 +41,5 @@ export function createSessionsStore(dbPath) {
     },
   };
 }
+
+module.exports = { createSessionsStore };

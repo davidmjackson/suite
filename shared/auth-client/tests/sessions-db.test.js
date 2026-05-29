@@ -1,7 +1,7 @@
 // tests/sessions-db.test.js
-import { test } from "node:test";
-import assert from "node:assert/strict";
-import { createSessionsStore } from "../lib/sessions-db.js";
+const { test } = require("node:test");
+const assert = require("node:assert/strict");
+const { createSessionsStore } = require("../lib/sessions-db.js");
 
 test("create + get + touch + delete round-trip", () => {
   const store = createSessionsStore(":memory:");

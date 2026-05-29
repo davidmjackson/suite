@@ -1,8 +1,8 @@
 // tests/middleware.test.js
-import { test } from "node:test";
-import assert from "node:assert/strict";
-import { createRequireAuth } from "../middleware.js";
-import { createSessionsStore } from "../lib/sessions-db.js";
+const { test } = require("node:test");
+const assert = require("node:assert/strict");
+const { createRequireAuth } = require("../middleware.js");
+const { createSessionsStore } = require("../lib/sessions-db.js");
 
 function makeReq(cookieHeader, host = "app.test") {
   return { headers: { cookie: cookieHeader, host }, originalUrl: "/protected" };

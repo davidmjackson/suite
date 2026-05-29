@@ -1,7 +1,7 @@
 // middleware.js
-import { parseCookies, clearSessionCookie } from "./lib/cookies.js";
+const { parseCookies, clearSessionCookie } = require("./lib/cookies.js");
 
-export function createRequireAuth(ctx) {
+function createRequireAuth(ctx) {
   const { store, hubApi, cookieName, cookieDomain, hubBaseUrl, cacheTtlMs, graceMs } = ctx;
 
   return async function requireAuth(req, res, next) {
@@ -51,3 +51,5 @@ export function createRequireAuth(ctx) {
     req.centralSessionId = sess.central_session_id;
   }
 }
+
+module.exports = { createRequireAuth };

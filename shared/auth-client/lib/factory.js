@@ -1,12 +1,12 @@
 // lib/factory.js
-import { createHubApi } from "./hub-api.js";
-import { createSessionsStore } from "./sessions-db.js";
-import { createRequireAuth } from "../middleware.js";
-import { createLaunchHandler } from "../handlers/launch.js";
-import { createLogoutHandler } from "../handlers/logout.js";
-import { createHeartbeatHandler } from "../handlers/heartbeat.js";
+const { createHubApi } = require("./hub-api.js");
+const { createSessionsStore } = require("./sessions-db.js");
+const { createRequireAuth } = require("../middleware.js");
+const { createLaunchHandler } = require("../handlers/launch.js");
+const { createLogoutHandler } = require("../handlers/logout.js");
+const { createHeartbeatHandler } = require("../handlers/heartbeat.js");
 
-export function createAuthClient(options) {
+function createAuthClient(options) {
   const required = ["appName", "hubBaseUrl", "hubApiKey", "cookieName", "dbPath"];
   for (const k of required) if (!options[k]) throw new Error(`createAuthClient: missing ${k}`);
 
@@ -30,3 +30,5 @@ export function createAuthClient(options) {
     _ctx: ctx,
   };
 }
+
+module.exports = { createAuthClient };

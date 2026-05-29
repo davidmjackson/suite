@@ -1,5 +1,5 @@
 // lib/cookies.js
-export function parseCookies(header) {
+function parseCookies(header) {
   const out = {};
   if (!header) return out;
   for (const part of header.split(";")) {
@@ -10,7 +10,7 @@ export function parseCookies(header) {
   return out;
 }
 
-export function setSessionCookie(res, { name, value, domain, secure = true, maxAgeSec = 60 * 60 * 24 * 30 }) {
+function setSessionCookie(res, { name, value, domain, secure = true, maxAgeSec = 60 * 60 * 24 * 30 }) {
   const attrs = [
     `${name}=${value}`,
     "HttpOnly", "Path=/", "SameSite=Lax",
@@ -21,8 +21,10 @@ export function setSessionCookie(res, { name, value, domain, secure = true, maxA
   res.setHeader("Set-Cookie", attrs.join("; "));
 }
 
-export function clearSessionCookie(res, { name, domain }) {
+function clearSessionCookie(res, { name, domain }) {
   const attrs = [`${name}=`, "HttpOnly", "Path=/", "SameSite=Lax", "Max-Age=0"];
   if (domain) attrs.push(`Domain=${domain}`);
   res.setHeader("Set-Cookie", attrs.join("; "));
 }
+
+module.exports = { parseCookies, setSessionCookie, clearSessionCookie };

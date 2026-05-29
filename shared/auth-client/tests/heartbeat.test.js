@@ -1,8 +1,8 @@
 // tests/heartbeat.test.js
-import { test } from "node:test";
-import assert from "node:assert/strict";
-import { createAuthClient } from "../index.js";
-import { createHubApi } from "../lib/hub-api.js";
+const { test } = require("node:test");
+const assert = require("node:assert/strict");
+const { createAuthClient } = require("../index.js");
+const { createHubApi } = require("../lib/hub-api.js");
 
 function buildClient(heartbeatStatus = 200) {
   const fetchImpl = async () => ({ status: heartbeatStatus, json: async () => (heartbeatStatus === 200 ? { ok: true } : {}) });

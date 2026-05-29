@@ -1,7 +1,7 @@
 // tests/hub-api.test.js
-import { test } from "node:test";
-import assert from "node:assert/strict";
-import { createHubApi } from "../lib/hub-api.js";
+const { test } = require("node:test");
+const assert = require("node:assert/strict");
+const { createHubApi } = require("../lib/hub-api.js");
 
 function mockFetch(handlers) {
   return async (url, opts = {}) => {

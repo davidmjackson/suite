@@ -1,8 +1,8 @@
 // tests/launch.test.js
-import { test } from "node:test";
-import assert from "node:assert/strict";
-import { createAuthClient } from "../index.js";
-import { createHubApi } from "../lib/hub-api.js";
+const { test } = require("node:test");
+const assert = require("node:assert/strict");
+const { createAuthClient } = require("../index.js");
+const { createHubApi } = require("../lib/hub-api.js");
 
 function makeReq({ query = {}, path = "/auth/launch" } = {}) {
   return { query, path, originalUrl: path + "?" + new URLSearchParams(query).toString(), headers: {} };

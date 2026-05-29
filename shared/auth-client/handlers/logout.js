@@ -1,7 +1,7 @@
 // handlers/logout.js
-import { parseCookies, clearSessionCookie } from "../lib/cookies.js";
+const { parseCookies, clearSessionCookie } = require("../lib/cookies.js");
 
-export function createLogoutHandler(ctx) {
+function createLogoutHandler(ctx) {
   return async function handleLogout(req, res) {
     const cookieVal = parseCookies(req.headers.cookie)[ctx.cookieName];
     if (cookieVal) {
@@ -15,3 +15,5 @@ export function createLogoutHandler(ctx) {
     res.redirect(302, `${ctx.hubBaseUrl}/`);
   };
 }
+
+module.exports = { createLogoutHandler };

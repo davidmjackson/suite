@@ -1,7 +1,7 @@
 // handlers/heartbeat.js
-import { parseCookies, clearSessionCookie } from "../lib/cookies.js";
+const { parseCookies, clearSessionCookie } = require("../lib/cookies.js");
 
-export function createHeartbeatHandler(ctx) {
+function createHeartbeatHandler(ctx) {
   return async function handleHeartbeat(req, res) {
     const cookieVal = parseCookies(req.headers.cookie)[ctx.cookieName];
     if (!cookieVal) return res.status(401).json({ error: "no_session" });
@@ -20,3 +20,5 @@ export function createHeartbeatHandler(ctx) {
     return res.status(503).json({ error: "hub_unreachable" });
   };
 }
+
+module.exports = { createHeartbeatHandler };
