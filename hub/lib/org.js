@@ -78,10 +78,20 @@ export function createOrg(db) {
     db.prepare("DELETE FROM team_members WHERE user_id=? AND team_id=?").run(userId, teamId);
   }
 
+  function teamsForUser(userId, companyId) {
+    return db.prepare(`
+      SELECT t.id AS id, t.name AS name, tm.role AS role
+      FROM team_members tm
+      JOIN teams t ON t.id = tm.team_id
+      WHERE tm.user_id = ? AND t.company_id = ?
+      ORDER BY t.name
+    `).all(userId, companyId);
+  }
+
   return {
     createCompany, getCompany, getCompanyBySlug, suspendCompany, getTeam, ownerCount,
     addCompanyMember, setCompanyMemberRole, removeCompanyMember,
-    createTeam, listTeams,
+    createTeam, listTeams, teamsForUser,
     addTeamMember, removeTeamMember,
     COMPANY_ROLES, TEAM_ROLES,
   };

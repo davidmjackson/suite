@@ -166,3 +166,23 @@ test("removeTeamMember deletes the row", () => {
   assert.equal(row, undefined);
   db.close();
 });
+
+test("teamsForUser returns the user's teams in a company with their role, excluding others", () => {
+  const db = openDb(":memory:");
+  const org = createOrg(db);
+  seedUser(db, "u1", "u1@x.y");
+  const c1 = org.createCompany({ name: "C1", slug: "c1" });
+  const c2 = org.createCompany({ name: "C2", slug: "c2" });
+  org.addCompanyMember({ userId: "u1", companyId: c1.id, role: "member" });
+  org.addCompanyMember({ userId: "u1", companyId: c2.id, role: "member" });
+  const tA = org.createTeam({ companyId: c1.id, name: "Alpha" });
+  const tB = org.createTeam({ companyId: c1.id, name: "Bravo" }); // user NOT a member
+  const tC = org.createTeam({ companyId: c2.id, name: "Charlie" }); // other company
+  org.addTeamMember({ userId: "u1", teamId: tA.id, role: "lead" });
+  org.addTeamMember({ userId: "u1", teamId: tC.id, role: "member" });
+
+  const teams = org.teamsForUser("u1", c1.id);
+  assert.deepEqual(teams, [{ id: tA.id, name: "Alpha", role: "lead" }]);
+  assert.equal(teams.find((t) => t.id === tB.id), undefined);
+  assert.equal(teams.find((t) => t.id === tC.id), undefined);
+});
