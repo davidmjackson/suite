@@ -3,6 +3,7 @@ import { now } from "../lib/tokens.js";
 import { createRequireApiKey } from "../middleware/requireApiKey.js";
 import { createAuditLogger } from "../lib/audit.js";
 import { createEntitlements } from "../lib/entitlements.js";
+import { createOrg } from "../lib/org.js";
 
 export function mountApiSessions(app) {
   const db = app.locals.db;
@@ -10,6 +11,7 @@ export function mountApiSessions(app) {
   const requireApiKey = createRequireApiKey(config);
   const audit = createAuditLogger(db);
   const entitlements = createEntitlements(db);
+  const org = createOrg(db);
 
   app.post("/api/sessions/exchange", requireApiKey, (req, res) => {
     const { launch_token } = req.body || {};
@@ -31,11 +33,17 @@ export function mountApiSessions(app) {
     if (row.target_app !== req.callingApp) return res.status(403).json({ error: "wrong_app" });
     if (row.disabled_at) return res.status(403).json({ error: "user_disabled" });
     const entitlement = entitlements.resolveEntitlement(row.user_id, row.target_app);
+    const companyId =
+      entitlement.entitled && entitlement.principal?.type === "company"
+        ? entitlement.principal.id
+        : null;
+    const teams = companyId ? org.teamsForUser(row.user_id, companyId) : [];
     audit.log({ userId: row.user_id, eventType: "session_exchanged", app: req.callingApp, ip: req.ip });
     res.json({
       user: { id: row.user_id, email: row.email, displayName: row.display_name },
       central_session_id: row.central_session_id,
       entitlement,
+      teams,
     });
   });
 
