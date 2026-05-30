@@ -15,3 +15,22 @@ test("create + get + touch + delete round-trip", () => {
   store.delete("c1");
   assert.equal(store.get("c1"), undefined);
 });
+
+test("create persists entitled+teams and get returns them parsed", () => {
+  const store = createSessionsStore(":memory:");
+  store.create({
+    id: "s1", userId: "u1", centralSessionId: "c1", expiresAt: Date.now() + 60_000,
+    entitled: true, teams: [{ id: "t1", name: "Alpha", role: "lead" }],
+  });
+  const s = store.get("s1");
+  assert.equal(s.entitled, true);
+  assert.deepEqual(s.teams, [{ id: "t1", name: "Alpha", role: "lead" }]);
+});
+
+test("create defaults entitled=false and teams=[] when omitted (back-compat)", () => {
+  const store = createSessionsStore(":memory:");
+  store.create({ id: "s2", userId: "u2", centralSessionId: "c2", expiresAt: Date.now() + 60_000 });
+  const s = store.get("s2");
+  assert.equal(s.entitled, false);
+  assert.deepEqual(s.teams, []);
+});
