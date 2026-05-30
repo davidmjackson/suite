@@ -5,6 +5,7 @@ const { createRequireAuth } = require("../middleware.js");
 const { createLaunchHandler } = require("../handlers/launch.js");
 const { createLogoutHandler } = require("../handlers/logout.js");
 const { createHeartbeatHandler } = require("../handlers/heartbeat.js");
+const { createVerifySession } = require("./verify-session.js");
 
 function createAuthClient(options) {
   const required = ["appName", "hubBaseUrl", "hubApiKey", "cookieName", "dbPath"];
@@ -27,6 +28,7 @@ function createAuthClient(options) {
     handleLogout: createLogoutHandler(ctx),
     handleHeartbeat: createHeartbeatHandler(ctx),
     getCurrentUser: (req) => req.user || null,
+    verifySession: createVerifySession(ctx),
     consume: (centralSessionId) => ctx.hubApi.consume(centralSessionId),
     _ctx: ctx,
   };
