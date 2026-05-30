@@ -20,6 +20,8 @@ function createLaunchHandler(ctx) {
       userId: info.user.id,
       centralSessionId: info.central_session_id,
       expiresAt: Date.now() + ctx.sessionMaxMs,
+      entitled: info.entitlement?.entitled === true,
+      teams: info.teams || [],
     });
     setSessionCookie(res, { name: ctx.cookieName, value: sessionId, domain: ctx.cookieDomain });
     let dest = "/";

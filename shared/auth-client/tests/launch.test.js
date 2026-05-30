@@ -65,3 +65,25 @@ test("launch with exchange failure returns 400", async () => {
   await client.handleLaunch(req, res);
   assert.equal(res.statusCode, 400);
 });
+
+test("launch persists entitled+teams from the exchange onto the session", async () => {
+  const calls = [];
+  const ctx = {
+    store: { create: (rec) => calls.push(rec) },
+    hubApi: { exchange: async () => ({
+      user: { id: "u1" }, central_session_id: "c1",
+      entitlement: { entitled: true }, teams: [{ id: "t1", name: "Alpha", role: "lead" }],
+    }) },
+    cookieName: "poker_session", cookieDomain: undefined, sessionMaxMs: 60_000,
+  };
+  const { createLaunchHandler } = require("../handlers/launch.js");
+  const handleLaunch = createLaunchHandler(ctx);
+  const req = { query: { token: "tok" }, headers: {} };
+  const res = { setHeader() {}, redirect() {} };
+
+  await handleLaunch(req, res);
+
+  assert.equal(calls.length, 1);
+  assert.equal(calls[0].entitled, true);
+  assert.deepEqual(calls[0].teams, [{ id: "t1", name: "Alpha", role: "lead" }]);
+});
