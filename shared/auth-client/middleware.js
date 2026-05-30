@@ -46,7 +46,7 @@ function createRequireAuth(ctx) {
   }
 
   function attachUser(req, sess) {
-    req.user = { id: sess.user_id };
+    req.user = { id: sess.user_id, entitled: !!sess.entitled, teams: sess.teams || [] };
     req.appSessionId = sess.id;
     req.centralSessionId = sess.central_session_id;
   }

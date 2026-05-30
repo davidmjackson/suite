@@ -111,3 +111,22 @@ test("requireAuth with stale cache + expired heartbeat → 302 + clears cookie",
   assert.match(res.location, /\/login\?return_to=/);
   assert.match(res["Set-Cookie"], /Max-Age=0/);
 });
+
+test("requireAuth attaches entitled+teams from the session to req.user", async () => {
+  const store = createSessionsStore(":memory:");
+  const requireAuth = createRequireAuth({
+    store, hubApi: { heartbeat: async () => "ok" },
+    cookieName: "poker_session", cacheTtlMs: 60_000, graceMs: 300_000,
+  });
+  store.create({
+    id: "s1", userId: "u1", centralSessionId: "c1", expiresAt: Date.now() + 60_000,
+    entitled: true, teams: [{ id: "t1", name: "Alpha", role: "lead" }],
+  });
+  const req = { headers: { cookie: "poker_session=s1" } };
+  let nexted = false;
+  await requireAuth(req, { redirect() {} }, () => { nexted = true; });
+  assert.equal(nexted, true);
+  assert.equal(req.user.id, "u1");
+  assert.equal(req.user.entitled, true);
+  assert.deepEqual(req.user.teams, [{ id: "t1", name: "Alpha", role: "lead" }]);
+});
