@@ -150,7 +150,7 @@ test("exchange returns the user's teams scoped to the per-company entitled app",
 
   assert.equal(res.status, 200);
   assert.equal(res.body.entitlement.entitled, true);
-  assert.deepEqual(res.body.teams, [{ id: team.id, name: "Alpha", role: "lead" }]);
+  assert.deepEqual(res.body.teams, [{ id: team.id, name: "Alpha", role: "lead", company: "Acme" }]);
 });
 
 test("exchange returns teams:[] when not entitled or principal is not a company", async () => {

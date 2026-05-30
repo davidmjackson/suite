@@ -37,7 +37,10 @@ export function mountApiSessions(app) {
       entitlement.entitled && entitlement.principal?.type === "company"
         ? entitlement.principal.id
         : null;
-    const teams = companyId ? org.teamsForUser(row.user_id, companyId) : [];
+    const company = companyId ? org.getCompany(companyId) : null;
+    const teams = companyId
+      ? org.teamsForUser(row.user_id, companyId).map((t) => ({ ...t, company: company?.name || null }))
+      : [];
     audit.log({ userId: row.user_id, eventType: "session_exchanged", app: req.callingApp, ip: req.ip });
     res.json({
       user: { id: row.user_id, email: row.email, displayName: row.display_name },
