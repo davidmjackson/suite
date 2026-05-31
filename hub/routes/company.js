@@ -71,6 +71,16 @@ export function mountCompany(app) {
     res.redirect("/company/" + req.company.slug);
   });
 
+  app.post("/company/:slug/teams", ...manage, (req, res) => {
+    const name = (req.body.name || "").trim();
+    if (!name) {
+      return res.status(400).render("error", { title: "Bad request", message: "Team name is required." });
+    }
+    const team = org.createTeam({ companyId: req.company.id, name });
+    audit.log({ userId: req.user.id, eventType: "team_created", metadata: { company: req.company.slug, team: team.id, name }, ip: req.ip });
+    res.redirect("/company/" + req.company.slug);
+  });
+
   app.post("/company/:slug/members/:userId/remove", ...manage, (req, res) => {
     const targetId = req.params.userId;
     const target = db.prepare("SELECT role FROM company_members WHERE user_id=? AND company_id=?")

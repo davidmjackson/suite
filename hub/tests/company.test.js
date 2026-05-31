@@ -137,3 +137,19 @@ test("removing the last owner shows a friendly error", async () => {
   assert.equal(res.status, 400);
   assert.match(res.text, /owner/i);
 });
+
+test("owner can create a team", async () => {
+  const { app, db, company, sid } = await build({ role: "owner" });
+  const res = await request(app).post("/company/acme/teams")
+    .type("form").send({ name: "Squad B" }).set("Cookie", cookie(sid));
+  assert.equal(res.status, 302);
+  const t = db.prepare("SELECT * FROM teams WHERE company_id=? AND name=?").get(company.id, "Squad B");
+  assert.ok(t);
+});
+
+test("creating a team with a blank name is rejected with 400", async () => {
+  const { app, sid } = await build({ role: "owner" });
+  const res = await request(app).post("/company/acme/teams")
+    .type("form").send({ name: "   " }).set("Cookie", cookie(sid));
+  assert.equal(res.status, 400);
+});
