@@ -257,3 +257,47 @@ test("listTeamMembers returns team members scoped to the team", () => {
   assert.equal(org.listTeamMembers(t.id)[0].hasLoggedIn, true);
   db.close();
 });
+
+// --- inviteCompanyMember ---
+test("inviteCompanyMember creates a dormant user + membership for a new email", () => {
+  const db = openDb(":memory:");
+  const org = createOrg(db);
+  const a = org.createCompany({ name: "Acme", slug: "acme" });
+  // org.inviteCompanyMember does NOT lowercase — the route lowercases before
+  // calling it (matches routes/admin.js). Pass an already-normalised email here.
+  const r = org.inviteCompanyMember({ email: "new@b.c", companyId: a.id, role: "member" });
+  assert.equal(r.alreadyMember, false);
+  assert.equal(r.user.email, "new@b.c");
+  const u = db.prepare("SELECT * FROM users WHERE email = ?").get("new@b.c");
+  assert.ok(u);
+  const m = db.prepare("SELECT role FROM company_members WHERE user_id=? AND company_id=?").get(u.id, a.id);
+  assert.equal(m.role, "member");
+  db.close();
+});
+
+test("inviteCompanyMember reuses an existing user", () => {
+  const db = openDb(":memory:");
+  const org = createOrg(db);
+  seedUser(db, "u1", "exists@b.c");
+  const a = org.createCompany({ name: "Acme", slug: "acme" });
+  const r = org.inviteCompanyMember({ email: "exists@b.c", companyId: a.id, role: "admin" });
+  assert.equal(r.alreadyMember, false);
+  assert.equal(r.user.id, "u1");
+  const m = db.prepare("SELECT role FROM company_members WHERE user_id=? AND company_id=?").get("u1", a.id);
+  assert.equal(m.role, "admin");
+  db.close();
+});
+
+test("inviteCompanyMember is a no-op for an existing member (no throw, role untouched)", () => {
+  const db = openDb(":memory:");
+  const org = createOrg(db);
+  seedUser(db, "u1", "exists@b.c");
+  const a = org.createCompany({ name: "Acme", slug: "acme" });
+  org.addCompanyMember({ userId: "u1", companyId: a.id, role: "owner" });
+  const r = org.inviteCompanyMember({ email: "exists@b.c", companyId: a.id, role: "member" });
+  assert.equal(r.alreadyMember, true);
+  assert.equal(r.user.id, "u1");
+  const m = db.prepare("SELECT role FROM company_members WHERE user_id=? AND company_id=?").get("u1", a.id);
+  assert.equal(m.role, "owner"); // unchanged
+  db.close();
+});

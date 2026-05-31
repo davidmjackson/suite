@@ -40,6 +40,22 @@ export function createOrg(db) {
     db.prepare("UPDATE company_members SET role=? WHERE user_id=? AND company_id=?").run(role, userId, companyId);
   }
 
+  const inviteCompanyMember = db.transaction(({ email, companyId, role }) => {
+    if (!getCompany(companyId)) throw new Error("company_not_found");
+    let user = db.prepare("SELECT * FROM users WHERE email = ?").get(email);
+    if (!user) {
+      const id = randomId();
+      db.prepare("INSERT INTO users (id,email,display_name,is_admin,created_at) VALUES (?,?,?,?,?)")
+        .run(id, email, null, 0, now());
+      user = db.prepare("SELECT * FROM users WHERE id = ?").get(id);
+    }
+    const existing = db.prepare("SELECT 1 FROM company_members WHERE user_id=? AND company_id=?")
+      .get(user.id, companyId);
+    if (existing) return { user, alreadyMember: true };
+    addCompanyMember({ userId: user.id, companyId, role });
+    return { user, alreadyMember: false };
+  });
+
   const removeCompanyMember = db.transaction(({ userId, companyId }) => {
     const current = db.prepare("SELECT role FROM company_members WHERE user_id=? AND company_id=?").get(userId, companyId);
     if (!current) return;
@@ -130,7 +146,7 @@ export function createOrg(db) {
 
   return {
     createCompany, getCompany, getCompanyBySlug, suspendCompany, getTeam, ownerCount,
-    addCompanyMember, setCompanyMemberRole, removeCompanyMember,
+    addCompanyMember, inviteCompanyMember, setCompanyMemberRole, removeCompanyMember,
     createTeam, listTeams, renameTeam, teamsForUser,
     addTeamMember, removeTeamMember,
     adminCompaniesForUser, listCompanyMembers, listTeamMembers,
