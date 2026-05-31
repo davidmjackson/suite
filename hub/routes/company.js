@@ -25,4 +25,23 @@ export function mountCompany(app) {
       teams,
     });
   });
+
+  app.post("/company/:slug/members", ...manage, (req, res) => {
+    const email = (req.body.email || "").trim().toLowerCase();
+    const role = req.body.role || "member";
+    if (!EMAIL_RE.test(email)) {
+      return res.status(400).render("error", { title: "Bad request", message: "Invalid email." });
+    }
+    if (!["owner", "admin", "member"].includes(role)) {
+      return res.status(400).render("error", { title: "Bad request", message: "Invalid role." });
+    }
+    if (req.companyRole === "admin" && role === "owner") {
+      return res.status(403).render("error", { title: "Forbidden", message: "Only an owner can grant the owner role." });
+    }
+    const r = org.inviteCompanyMember({ email, companyId: req.company.id, role });
+    if (!r.alreadyMember) {
+      audit.log({ userId: req.user.id, eventType: "company_member_invited", metadata: { company: req.company.slug, email, role }, ip: req.ip });
+    }
+    res.redirect("/company/" + req.company.slug);
+  });
 }

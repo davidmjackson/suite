@@ -46,3 +46,32 @@ test("GET /company/:slug is 404 for an unknown slug", async () => {
   const res = await request(app).get("/company/nope").set("Cookie", cookie(sid));
   assert.equal(res.status, 404);
 });
+
+test("owner can invite a new member; user + membership created", async () => {
+  const { app, db, company, sid } = await build({ role: "owner" });
+  const res = await request(app).post("/company/acme/members")
+    .type("form").send({ email: "New@B.C", role: "member" })
+    .set("Cookie", cookie(sid));
+  assert.equal(res.status, 302);
+  assert.equal(res.headers.location, "/company/acme");
+  const u = db.prepare("SELECT * FROM users WHERE email = ?").get("new@b.c");
+  assert.ok(u, "user row created (lowercased)");
+  const m = db.prepare("SELECT role FROM company_members WHERE user_id=? AND company_id=?").get(u.id, company.id);
+  assert.equal(m.role, "member");
+});
+
+test("invalid email is rejected with 400", async () => {
+  const { app, sid } = await build({ role: "owner" });
+  const res = await request(app).post("/company/acme/members")
+    .type("form").send({ email: "not-an-email", role: "member" })
+    .set("Cookie", cookie(sid));
+  assert.equal(res.status, 400);
+});
+
+test("admin cannot invite an owner (403)", async () => {
+  const { app, sid } = await build({ role: "admin" });
+  const res = await request(app).post("/company/acme/members")
+    .type("form").send({ email: "x@b.c", role: "owner" })
+    .set("Cookie", cookie(sid));
+  assert.equal(res.status, 403);
+});
