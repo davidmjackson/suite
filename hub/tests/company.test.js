@@ -211,3 +211,32 @@ test("renaming a team to an existing name shows a friendly 400, not a 500", asyn
   assert.equal(res.status, 400);
   assert.match(res.text, /already exists/i);
 });
+
+test("add a company member to a team", async () => {
+  const { app, db, company, org, sid } = await build({ role: "owner" });
+  db.prepare("INSERT INTO users (id,email,created_at) VALUES (?,?,?)").run("u2", "m2@b.c", now());
+  org.addCompanyMember({ userId: "u2", companyId: company.id, role: "member" });
+  const t = org.createTeam({ companyId: company.id, name: "Squad" });
+  const res = await request(app).post(`/company/acme/teams/${t.id}/members`)
+    .type("form").send({ userId: "u2" }).set("Cookie", cookie(sid));
+  assert.equal(res.status, 302);
+  assert.ok(db.prepare("SELECT 1 FROM team_members WHERE user_id=? AND team_id=?").get("u2", t.id));
+});
+
+test("adding a non-company-member to a team shows a friendly error", async () => {
+  const { app, db, company, org, sid } = await build({ role: "owner" });
+  db.prepare("INSERT INTO users (id,email,created_at) VALUES (?,?,?)").run("u9", "outsider@b.c", now());
+  const t = org.createTeam({ companyId: company.id, name: "Squad" });
+  const res = await request(app).post(`/company/acme/teams/${t.id}/members`)
+    .type("form").send({ userId: "u9" }).set("Cookie", cookie(sid));
+  assert.equal(res.status, 400);
+});
+
+test("remove a team member", async () => {
+  const { app, db, company, org, sid } = await build({ role: "owner" });
+  org.addTeamMember({ userId: "u1", teamId: org.createTeam({ companyId: company.id, name: "Squad" }).id, role: "member" });
+  const t = db.prepare("SELECT id FROM teams WHERE company_id=? AND name=?").get(company.id, "Squad");
+  const res = await request(app).post(`/company/acme/teams/${t.id}/members/u1/remove`).set("Cookie", cookie(sid));
+  assert.equal(res.status, 302);
+  assert.equal(db.prepare("SELECT 1 FROM team_members WHERE user_id=? AND team_id=?").get("u1", t.id), undefined);
+});

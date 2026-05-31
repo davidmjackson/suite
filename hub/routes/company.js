@@ -134,6 +134,30 @@ export function mountCompany(app) {
     res.redirect(`/company/${req.company.slug}/teams/${team.id}`);
   });
 
+  app.post("/company/:slug/teams/:teamId/members", ...manage, (req, res) => {
+    const team = loadTeam(req, res);
+    if (!team) return;
+    const userId = req.body.userId;
+    try {
+      org.addTeamMember({ userId, teamId: team.id, role: "member" });
+    } catch (e) {
+      if (e.message === "not_company_member") {
+        return res.status(400).render("error", { title: "Can't add", message: "That person is not a member of this company." });
+      }
+      throw e;
+    }
+    audit.log({ userId: req.user.id, eventType: "team_member_added", metadata: { company: req.company.slug, team: team.id, target: userId }, ip: req.ip });
+    res.redirect(`/company/${req.company.slug}/teams/${team.id}`);
+  });
+
+  app.post("/company/:slug/teams/:teamId/members/:userId/remove", ...manage, (req, res) => {
+    const team = loadTeam(req, res);
+    if (!team) return;
+    org.removeTeamMember({ userId: req.params.userId, teamId: team.id });
+    audit.log({ userId: req.user.id, eventType: "team_member_removed", metadata: { company: req.company.slug, team: team.id, target: req.params.userId }, ip: req.ip });
+    res.redirect(`/company/${req.company.slug}/teams/${team.id}`);
+  });
+
   app.post("/company/:slug/members/:userId/remove", ...manage, (req, res) => {
     const targetId = req.params.userId;
     const target = db.prepare("SELECT role FROM company_members WHERE user_id=? AND company_id=?")
