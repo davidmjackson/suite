@@ -174,3 +174,21 @@ test("GET team page is 404 for a team in another company", async () => {
   const res = await request(app).get(`/company/acme/teams/${otherTeam.id}`).set("Cookie", cookie(sid));
   assert.equal(res.status, 404);
 });
+
+test("owner can rename a team", async () => {
+  const { app, db, company, org, sid } = await build({ role: "owner" });
+  const t = org.createTeam({ companyId: company.id, name: "Old" });
+  const res = await request(app).post(`/company/acme/teams/${t.id}/rename`)
+    .type("form").send({ name: "Renamed" }).set("Cookie", cookie(sid));
+  assert.equal(res.status, 302);
+  assert.equal(db.prepare("SELECT name FROM teams WHERE id=?").get(t.id).name, "Renamed");
+});
+
+test("renaming a team in another company is 404", async () => {
+  const { app, org, sid } = await build({ role: "owner" });
+  const other = org.createCompany({ name: "Other", slug: "other" });
+  const otherTeam = org.createTeam({ companyId: other.id, name: "Theirs" });
+  const res = await request(app).post(`/company/acme/teams/${otherTeam.id}/rename`)
+    .type("form").send({ name: "Hijack" }).set("Cookie", cookie(sid));
+  assert.equal(res.status, 404);
+});
