@@ -239,5 +239,9 @@ test("listTeamMembers returns team members scoped to the team", () => {
   const rows = org.listTeamMembers(t.id);
   assert.deepEqual(rows.map((r) => r.userId), ["u1"]);
   assert.equal(rows[0].email, "u1@b.c");
+  assert.equal(rows[0].hasLoggedIn, false); // no audit row yet
+  db.prepare("INSERT INTO audit_events (user_id,event_type,created_at) VALUES (?,?,?)")
+    .run("u1", "session_created", Date.now());
+  assert.equal(org.listTeamMembers(t.id)[0].hasLoggedIn, true);
   db.close();
 });
