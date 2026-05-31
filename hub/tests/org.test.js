@@ -186,3 +186,58 @@ test("teamsForUser returns the user's teams in a company with their role, exclud
   assert.equal(teams.find((t) => t.id === tB.id), undefined);
   assert.equal(teams.find((t) => t.id === tC.id), undefined);
 });
+
+// --- Layer 3 console read helpers ---
+test("adminCompaniesForUser returns only companies where user is owner/admin", () => {
+  const db = openDb(":memory:");
+  const org = createOrg(db);
+  seedUser(db, "u1", "u1@b.c");
+  const a = org.createCompany({ name: "Acme", slug: "acme" });
+  const b = org.createCompany({ name: "Beta", slug: "beta" });
+  const c = org.createCompany({ name: "Gamma", slug: "gamma" });
+  org.addCompanyMember({ userId: "u1", companyId: a.id, role: "owner" });
+  org.addCompanyMember({ userId: "u1", companyId: b.id, role: "admin" });
+  org.addCompanyMember({ userId: "u1", companyId: c.id, role: "member" });
+  const rows = org.adminCompaniesForUser("u1");
+  assert.deepEqual(rows.map((r) => r.slug), ["acme", "beta"]);
+  assert.equal(rows[0].role, "owner");
+  assert.equal(rows[1].role, "admin");
+  db.close();
+});
+
+test("listCompanyMembers returns members with hasLoggedIn derived from audit", () => {
+  const db = openDb(":memory:");
+  const org = createOrg(db);
+  seedUser(db, "u1", "owner@b.c");
+  seedUser(db, "u2", "invited@b.c");
+  const a = org.createCompany({ name: "Acme", slug: "acme" });
+  org.addCompanyMember({ userId: "u1", companyId: a.id, role: "owner" });
+  org.addCompanyMember({ userId: "u2", companyId: a.id, role: "member" });
+  db.prepare("INSERT INTO audit_events (user_id,event_type,created_at) VALUES (?,?,?)")
+    .run("u1", "session_created", Date.now());
+  const rows = org.listCompanyMembers(a.id);
+  assert.equal(rows.length, 2);
+  const u1 = rows.find((r) => r.userId === "u1");
+  const u2 = rows.find((r) => r.userId === "u2");
+  assert.equal(u1.email, "owner@b.c");
+  assert.equal(u1.role, "owner");
+  assert.equal(u1.hasLoggedIn, true);
+  assert.equal(u2.hasLoggedIn, false);
+  db.close();
+});
+
+test("listTeamMembers returns team members scoped to the team", () => {
+  const db = openDb(":memory:");
+  const org = createOrg(db);
+  seedUser(db, "u1", "u1@b.c");
+  seedUser(db, "u2", "u2@b.c");
+  const a = org.createCompany({ name: "Acme", slug: "acme" });
+  org.addCompanyMember({ userId: "u1", companyId: a.id, role: "owner" });
+  org.addCompanyMember({ userId: "u2", companyId: a.id, role: "member" });
+  const t = org.createTeam({ companyId: a.id, name: "Squad" });
+  org.addTeamMember({ userId: "u1", teamId: t.id, role: "member" });
+  const rows = org.listTeamMembers(t.id);
+  assert.deepEqual(rows.map((r) => r.userId), ["u1"]);
+  assert.equal(rows[0].email, "u1@b.c");
+  db.close();
+});

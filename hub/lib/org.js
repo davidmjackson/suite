@@ -88,11 +88,44 @@ export function createOrg(db) {
     `).all(userId, companyId);
   }
 
+  function adminCompaniesForUser(userId) {
+    return db.prepare(`
+      SELECT c.id AS id, c.name AS name, c.slug AS slug, cm.role AS role
+      FROM company_members cm
+      JOIN companies c ON c.id = cm.company_id
+      WHERE cm.user_id = ? AND cm.role IN ('owner','admin')
+      ORDER BY c.name
+    `).all(userId);
+  }
+
+  function listCompanyMembers(companyId) {
+    return db.prepare(`
+      SELECT u.id AS userId, u.email AS email, u.display_name AS display_name, cm.role AS role,
+             EXISTS(SELECT 1 FROM audit_events ae WHERE ae.user_id = u.id AND ae.event_type = 'session_created') AS hasLoggedIn
+      FROM company_members cm
+      JOIN users u ON u.id = cm.user_id
+      WHERE cm.company_id = ?
+      ORDER BY u.email
+    `).all(companyId).map((r) => ({ ...r, hasLoggedIn: !!r.hasLoggedIn }));
+  }
+
+  function listTeamMembers(teamId) {
+    return db.prepare(`
+      SELECT u.id AS userId, u.email AS email, u.display_name AS display_name, tm.role AS role,
+             EXISTS(SELECT 1 FROM audit_events ae WHERE ae.user_id = u.id AND ae.event_type = 'session_created') AS hasLoggedIn
+      FROM team_members tm
+      JOIN users u ON u.id = tm.user_id
+      WHERE tm.team_id = ?
+      ORDER BY u.email
+    `).all(teamId).map((r) => ({ ...r, hasLoggedIn: !!r.hasLoggedIn }));
+  }
+
   return {
     createCompany, getCompany, getCompanyBySlug, suspendCompany, getTeam, ownerCount,
     addCompanyMember, setCompanyMemberRole, removeCompanyMember,
     createTeam, listTeams, teamsForUser,
     addTeamMember, removeTeamMember,
+    adminCompaniesForUser, listCompanyMembers, listTeamMembers,
     COMPANY_ROLES, TEAM_ROLES,
   };
 }
