@@ -1,0 +1,59 @@
+<%~ include("../partials/header", { title: "Manage · " + it.company.name, user: it.user }) %>
+<nav style="margin-bottom:24px;"><a href="/dashboard">← Back to dashboard</a></nav>
+<h1><%= it.company.name %></h1>
+
+<div class="card">
+<h2>Members (<%= it.members.length %>)</h2>
+<form method="POST" action="/company/<%= it.company.slug %>/members">
+<p><input type="email" name="email" placeholder="email@example.com" required></p>
+<p>
+<select name="role">
+<option value="member">Member</option>
+<option value="admin">Admin</option>
+<% if (it.companyRole === "owner") { %><option value="owner">Owner</option><% } %>
+</select>
+<button class="btn" type="submit">Invite member</button>
+</p>
+</form>
+<table>
+<thead><tr><th>Email</th><th>Role</th><th>Status</th><th></th></tr></thead>
+<tbody>
+<% for (const m of it.members) { %>
+<tr>
+<td><%= m.email %></td>
+<td>
+<% const canEditRow = it.companyRole === "owner" || m.role !== "owner"; %>
+<% if (canEditRow) { %>
+<form method="POST" action="/company/<%= it.company.slug %>/members/<%= m.userId %>/role" style="display:inline;">
+<select name="role">
+<option value="member" <%= m.role === "member" ? "selected" : "" %>>Member</option>
+<option value="admin" <%= m.role === "admin" ? "selected" : "" %>>Admin</option>
+<% if (it.companyRole === "owner") { %><option value="owner" <%= m.role === "owner" ? "selected" : "" %>>Owner</option><% } %>
+</select>
+<button class="btn" type="submit">Save</button>
+</form>
+<% } else { %><%= m.role %><% } %>
+</td>
+<td><%= m.hasLoggedIn ? "Active" : "Invited — not joined yet" %></td>
+<td>
+<% if (canEditRow) { %>
+<form method="POST" action="/company/<%= it.company.slug %>/members/<%= m.userId %>/remove" style="display:inline;" onsubmit="return confirm('Remove <%= m.email %>?')"><button class="btn danger">Remove</button></form>
+<% } %>
+</td>
+</tr>
+<% } %>
+</tbody></table>
+</div>
+
+<div class="card">
+<h2>Teams (<%= it.teams.length %>)</h2>
+<form method="POST" action="/company/<%= it.company.slug %>/teams">
+<p><input type="text" name="name" placeholder="Team name" required> <button class="btn" type="submit">Create team</button></p>
+</form>
+<ul>
+<% for (const t of it.teams) { %>
+<li><a href="/company/<%= it.company.slug %>/teams/<%= t.id %>"><%= t.name %></a></li>
+<% } %>
+</ul>
+</div>
+<%~ include("../partials/footer") %>

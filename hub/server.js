@@ -14,6 +14,7 @@ import { mountApiSessions } from "./routes/api-sessions.js";
 import { mountApiApps } from "./routes/api-apps.js";
 import { mountLogout } from "./routes/logout.js";
 import { mountAdmin } from "./routes/admin.js";
+import { mountCompany } from "./routes/company.js";
 import { createEmailSender } from "./lib/email.js";
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
@@ -52,6 +53,7 @@ mountApiSessions(app);
 mountApiApps(app);
 mountLogout(app);
 mountAdmin(app);
+mountCompany(app);
 app.get("/healthz", (_req, res) => res.json({ ok: true }));
 
 app.listen(config.port, () => console.log(`hub listening on ${config.port}`));
