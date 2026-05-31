@@ -112,3 +112,28 @@ test("demoting the last owner shows a friendly error, not a 500", async () => {
   assert.equal(res.status, 400);
   assert.match(res.text, /owner/i);
 });
+
+test("owner can remove a member", async () => {
+  const { app, db, company, org, sid } = await build({ role: "owner" });
+  db.prepare("INSERT INTO users (id,email,created_at) VALUES (?,?,?)").run("u2", "m@b.c", now());
+  org.addCompanyMember({ userId: "u2", companyId: company.id, role: "member" });
+  const res = await request(app).post("/company/acme/members/u2/remove").set("Cookie", cookie(sid));
+  assert.equal(res.status, 302);
+  const m = db.prepare("SELECT 1 FROM company_members WHERE user_id=? AND company_id=?").get("u2", company.id);
+  assert.equal(m, undefined);
+});
+
+test("admin cannot remove an owner (403)", async () => {
+  const { app, db, company, org, sid } = await build({ role: "admin" });
+  db.prepare("INSERT INTO users (id,email,created_at) VALUES (?,?,?)").run("u2", "o2@b.c", now());
+  org.addCompanyMember({ userId: "u2", companyId: company.id, role: "owner" });
+  const res = await request(app).post("/company/acme/members/u2/remove").set("Cookie", cookie(sid));
+  assert.equal(res.status, 403);
+});
+
+test("removing the last owner shows a friendly error", async () => {
+  const { app, sid } = await build({ role: "owner" }); // u1 is the only owner
+  const res = await request(app).post("/company/acme/members/u1/remove").set("Cookie", cookie(sid));
+  assert.equal(res.status, 400);
+  assert.match(res.text, /owner/i);
+});

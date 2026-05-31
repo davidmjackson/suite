@@ -70,4 +70,26 @@ export function mountCompany(app) {
     audit.log({ userId: req.user.id, eventType: "company_member_role_changed", metadata: { company: req.company.slug, target: targetId, role }, ip: req.ip });
     res.redirect("/company/" + req.company.slug);
   });
+
+  app.post("/company/:slug/members/:userId/remove", ...manage, (req, res) => {
+    const targetId = req.params.userId;
+    const target = db.prepare("SELECT role FROM company_members WHERE user_id=? AND company_id=?")
+      .get(targetId, req.company.id);
+    if (!target) {
+      return res.status(404).render("error", { title: "Not found", message: "Not a member of this company." });
+    }
+    if (req.companyRole === "admin" && target.role === "owner") {
+      return res.status(403).render("error", { title: "Forbidden", message: "Only an owner can remove an owner." });
+    }
+    try {
+      org.removeCompanyMember({ userId: targetId, companyId: req.company.id });
+    } catch (e) {
+      if (e.message === "last_owner") {
+        return res.status(400).render("error", { title: "Can't remove", message: "A company must keep at least one owner." });
+      }
+      throw e;
+    }
+    audit.log({ userId: req.user.id, eventType: "company_member_removed", metadata: { company: req.company.slug, target: targetId }, ip: req.ip });
+    res.redirect("/company/" + req.company.slug);
+  });
 }
