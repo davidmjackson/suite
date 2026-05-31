@@ -1,0 +1,37 @@
+<%~ include("../partials/header", { title: "Team · " + it.team.name, user: it.user }) %>
+<nav style="margin-bottom:24px;"><a href="/company/<%= it.company.slug %>">← Back to <%= it.company.name %></a></nav>
+<h1><%= it.team.name %></h1>
+
+<div class="card">
+<h2>Rename team</h2>
+<form method="POST" action="/company/<%= it.company.slug %>/teams/<%= it.team.id %>/rename">
+<p><input type="text" name="name" value="<%= it.team.name %>" required> <button class="btn" type="submit">Rename</button></p>
+</form>
+</div>
+
+<div class="card">
+<h2>Members (<%= it.teamMembers.length %>)</h2>
+<table>
+<thead><tr><th>Email</th><th></th></tr></thead>
+<tbody>
+<% for (const m of it.teamMembers) { %>
+<tr>
+<td><%= m.email %></td>
+<td><form method="POST" action="/company/<%= it.company.slug %>/teams/<%= it.team.id %>/members/<%= m.userId %>/remove" style="display:inline;"><button class="btn danger">Remove</button></form></td>
+</tr>
+<% } %>
+</tbody></table>
+
+<h3>Add to team</h3>
+<% if (it.availableMembers.length === 0) { %>
+<p><em>All company members are already on this team.</em></p>
+<% } else { %>
+<form method="POST" action="/company/<%= it.company.slug %>/teams/<%= it.team.id %>/members">
+<select name="userId">
+<% for (const m of it.availableMembers) { %><option value="<%= m.userId %>"><%= m.email %></option><% } %>
+</select>
+<button class="btn" type="submit">Add</button>
+</form>
+<% } %>
+</div>
+<%~ include("../partials/footer") %>

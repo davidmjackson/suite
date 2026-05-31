@@ -14,6 +14,32 @@ export function mountCompany(app) {
   const audit = createAuditLogger(db);
   const manage = [requireSession, companyRole(["owner", "admin"])];
 
+  // Resolve a team that must belong to req.company; render 404 otherwise.
+  function loadTeam(req, res) {
+    const team = org.getTeam(req.params.teamId);
+    if (!team || team.company_id !== req.company.id) {
+      res.status(404).render("error", { title: "Not found", message: "No such team." });
+      return null;
+    }
+    return team;
+  }
+
+  app.get("/company/:slug/teams/:teamId", ...manage, (req, res) => {
+    const team = loadTeam(req, res);
+    if (!team) return;
+    const teamMembers = org.listTeamMembers(team.id);
+    const memberIds = new Set(teamMembers.map((m) => m.userId));
+    const availableMembers = org.listCompanyMembers(req.company.id).filter((m) => !memberIds.has(m.userId));
+    res.render("company/team", {
+      user: req.user,
+      company: req.company,
+      companyRole: req.companyRole,
+      team,
+      teamMembers,
+      availableMembers,
+    });
+  });
+
   app.get("/company/:slug", ...manage, (req, res) => {
     const members = org.listCompanyMembers(req.company.id);
     const teams = org.listTeams(req.company.id);

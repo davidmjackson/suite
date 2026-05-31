@@ -153,3 +153,24 @@ test("creating a team with a blank name is rejected with 400", async () => {
     .type("form").send({ name: "   " }).set("Cookie", cookie(sid));
   assert.equal(res.status, 400);
 });
+
+test("GET team page renders members + add picker", async () => {
+  const { app, db, company, org, sid } = await build({ role: "owner" });
+  db.prepare("INSERT INTO users (id,email,created_at) VALUES (?,?,?)").run("u2", "m2@b.c", now());
+  org.addCompanyMember({ userId: "u2", companyId: company.id, role: "member" });
+  const t = org.createTeam({ companyId: company.id, name: "Squad" });
+  org.addTeamMember({ userId: "u1", teamId: t.id, role: "member" });
+  const res = await request(app).get(`/company/acme/teams/${t.id}`).set("Cookie", cookie(sid));
+  assert.equal(res.status, 200);
+  assert.match(res.text, /Squad/);
+  assert.match(res.text, /owner@b\.c/);      // current team member
+  assert.match(res.text, /m2@b\.c/);          // available to add
+});
+
+test("GET team page is 404 for a team in another company", async () => {
+  const { app, db, org, sid } = await build({ role: "owner" });
+  const other = org.createCompany({ name: "Other", slug: "other" });
+  const otherTeam = org.createTeam({ companyId: other.id, name: "Theirs" });
+  const res = await request(app).get(`/company/acme/teams/${otherTeam.id}`).set("Cookie", cookie(sid));
+  assert.equal(res.status, 404);
+});
