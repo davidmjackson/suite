@@ -102,7 +102,15 @@ export function mountCompany(app) {
     if (!name) {
       return res.status(400).render("error", { title: "Bad request", message: "Team name is required." });
     }
-    const team = org.createTeam({ companyId: req.company.id, name });
+    let team;
+    try {
+      team = org.createTeam({ companyId: req.company.id, name });
+    } catch (e) {
+      if (/UNIQUE/.test(e.message)) {
+        return res.status(400).render("error", { title: "Bad request", message: "A team with that name already exists." });
+      }
+      throw e;
+    }
     audit.log({ userId: req.user.id, eventType: "team_created", metadata: { company: req.company.slug, team: team.id, name }, ip: req.ip });
     res.redirect("/company/" + req.company.slug);
   });
@@ -114,7 +122,14 @@ export function mountCompany(app) {
     if (!name) {
       return res.status(400).render("error", { title: "Bad request", message: "Team name is required." });
     }
-    org.renameTeam(team.id, name);
+    try {
+      org.renameTeam(team.id, name);
+    } catch (e) {
+      if (/UNIQUE/.test(e.message)) {
+        return res.status(400).render("error", { title: "Bad request", message: "A team with that name already exists." });
+      }
+      throw e;
+    }
     audit.log({ userId: req.user.id, eventType: "team_renamed", metadata: { company: req.company.slug, team: team.id, name }, ip: req.ip });
     res.redirect(`/company/${req.company.slug}/teams/${team.id}`);
   });

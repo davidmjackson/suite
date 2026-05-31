@@ -192,3 +192,22 @@ test("renaming a team in another company is 404", async () => {
     .type("form").send({ name: "Hijack" }).set("Cookie", cookie(sid));
   assert.equal(res.status, 404);
 });
+
+test("creating a team with a duplicate name shows a friendly 400, not a 500", async () => {
+  const { app, company, org, sid } = await build({ role: "owner" });
+  org.createTeam({ companyId: company.id, name: "Squad" });
+  const res = await request(app).post("/company/acme/teams")
+    .type("form").send({ name: "Squad" }).set("Cookie", cookie(sid));
+  assert.equal(res.status, 400);
+  assert.match(res.text, /already exists/i);
+});
+
+test("renaming a team to an existing name shows a friendly 400, not a 500", async () => {
+  const { app, company, org, sid } = await build({ role: "owner" });
+  org.createTeam({ companyId: company.id, name: "Alpha" });
+  const t = org.createTeam({ companyId: company.id, name: "Beta" });
+  const res = await request(app).post(`/company/acme/teams/${t.id}/rename`)
+    .type("form").send({ name: "Alpha" }).set("Cookie", cookie(sid));
+  assert.equal(res.status, 400);
+  assert.match(res.text, /already exists/i);
+});
