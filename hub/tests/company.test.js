@@ -75,3 +75,40 @@ test("admin cannot invite an owner (403)", async () => {
     .set("Cookie", cookie(sid));
   assert.equal(res.status, 403);
 });
+
+test("owner can change a member's role", async () => {
+  const { app, db, company, org, sid } = await build({ role: "owner" });
+  db.prepare("INSERT INTO users (id,email,created_at) VALUES (?,?,?)").run("u2", "m@b.c", now());
+  org.addCompanyMember({ userId: "u2", companyId: company.id, role: "member" });
+  const res = await request(app).post("/company/acme/members/u2/role")
+    .type("form").send({ role: "admin" }).set("Cookie", cookie(sid));
+  assert.equal(res.status, 302);
+  const m = db.prepare("SELECT role FROM company_members WHERE user_id=? AND company_id=?").get("u2", company.id);
+  assert.equal(m.role, "admin");
+});
+
+test("admin cannot promote anyone to owner (403)", async () => {
+  const { app, db, company, org, sid } = await build({ role: "admin" });
+  db.prepare("INSERT INTO users (id,email,created_at) VALUES (?,?,?)").run("u2", "m@b.c", now());
+  org.addCompanyMember({ userId: "u2", companyId: company.id, role: "member" });
+  const res = await request(app).post("/company/acme/members/u2/role")
+    .type("form").send({ role: "owner" }).set("Cookie", cookie(sid));
+  assert.equal(res.status, 403);
+});
+
+test("admin cannot change an owner's role (403)", async () => {
+  const { app, db, company, org, sid } = await build({ role: "admin" });
+  db.prepare("INSERT INTO users (id,email,created_at) VALUES (?,?,?)").run("u2", "o2@b.c", now());
+  org.addCompanyMember({ userId: "u2", companyId: company.id, role: "owner" });
+  const res = await request(app).post("/company/acme/members/u2/role")
+    .type("form").send({ role: "member" }).set("Cookie", cookie(sid));
+  assert.equal(res.status, 403);
+});
+
+test("demoting the last owner shows a friendly error, not a 500", async () => {
+  const { app, sid } = await build({ role: "owner" }); // u1 is the only owner
+  const res = await request(app).post("/company/acme/members/u1/role")
+    .type("form").send({ role: "member" }).set("Cookie", cookie(sid));
+  assert.equal(res.status, 400);
+  assert.match(res.text, /owner/i);
+});

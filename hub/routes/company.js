@@ -44,4 +44,30 @@ export function mountCompany(app) {
     }
     res.redirect("/company/" + req.company.slug);
   });
+
+  app.post("/company/:slug/members/:userId/role", ...manage, (req, res) => {
+    const role = req.body.role;
+    const targetId = req.params.userId;
+    if (!["owner", "admin", "member"].includes(role)) {
+      return res.status(400).render("error", { title: "Bad request", message: "Invalid role." });
+    }
+    const target = db.prepare("SELECT role FROM company_members WHERE user_id=? AND company_id=?")
+      .get(targetId, req.company.id);
+    if (!target) {
+      return res.status(404).render("error", { title: "Not found", message: "Not a member of this company." });
+    }
+    if (req.companyRole === "admin" && (role === "owner" || target.role === "owner")) {
+      return res.status(403).render("error", { title: "Forbidden", message: "Only an owner can manage owners." });
+    }
+    try {
+      org.setCompanyMemberRole({ userId: targetId, companyId: req.company.id, role });
+    } catch (e) {
+      if (e.message === "last_owner") {
+        return res.status(400).render("error", { title: "Can't change role", message: "A company must keep at least one owner." });
+      }
+      throw e;
+    }
+    audit.log({ userId: req.user.id, eventType: "company_member_role_changed", metadata: { company: req.company.slug, target: targetId, role }, ip: req.ip });
+    res.redirect("/company/" + req.company.slug);
+  });
 }
