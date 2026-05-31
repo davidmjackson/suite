@@ -240,3 +240,15 @@ test("remove a team member", async () => {
   assert.equal(res.status, 302);
   assert.equal(db.prepare("SELECT 1 FROM team_members WHERE user_id=? AND team_id=?").get("u1", t.id), undefined);
 });
+
+test("adding a user already on the team shows a friendly 400, not a 500", async () => {
+  const { app, db, company, org, sid } = await build({ role: "owner" });
+  db.prepare("INSERT INTO users (id,email,created_at) VALUES (?,?,?)").run("u2", "m2@b.c", now());
+  org.addCompanyMember({ userId: "u2", companyId: company.id, role: "member" });
+  const t = org.createTeam({ companyId: company.id, name: "Squad" });
+  org.addTeamMember({ userId: "u2", teamId: t.id, role: "member" });
+  const res = await request(app).post(`/company/acme/teams/${t.id}/members`)
+    .type("form").send({ userId: "u2" }).set("Cookie", cookie(sid));
+  assert.equal(res.status, 400);
+  assert.match(res.text, /already on this team/i);
+});

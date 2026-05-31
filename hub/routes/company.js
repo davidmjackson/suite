@@ -144,6 +144,9 @@ export function mountCompany(app) {
       if (e.message === "not_company_member") {
         return res.status(400).render("error", { title: "Can't add", message: "That person is not a member of this company." });
       }
+      if (/UNIQUE/.test(e.message)) {
+        return res.status(400).render("error", { title: "Can't add", message: "That person is already on this team." });
+      }
       throw e;
     }
     audit.log({ userId: req.user.id, eventType: "team_member_added", metadata: { company: req.company.slug, team: team.id, target: userId }, ip: req.ip });
