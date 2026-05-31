@@ -11,5 +11,15 @@
   <% } %>
 <% }); %>
 </section>
+<% if (it.manageable && it.manageable.length) { %>
+<section style="margin-top:32px;">
+<h2>Manage</h2>
+<ul>
+<% it.manageable.forEach(function (c) { %>
+<li><a href="/company/<%= c.slug %>">Manage <%= c.name %></a> (<%= c.role %>)</li>
+<% }); %>
+</ul>
+</section>
+<% } %>
 <% if (it.user.isAdmin) { %><p style="margin-top:32px;"><a href="/admin">Admin</a></p><% } %>
 <%~ include("partials/footer") %>
