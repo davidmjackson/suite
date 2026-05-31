@@ -37,7 +37,7 @@
 <td><%= m.hasLoggedIn ? "Active" : "Invited — not joined yet" %></td>
 <td>
 <% if (canEditRow) { %>
-<form method="POST" action="/company/<%= it.company.slug %>/members/<%= m.userId %>/remove" style="display:inline;" onsubmit="return confirm('Remove <%= m.email %>?')"><button class="btn danger">Remove</button></form>
+<form method="POST" action="/company/<%= it.company.slug %>/members/<%= m.userId %>/remove" style="display:inline;" onsubmit="return confirm('Remove this member?')"><button class="btn danger">Remove</button></form>
 <% } %>
 </td>
 </tr>
