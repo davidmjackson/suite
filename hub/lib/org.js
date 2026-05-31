@@ -59,6 +59,14 @@ export function createOrg(db) {
     return getTeam(id);
   }
 
+  function renameTeam(teamId, name) {
+    const trimmed = (name || "").trim();
+    if (!trimmed) throw new Error("name_required");
+    if (!getTeam(teamId)) throw new Error("team_not_found");
+    db.prepare("UPDATE teams SET name = ? WHERE id = ?").run(trimmed, teamId);
+    return getTeam(teamId);
+  }
+
   function listTeams(companyId) {
     return db.prepare("SELECT * FROM teams WHERE company_id=? ORDER BY name").all(companyId);
   }
@@ -123,7 +131,7 @@ export function createOrg(db) {
   return {
     createCompany, getCompany, getCompanyBySlug, suspendCompany, getTeam, ownerCount,
     addCompanyMember, setCompanyMemberRole, removeCompanyMember,
-    createTeam, listTeams, teamsForUser,
+    createTeam, listTeams, renameTeam, teamsForUser,
     addTeamMember, removeTeamMember,
     adminCompaniesForUser, listCompanyMembers, listTeamMembers,
     COMPANY_ROLES, TEAM_ROLES,

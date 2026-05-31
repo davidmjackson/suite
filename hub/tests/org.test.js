@@ -226,6 +226,18 @@ test("listCompanyMembers returns members with hasLoggedIn derived from audit", (
   db.close();
 });
 
+test("renameTeam updates the name; missing team throws", () => {
+  const db = openDb(":memory:");
+  const org = createOrg(db);
+  const a = org.createCompany({ name: "Acme", slug: "acme" });
+  const t = org.createTeam({ companyId: a.id, name: "Old" });
+  org.renameTeam(t.id, "New");
+  assert.equal(org.getTeam(t.id).name, "New");
+  assert.throws(() => org.renameTeam("nope", "X"), /team_not_found/);
+  assert.throws(() => org.renameTeam(t.id, "  "), /name_required/);
+  db.close();
+});
+
 test("listTeamMembers returns team members scoped to the team", () => {
   const db = openDb(":memory:");
   const org = createOrg(db);
