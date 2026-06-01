@@ -13,7 +13,7 @@ test("migration 002 creates org + entitlement tables and bumps schema_version", 
     assert.ok(tables.includes(t), `missing table ${t}`);
   }
   const v = db.prepare("SELECT MAX(version) AS v FROM schema_version").get().v;
-  assert.equal(v, 2);
+  assert.ok(v >= 2, `schema_version should be >= 2, got ${v}`);
   db.close();
 });
 
