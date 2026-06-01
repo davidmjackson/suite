@@ -23,6 +23,7 @@ const config = {
   sessionIdleMs: 30 * 60 * 1000,
   sessionMaxMs: 30 * 24 * 60 * 60 * 1000,
   magicLinkTtlMs: 15 * 60 * 1000,
+  inviteTtlMs: 7 * 24 * 60 * 60 * 1000,
   launchTokenTtlMs: 30 * 1000,
 };
 

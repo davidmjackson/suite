@@ -105,5 +105,13 @@ export function createEntitlements(db) {
     return consumeTx(userId, app, t);
   }
 
-  return { principalsForUser, grantEntitlement, revokeEntitlement, resolveEntitlement, consume };
+  function listCompanyApps(companyId) {
+    return db.prepare(`
+      SELECT app FROM app_entitlements
+      WHERE principal_type = 'company' AND principal_id = ? AND status = 'active'
+      ORDER BY app
+    `).all(companyId).map((r) => r.app);
+  }
+
+  return { principalsForUser, grantEntitlement, revokeEntitlement, resolveEntitlement, consume, listCompanyApps };
 }

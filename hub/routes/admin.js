@@ -3,11 +3,29 @@ import { createRequireSession } from "../middleware/requireSession.js";
 import { requireAdmin } from "../middleware/requireAdmin.js";
 import { randomId, now } from "../lib/tokens.js";
 import { createAuditLogger } from "../lib/audit.js";
+import { createOrg } from "../lib/org.js";
+import { createEntitlements } from "../lib/entitlements.js";
+import { createAccessRequests } from "../lib/access-requests.js";
+import { createProvisioner } from "../lib/provisioning.js";
 
-export function mountAdmin(app) {
+function safeAppsLabel(json) {
+  try {
+    const arr = JSON.parse(json);
+    return Array.isArray(arr) && arr.length ? arr.join(", ") : null;
+  } catch {
+    return null;
+  }
+}
+
+export function mountAdmin(app, { emailSender } = {}) {
   const db = app.locals.db;
   const requireSession = createRequireSession(db);
   const audit = createAuditLogger(db);
+  const config = app.locals.config;
+  const org = createOrg(db);
+  const ent = createEntitlements(db);
+  const reqs = createAccessRequests(db);
+  const provisioner = createProvisioner(db, { inviteTtlMs: config.inviteTtlMs });
 
   app.get("/admin", requireSession, requireAdmin, (req, res) => {
     const users = db.prepare(`
@@ -83,5 +101,45 @@ export function mountAdmin(app) {
       ORDER BY ae.id DESC LIMIT 200
     `).all();
     res.render("admin/audit", { user: req.user, events });
+  });
+
+  app.get("/admin/companies", requireSession, requireAdmin, (req, res) => {
+    const companies = org.listAllCompanies();
+    const appsByCompany = {};
+    for (const c of companies) appsByCompany[c.id] = ent.listCompanyApps(c.id);
+    const requests = reqs.listByStatus("pending").map((r) => ({
+      ...r,
+      appsLabel: r.apps_interest ? safeAppsLabel(r.apps_interest) : null,
+    }));
+    res.render("admin/companies", { user: req.user, companies, appsByCompany, requests });
+  });
+
+  app.post("/admin/requests/:id/approve", requireSession, requireAdmin, async (req, res) => {
+    const result = provisioner.approve({ requestId: req.params.id, grantedBy: req.user.id });
+    if (!result.ok) {
+      const message = result.reason === "not_pending"
+        ? "That request has already been handled."
+        : "Request not found.";
+      return res.status(400).render("error", { title: "Can't approve", message });
+    }
+    audit.log({ userId: req.user.id, eventType: "access_request_approved", metadata: { company: result.company.slug, email: result.user.email }, ip: req.ip });
+    const url = `${config.baseUrl}/auth/magic?token=${result.token}`;
+    try {
+      if (emailSender) await emailSender.sendAccessApproved({ to: result.user.email, url });
+    } catch (err) {
+      console.error("access-approved email send failed", err);
+    }
+    res.redirect("/admin/companies");
+  });
+
+  app.post("/admin/requests/:id/reject", requireSession, requireAdmin, (req, res) => {
+    const note = (req.body.review_note || "").trim() || null;
+    const r = reqs.getRequest(req.params.id);
+    if (!r || r.status !== "pending") {
+      return res.status(400).render("error", { title: "Can't reject", message: "That request has already been handled." });
+    }
+    reqs.markReviewed({ id: req.params.id, status: "rejected", reviewedBy: req.user.id, note });
+    audit.log({ userId: req.user.id, eventType: "access_request_rejected", metadata: { email: r.email }, ip: req.ip });
+    res.redirect("/admin/companies");
   });
 }

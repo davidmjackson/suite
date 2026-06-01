@@ -206,3 +206,14 @@ test("consume buckets by period_key (new month resets)", () => {
   assert.equal(ent.consume("u1", "raid", jun).ok, true);   // June fresh bucket
   db.close();
 });
+
+test("listCompanyApps lists active company-scoped apps", () => {
+  const db = openDb(":memory:");
+  const ent = createEntitlements(db);
+  ent.grantEntitlement({ app: "poker", principalType: "company", principalId: "co1" });
+  ent.grantEntitlement({ app: "raid", principalType: "company", principalId: "co1", quotaLimit: 25, quotaPeriod: "month" });
+  ent.grantEntitlement({ app: "signal", principalType: "user", principalId: "u1" }); // wrong principal, excluded
+  const apps = ent.listCompanyApps("co1");
+  assert.deepEqual(apps, ["poker", "raid"]);
+  db.close();
+});
