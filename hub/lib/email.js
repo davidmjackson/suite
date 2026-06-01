@@ -11,6 +11,10 @@ export async function renderMagicLinkEmail({ url }) {
   return await eta.renderAsync("emails/magic-link", { url });
 }
 
+export async function renderAccessApprovedEmail({ url }) {
+  return await eta.renderAsync("emails/access-approved", { url });
+}
+
 export function createEmailSender({ apiKey, from }) {
   const resend = new Resend(apiKey);
   return {
@@ -20,6 +24,15 @@ export function createEmailSender({ apiKey, from }) {
         from,
         to,
         subject: "Your Sprint Suite sign-in link",
+        html,
+      });
+    },
+    async sendAccessApproved({ to, url }) {
+      const html = await renderAccessApprovedEmail({ url });
+      return await resend.emails.send({
+        from,
+        to,
+        subject: "You're approved — sign in to Sprint Suite",
         html,
       });
     },
