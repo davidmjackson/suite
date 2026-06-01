@@ -8,6 +8,15 @@ import { createEntitlements } from "../lib/entitlements.js";
 import { createAccessRequests } from "../lib/access-requests.js";
 import { createProvisioner } from "../lib/provisioning.js";
 
+function safeAppsLabel(json) {
+  try {
+    const arr = JSON.parse(json);
+    return Array.isArray(arr) && arr.length ? arr.join(", ") : null;
+  } catch {
+    return null;
+  }
+}
+
 export function mountAdmin(app, { emailSender } = {}) {
   const db = app.locals.db;
   const requireSession = createRequireSession(db);
@@ -98,7 +107,10 @@ export function mountAdmin(app, { emailSender } = {}) {
     const companies = org.listAllCompanies();
     const appsByCompany = {};
     for (const c of companies) appsByCompany[c.id] = ent.listCompanyApps(c.id);
-    const requests = reqs.listByStatus("pending");
+    const requests = reqs.listByStatus("pending").map((r) => ({
+      ...r,
+      appsLabel: r.apps_interest ? safeAppsLabel(r.apps_interest) : null,
+    }));
     res.render("admin/companies", { user: req.user, companies, appsByCompany, requests });
   });
 

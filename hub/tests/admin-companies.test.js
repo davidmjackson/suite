@@ -66,3 +66,26 @@ test("reject marks the request rejected and provisions nothing", async () => {
   assert.equal(createAccessRequests(db).getRequest(r.id).status, "rejected");
   assert.equal(db.prepare("SELECT COUNT(*) AS n FROM companies").get().n, 0);
 });
+
+test("approve still succeeds (302) when no emailSender is wired", async () => {
+  const { app, db } = await buildTestApp();
+  const { mountAdmin } = await import("../routes/admin.js?t=" + Date.now());
+  mountAdmin(app); // no emailSender
+  db.prepare("INSERT INTO users (id,email,display_name,is_admin,created_at) VALUES (?,?,?,?,?)")
+    .run("admin2", "admin2@test", "Admin", 1, now());
+  const sid = randomToken();
+  db.prepare("INSERT INTO central_sessions (id,user_id,created_at,last_heartbeat_at,expires_at) VALUES (?,?,?,?,?)")
+    .run(sid, "admin2", now(), now(), now() + 60_000);
+  const r = createAccessRequests(db).createRequest({ companyName: "IBM", contactName: "James", email: "james@ibm.com" });
+  const res = await request(app).post(`/admin/requests/${r.id}/approve`).set("Cookie", `hub_session=${sid}`);
+  assert.equal(res.status, 302);
+  assert.ok(db.prepare("SELECT 1 FROM companies WHERE slug='ibm'").get());
+});
+
+test("pending request shows a human-readable apps label, not raw JSON", async () => {
+  const { app, db, sid } = await setup();
+  createAccessRequests(db).createRequest({ companyName: "IBM", contactName: "James", email: "james@ibm.com", appsInterest: ["poker", "retro"] });
+  const res = await request(app).get("/admin/companies").set("Cookie", `hub_session=${sid}`);
+  assert.match(res.text, /poker, retro/);
+  assert.doesNotMatch(res.text, /\[&quot;poker/);  // not raw/escaped JSON
+});

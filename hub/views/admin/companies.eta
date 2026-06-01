@@ -13,7 +13,7 @@
 <td><%= r.company_name %></td>
 <td><%= r.contact_name %></td>
 <td><%= r.email %></td>
-<td><%= r.apps_interest || "—" %></td>
+<td><%= r.appsLabel || "—" %></td>
 <td>
 <form method="POST" action="/admin/requests/<%= r.id %>/approve" style="display:inline;"><button class="btn" type="submit">Approve</button></form>
 <form method="POST" action="/admin/requests/<%= r.id %>/reject" style="display:inline;" onsubmit="return confirm('Reject this request?')"><button class="btn danger" type="submit">Reject</button></form>
