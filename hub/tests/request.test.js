@@ -61,3 +61,16 @@ test("POST /request rate-limits a flood from one IP", async () => {
   }
   assert.equal(last.status, 429);
 });
+
+test("POST /request with a bad email re-renders with entered values restored", async () => {
+  const { app } = await setup();
+  const res = await request(app).post("/request").type("form").send({
+    company_name: "IBM", contact_name: "James", email: "bad", team_size: "11-50",
+    apps: ["poker", "signal"], message: "keep me",
+  });
+  assert.equal(res.status, 400);
+  assert.match(res.text, /value="IBM"/);
+  assert.match(res.text, /value="11-50" selected/);
+  assert.match(res.text, /value="poker" checked/);
+  assert.match(res.text, /keep me/);
+});

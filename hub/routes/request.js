@@ -5,6 +5,7 @@ import { createAuditLogger } from "../lib/audit.js";
 
 const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 const APP_KEYS = ["poker", "retro", "signal", "raid"];
+// 1-hour window: access-request spam is slower-moving than login-token abuse.
 const ipLimiter = createLimiter({ max: 5, windowMs: 60 * 60 * 1000 });
 
 export function mountRequest(app, { emailSender } = {}) {
@@ -39,7 +40,7 @@ export function mountRequest(app, { emailSender } = {}) {
     if (!companyName || !contactName || !EMAIL_RE.test(email)) {
       return res.status(400).render("request", {
         error: "Please provide a company, your name, and a valid email.",
-        values: { company_name: companyName, contact_name: contactName, email, job_title: jobTitle, team_size: teamSize, message },
+        values: { company_name: companyName, contact_name: contactName, email, job_title: jobTitle, team_size: teamSize, message, apps },
       });
     }
 

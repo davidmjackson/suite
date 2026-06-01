@@ -10,19 +10,19 @@
 <p><input type="text" name="job_title" placeholder="Job title (optional)" value="<%= it.values.job_title || '' %>"></p>
 <p><select name="team_size">
 <option value="">Team size (optional)</option>
-<option value="1-10">1–10</option>
-<option value="11-50">11–50</option>
-<option value="51-200">51–200</option>
-<option value="200+">200+</option>
+<option value="1-10" <%= it.values.team_size === '1-10' ? 'selected' : '' %>>1–10</option>
+<option value="11-50" <%= it.values.team_size === '11-50' ? 'selected' : '' %>>11–50</option>
+<option value="51-200" <%= it.values.team_size === '51-200' ? 'selected' : '' %>>51–200</option>
+<option value="200+" <%= it.values.team_size === '200+' ? 'selected' : '' %>>200+</option>
 </select></p>
 <fieldset style="border:1px solid #ddd;padding:12px;margin:0 0 12px;">
 <legend>Apps you're interested in</legend>
-<label><input type="checkbox" name="apps" value="poker"> Sprintpoker</label><br>
-<label><input type="checkbox" name="apps" value="retro"> Sprintretro</label><br>
-<label><input type="checkbox" name="apps" value="signal"> Sprintsignal</label><br>
-<label><input type="checkbox" name="apps" value="raid"> Sprintraid</label>
+<label><input type="checkbox" name="apps" value="poker" <%= (it.values.apps || []).includes('poker') ? 'checked' : '' %>> Sprintpoker</label><br>
+<label><input type="checkbox" name="apps" value="retro" <%= (it.values.apps || []).includes('retro') ? 'checked' : '' %>> Sprintretro</label><br>
+<label><input type="checkbox" name="apps" value="signal" <%= (it.values.apps || []).includes('signal') ? 'checked' : '' %>> Sprintsignal</label><br>
+<label><input type="checkbox" name="apps" value="raid" <%= (it.values.apps || []).includes('raid') ? 'checked' : '' %>> Sprintraid</label>
 </fieldset>
-<p><textarea name="message" placeholder="Anything else? (optional)" rows="3" style="width:100%;"></textarea></p>
+<p><textarea name="message" placeholder="Anything else? (optional)" rows="3" style="width:100%;"><%= it.values.message || '' %></textarea></p>
 <div style="position:absolute;left:-9999px;" aria-hidden="true"><input type="text" name="website" tabindex="-1" autocomplete="off"></div>
 <p><button class="btn" type="submit">Request access</button></p>
 </form>
