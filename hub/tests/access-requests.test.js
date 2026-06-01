@@ -46,6 +46,7 @@ test("listByStatus and getRequest", async () => {
 test("markReviewed updates status and stamps fields", async () => {
   const { db } = await buildTestApp();
   const reqs = createAccessRequests(db);
+  db.prepare("INSERT INTO users (id,email,created_at) VALUES (?,?,?)").run("op1", "op1@test", Date.now());
   const a = reqs.createRequest({ companyName: "A", contactName: "x", email: "a@a.com" });
   const updated = reqs.markReviewed({ id: a.id, status: "rejected", reviewedBy: "op1", note: "spam" });
   assert.equal(updated.status, "rejected");

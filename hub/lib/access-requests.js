@@ -27,13 +27,11 @@ export function createAccessRequests(db) {
   }
 
   function markReviewed({ id, status, reviewedBy = null, note = null, companyId = null }) {
-    db.pragma("foreign_keys = OFF");
     db.prepare(`
       UPDATE access_requests
       SET status = ?, reviewed_by = ?, reviewed_at = ?, review_note = ?, company_id = ?
       WHERE id = ?
     `).run(status, reviewedBy, now(), note, companyId, id);
-    db.pragma("foreign_keys = ON");
     return getRequest(id);
   }
 
