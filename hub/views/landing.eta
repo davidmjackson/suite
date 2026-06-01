@@ -2,7 +2,7 @@
 <section style="text-align:center;padding:48px 0;">
 <h1 style="font-size:40px;margin:0 0 16px;">Agile tools for teams that ship.</h1>
 <p class="muted" style="font-size:18px;">One sign-in, four focused apps.</p>
-<% if (!it.user) { %><p style="margin-top:24px;"><a class="btn" href="/login">Sign in</a> <a class="btn" href="/request">Request free access</a></p><% } %>
+<% if (!it.user) { %><p style="margin-top:24px;"><a class="btn" href="/login">Sign in</a></p><% } %>
 </section>
 <section class="grid-4">
 <a class="tile" href="https://sprintraid.uk"><h3>🛡 Sprintraid</h3><p>Risks, Assumptions, Issues, Dependencies — pipe in email/Teams text, get a structured RAID log.</p></a>
