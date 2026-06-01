@@ -144,12 +144,21 @@ export function createOrg(db) {
     `).all(teamId).map((r) => ({ ...r, hasLoggedIn: !!r.hasLoggedIn }));
   }
 
+  function listAllCompanies() {
+    return db.prepare(`
+      SELECT c.id AS id, c.name AS name, c.slug AS slug, c.status AS status,
+             (SELECT COUNT(*) FROM company_members cm WHERE cm.company_id = c.id) AS memberCount
+      FROM companies c
+      ORDER BY c.name
+    `).all();
+  }
+
   return {
     createCompany, getCompany, getCompanyBySlug, suspendCompany, getTeam, ownerCount,
     addCompanyMember, inviteCompanyMember, setCompanyMemberRole, removeCompanyMember,
     createTeam, listTeams, renameTeam, teamsForUser,
     addTeamMember, removeTeamMember,
-    adminCompaniesForUser, listCompanyMembers, listTeamMembers,
+    adminCompaniesForUser, listCompanyMembers, listTeamMembers, listAllCompanies,
     COMPANY_ROLES, TEAM_ROLES,
   };
 }

@@ -301,3 +301,16 @@ test("inviteCompanyMember is a no-op for an existing member (no throw, role unto
   assert.equal(m.role, "owner"); // unchanged
   db.close();
 });
+
+test("listAllCompanies returns every company with member counts", () => {
+  const db = openDb(":memory:");
+  const org = createOrg(db);
+  const c = org.createCompany({ name: "Acme", slug: "acme" });
+  db.prepare("INSERT INTO users (id,email,created_at) VALUES (?,?,?)").run("u1", "u1@a.com", Date.now());
+  org.addCompanyMember({ userId: "u1", companyId: c.id, role: "owner" });
+  const all = org.listAllCompanies();
+  assert.equal(all.length, 1);
+  assert.equal(all[0].slug, "acme");
+  assert.equal(all[0].memberCount, 1);
+  db.close();
+});
