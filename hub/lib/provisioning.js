@@ -31,6 +31,7 @@ export function createProvisioner(db, { inviteTtlMs }) {
     let slug = base;
     let n = 2;
     while (org.getCompanyBySlug(slug)) {
+      if (n > 1000) throw new Error("slug_collision_exhausted");
       slug = `${base}-${n}`;
       n += 1;
     }
@@ -56,9 +57,7 @@ export function createProvisioner(db, { inviteTtlMs }) {
       user = db.prepare("SELECT * FROM users WHERE id = ?").get(id);
     }
 
-    const already = db.prepare("SELECT 1 FROM company_members WHERE user_id=? AND company_id=?")
-      .get(user.id, company.id);
-    if (!already) org.addCompanyMember({ userId: user.id, companyId: company.id, role: "owner" });
+    org.addCompanyMember({ userId: user.id, companyId: company.id, role: "owner" });
 
     for (const a of DEFAULT_APPS) {
       ent.grantEntitlement({

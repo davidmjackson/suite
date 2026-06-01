@@ -90,3 +90,15 @@ test("approve of an unknown request returns not_found", async () => {
   assert.equal(res.ok, false);
   assert.equal(res.reason, "not_found");
 });
+
+test("approve matches an existing user case-insensitively", async () => {
+  const { db } = await buildTestApp();
+  db.prepare("INSERT INTO users (id,email,created_at) VALUES (?,?,?)").run("op1", "op1@test", Date.now());
+  db.prepare("INSERT INTO users (id,email,created_at) VALUES (?,?,?)").run("lower", "james@ibm.com", Date.now());
+  const reqs = createAccessRequests(db);
+  const r = reqs.createRequest({ companyName: "IBM", contactName: "James", email: "James@IBM.COM" });
+  const prov = createProvisioner(db, { inviteTtlMs: 1000 });
+  const res = prov.approve({ requestId: r.id, grantedBy: "op1" });
+  assert.equal(res.user.id, "lower");
+  assert.equal(db.prepare("SELECT COUNT(*) AS n FROM users WHERE LOWER(email)=?").get("james@ibm.com").n, 1);
+});
