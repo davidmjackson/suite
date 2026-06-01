@@ -1,0 +1,30 @@
+<%~ include("partials/header", { title: "Request free access", user: null }) %>
+<section style="max-width:520px;margin:32px auto;">
+<h1>Request free access</h1>
+<p class="muted">Tell us about your team and we'll set you up.</p>
+<% if (it.error) { %><p style="color:#b91c1c;"><%= it.error %></p><% } %>
+<form method="POST" action="/request">
+<p><input type="text" name="company_name" placeholder="Company / group" required value="<%= it.values.company_name || '' %>"></p>
+<p><input type="text" name="contact_name" placeholder="Your name" required value="<%= it.values.contact_name || '' %>"></p>
+<p><input type="email" name="email" placeholder="Work email" required value="<%= it.values.email || '' %>"></p>
+<p><input type="text" name="job_title" placeholder="Job title (optional)" value="<%= it.values.job_title || '' %>"></p>
+<p><select name="team_size">
+<option value="">Team size (optional)</option>
+<option value="1-10">1–10</option>
+<option value="11-50">11–50</option>
+<option value="51-200">51–200</option>
+<option value="200+">200+</option>
+</select></p>
+<fieldset style="border:1px solid #ddd;padding:12px;margin:0 0 12px;">
+<legend>Apps you're interested in</legend>
+<label><input type="checkbox" name="apps" value="poker"> Sprintpoker</label><br>
+<label><input type="checkbox" name="apps" value="retro"> Sprintretro</label><br>
+<label><input type="checkbox" name="apps" value="signal"> Sprintsignal</label><br>
+<label><input type="checkbox" name="apps" value="raid"> Sprintraid</label>
+</fieldset>
+<p><textarea name="message" placeholder="Anything else? (optional)" rows="3" style="width:100%;"></textarea></p>
+<div style="position:absolute;left:-9999px;" aria-hidden="true"><input type="text" name="website" tabindex="-1" autocomplete="off"></div>
+<p><button class="btn" type="submit">Request access</button></p>
+</form>
+</section>
+<%~ include("partials/footer") %>

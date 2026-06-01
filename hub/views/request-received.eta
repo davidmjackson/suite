@@ -1,0 +1,7 @@
+<%~ include("partials/header", { title: "Request received", user: null }) %>
+<section style="max-width:520px;margin:48px auto;text-align:center;">
+<h1>Thanks — request received</h1>
+<p class="muted">We'll review your request and email you a sign-in link once you're approved.</p>
+<p style="margin-top:24px;"><a class="btn" href="/">Back to home</a></p>
+</section>
+<%~ include("partials/footer") %>
