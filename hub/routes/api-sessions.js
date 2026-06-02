@@ -33,10 +33,12 @@ export function mountApiSessions(app) {
     if (row.target_app !== req.callingApp) return res.status(403).json({ error: "wrong_app" });
     if (row.disabled_at) return res.status(403).json({ error: "user_disabled" });
     const entitlement = entitlements.resolveEntitlement(row.user_id, row.target_app);
+    // Company context comes from membership, not only from a company-typed
+    // entitlement — Signal/RAID are granted per-user yet still belong to a company.
     const companyId =
       entitlement.entitled && entitlement.principal?.type === "company"
         ? entitlement.principal.id
-        : null;
+        : (db.prepare("SELECT company_id FROM company_members WHERE user_id = ?").get(row.user_id)?.company_id ?? null);
     const company = companyId ? org.getCompany(companyId) : null;
     const teams = companyId
       ? org.teamsForUser(row.user_id, companyId).map((t) => ({ ...t, company: company?.name || null }))
