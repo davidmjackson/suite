@@ -275,9 +275,19 @@ test("owner can grant then revoke RAID for a member", async () => {
   assert.equal(ent.status, "suspended");
 });
 
-test("grant rejects a non-togglable app", async () => {
+test("owner can grant Signal (unlimited) for a member", async () => {
   const { app, db, org, company, sid } = await build({ role: "owner" });
   addMember(db, org, company);
+  const res = await request(app).post("/company/acme/members/mem/apps/signal")
+    .type("form").send({ action: "grant" }).set("Cookie", cookie(sid));
+  assert.equal(res.status, 302);
+  const ent = db.prepare("SELECT quota_limit,status FROM app_entitlements WHERE app='signal' AND principal_type='user' AND principal_id='mem'").get();
+  assert.equal(ent.status, "active");
+  assert.equal(ent.quota_limit, null);
+});
+
+test("grant rejects a non-togglable app", async () => {
+  const { app, org, company, sid } = await build({ role: "owner" });
   const res = await request(app).post("/company/acme/members/mem/apps/poker")
     .type("form").send({ action: "grant" }).set("Cookie", cookie(sid));
   assert.equal(res.status, 400);

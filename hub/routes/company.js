@@ -192,6 +192,9 @@ export function mountCompany(app) {
     if (!spec) {
       return res.status(400).render("error", { title: "Bad request", message: "That app is not granted per-member." });
     }
+    if (action !== "grant" && action !== "revoke") {
+      return res.status(400).render("error", { title: "Bad request", message: "Unknown action." });
+    }
     const target = db.prepare("SELECT role FROM company_members WHERE user_id=? AND company_id=?")
       .get(targetId, req.company.id);
     if (!target) {
@@ -206,11 +209,9 @@ export function mountCompany(app) {
         quotaLimit: spec.quotaLimit, quotaPeriod: spec.quotaPeriod, grantedBy: req.user.id,
       });
       audit.log({ userId: req.user.id, eventType: "member_app_granted", metadata: { company: req.company.slug, target: targetId, app: appName }, ip: req.ip });
-    } else if (action === "revoke") {
+    } else {
       ent.revokeEntitlement({ app: appName, principalType: "user", principalId: targetId });
       audit.log({ userId: req.user.id, eventType: "member_app_revoked", metadata: { company: req.company.slug, target: targetId, app: appName }, ip: req.ip });
-    } else {
-      return res.status(400).render("error", { title: "Bad request", message: "Unknown action." });
     }
     res.redirect("/company/" + req.company.slug);
   });
