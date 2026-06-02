@@ -4,6 +4,7 @@ import { createRequireApiKey } from "../middleware/requireApiKey.js";
 import { createAuditLogger } from "../lib/audit.js";
 import { createEntitlements } from "../lib/entitlements.js";
 import { createOrg } from "../lib/org.js";
+import { deleteCentralSession } from "../lib/sessions.js";
 
 export function mountApiSessions(app) {
   const db = app.locals.db;
@@ -71,7 +72,7 @@ export function mountApiSessions(app) {
   app.delete("/api/sessions/:id", requireApiKey, (req, res) => {
     const sid = req.params.id;
     const sess = db.prepare("SELECT user_id FROM central_sessions WHERE id = ?").get(sid);
-    db.prepare("DELETE FROM central_sessions WHERE id = ?").run(sid);
+    deleteCentralSession(db, sid);
     if (sess) audit.log({ userId: sess.user_id, eventType: "logged_out", app: req.callingApp, ip: req.ip });
     res.status(204).end();
   });

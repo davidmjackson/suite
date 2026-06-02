@@ -7,6 +7,7 @@ import { createOrg } from "../lib/org.js";
 import { createEntitlements } from "../lib/entitlements.js";
 import { createAccessRequests } from "../lib/access-requests.js";
 import { createProvisioner } from "../lib/provisioning.js";
+import { deleteCentralSession, deleteCentralSessionsForUser } from "../lib/sessions.js";
 
 function safeAppsLabel(json) {
   try {
@@ -60,7 +61,7 @@ export function mountAdmin(app, { emailSender } = {}) {
   app.post("/admin/users/:id/disable", requireSession, requireAdmin, (req, res) => {
     const id = req.params.id;
     db.prepare("UPDATE users SET disabled_at = ? WHERE id = ?").run(now(), id);
-    db.prepare("DELETE FROM central_sessions WHERE user_id = ?").run(id);
+    deleteCentralSessionsForUser(db, id);
     audit.log({ userId: req.user.id, eventType: "user_disabled", metadata: { target: id }, ip: req.ip });
     res.redirect("/admin");
   });
@@ -73,7 +74,7 @@ export function mountAdmin(app, { emailSender } = {}) {
   app.post("/admin/users/:id/delete", requireSession, requireAdmin, (req, res) => {
     const id = req.params.id;
     if (id === req.user.id) return res.status(400).render("error", { title: "Can't delete self", message: "Use another admin account." });
-    db.prepare("DELETE FROM central_sessions WHERE user_id = ?").run(id);
+    deleteCentralSessionsForUser(db, id);
     db.prepare("DELETE FROM users WHERE id = ?").run(id);
     audit.log({ userId: req.user.id, eventType: "user_deleted", metadata: { target: id }, ip: req.ip });
     res.redirect("/admin");
@@ -89,7 +90,7 @@ export function mountAdmin(app, { emailSender } = {}) {
   });
 
   app.post("/admin/sessions/:id/kill", requireSession, requireAdmin, (req, res) => {
-    db.prepare("DELETE FROM central_sessions WHERE id = ?").run(req.params.id);
+    deleteCentralSession(db, req.params.id);
     audit.log({ userId: req.user.id, eventType: "session_killed", metadata: { target: req.params.id }, ip: req.ip });
     res.redirect("/admin/sessions");
   });

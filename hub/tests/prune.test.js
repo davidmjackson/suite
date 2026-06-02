@@ -27,3 +27,19 @@ test("prune deletes expired sessions and old audit events", () => {
   assert.equal(db.prepare("SELECT COUNT(*) AS c FROM central_sessions").get().c, 1);
   assert.equal(db.prepare("SELECT COUNT(*) AS c FROM audit_events").get().c, 1);
 });
+
+test("prune deletes an expired session that still has a launch_token (no FK error)", () => {
+  const db = openDb(":memory:");
+  db.prepare("INSERT INTO users (id,email,created_at) VALUES (?,?,?)").run("u1", "a@b.c", now());
+  const sid = randomToken();
+  db.prepare("INSERT INTO central_sessions (id,user_id,created_at,last_heartbeat_at,expires_at) VALUES (?,?,?,?,?)")
+    .run(sid, "u1", now() - 1000, now() - 1000, now() - 1);
+  // A launch_token still references the expiring session.
+  db.prepare("INSERT INTO launch_tokens (token,central_session_id,target_app,created_at,expires_at) VALUES (?,?,?,?,?)")
+    .run(randomToken(), sid, "retro", now() - 1000, now() - 1);
+
+  const result = prune(db);
+  assert.equal(result.sessionsDeleted, 1);
+  assert.equal(db.prepare("SELECT COUNT(*) AS c FROM central_sessions").get().c, 0);
+  assert.equal(db.prepare("SELECT COUNT(*) AS c FROM launch_tokens").get().c, 0);
+});
