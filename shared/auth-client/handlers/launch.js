@@ -22,6 +22,7 @@ function createLaunchHandler(ctx) {
       expiresAt: Date.now() + ctx.sessionMaxMs,
       entitled: info.entitlement?.entitled === true,
       teams: info.teams || [],
+      company: info.company || null,
     });
     setSessionCookie(res, { name: ctx.cookieName, value: sessionId, domain: ctx.cookieDomain });
     let dest = "/";

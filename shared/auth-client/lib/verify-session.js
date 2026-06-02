@@ -1,13 +1,13 @@
 // lib/verify-session.js — connection-layer session check (e.g. WebSocket upgrade).
 // Mirrors requireAuth's cache/grace freshness logic but returns data instead of
-// redirecting. Returns { userId, entitled, teams } or null.
+// redirecting. Returns { userId, entitled, teams, company } or null.
 const { parseCookies } = require("./cookies.js");
 
 function createVerifySession(ctx) {
   const { store, hubApi, cookieName, cacheTtlMs, graceMs } = ctx;
 
   function context(sess) {
-    return { userId: sess.user_id, entitled: !!sess.entitled, teams: sess.teams || [] };
+    return { userId: sess.user_id, entitled: !!sess.entitled, teams: sess.teams || [], company: sess.company ?? null };
   }
 
   // On a null result the caller is responsible for clearing the session cookie (this has no res).

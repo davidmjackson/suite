@@ -52,6 +52,7 @@ export function mountApiSessions(app) {
       central_session_id: row.central_session_id,
       entitlement,
       teams,
+      company: company ? { id: company.id, name: company.name } : null,
     });
   });
 

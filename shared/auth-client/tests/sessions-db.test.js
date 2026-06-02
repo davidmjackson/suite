@@ -34,3 +34,15 @@ test("create defaults entitled=false and teams=[] when omitted (back-compat)", (
   assert.equal(s.entitled, false);
   assert.deepEqual(s.teams, []);
 });
+
+test("sessions-db round-trips company (defaults to null)", () => {
+  const store = createSessionsStore(":memory:");
+  store.create({ id: "s1", userId: "u1", centralSessionId: "c1", expiresAt: Date.now() + 60_000 });
+  assert.equal(store.get("s1").company, null);
+
+  store.create({ id: "s2", userId: "u2", centralSessionId: "c2", expiresAt: Date.now() + 60_000, company: { id: "co1", name: "Acme" } });
+  assert.deepEqual(store.get("s2").company, { id: "co1", name: "Acme" });
+
+  store.create({ id: "s3", userId: "u3", centralSessionId: "c3", expiresAt: Date.now() + 60_000, company: null });
+  assert.equal(store.get("s3").company, null);
+});
