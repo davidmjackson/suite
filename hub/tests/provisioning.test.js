@@ -18,7 +18,7 @@ async function pendingRequest(db, over = {}) {
   });
 }
 
-test("approve provisions company + owner + 4 entitlements + invite token", async () => {
+test("approve provisions company + owner + company poker/retro + owner signal/raid + invite token", async () => {
   const { db } = await buildTestApp();
   db.prepare("INSERT INTO users (id,email,created_at) VALUES (?,?,?)").run("op1", "op1@test", Date.now());
   const r = await pendingRequest(db);
@@ -34,9 +34,13 @@ test("approve provisions company + owner + 4 entitlements + invite token", async
     .get(company.id, res.user.id);
   assert.equal(member.role, "owner");
 
-  const ents = db.prepare("SELECT app, quota_limit, quota_period FROM app_entitlements WHERE principal_type='company' AND principal_id=? ORDER BY app").all(company.id);
-  assert.deepEqual(ents.map((e) => e.app), ["poker", "raid", "retro", "signal"]);
-  const raid = ents.find((e) => e.app === "raid");
+  // Poker + Retro at COMPANY level
+  const compEnts = db.prepare("SELECT app FROM app_entitlements WHERE principal_type='company' AND principal_id=? AND status='active' ORDER BY app").all(company.id);
+  assert.deepEqual(compEnts.map((e) => e.app), ["poker", "retro"]);
+  // Signal + RAID at USER level, granted to the new owner
+  const userEnts = db.prepare("SELECT app, quota_limit, quota_period FROM app_entitlements WHERE principal_type='user' AND principal_id=? AND status='active' ORDER BY app").all(res.user.id);
+  assert.deepEqual(userEnts.map((e) => e.app), ["raid", "signal"]);
+  const raid = userEnts.find((e) => e.app === "raid");
   assert.equal(raid.quota_limit, 25);
   assert.equal(raid.quota_period, "month");
 
