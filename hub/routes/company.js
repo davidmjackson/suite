@@ -184,6 +184,10 @@ export function mountCompany(app) {
     res.redirect("/company/" + req.company.slug);
   });
 
+  // TODO(multi-tenancy): grants/revokes here are user-scoped (principal_id = user),
+  // not company-scoped, and console "On/Off" state derives from resolveEntitlement
+  // (which sees company- and team-level grants too). Correct while Signal/RAID live
+  // only at user level and every user is single-company; revisit if either changes.
   app.post("/company/:slug/members/:userId/apps/:app", ...manage, (req, res) => {
     const appName = req.params.app;
     const action = req.body.action;

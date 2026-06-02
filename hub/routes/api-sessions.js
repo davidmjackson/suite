@@ -35,6 +35,9 @@ export function mountApiSessions(app) {
     const entitlement = entitlements.resolveEntitlement(row.user_id, row.target_app);
     // Company context comes from membership, not only from a company-typed
     // entitlement — Signal/RAID are granted per-user yet still belong to a company.
+    // TODO(multi-tenancy): per-user entitlements carry no company scope, so this
+    // picks an arbitrary membership. Correct while every user is single-company;
+    // when a user can belong to 2+ companies, scope this to the launch context.
     const companyId =
       entitlement.entitled && entitlement.principal?.type === "company"
         ? entitlement.principal.id
