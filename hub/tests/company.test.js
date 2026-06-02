@@ -317,3 +317,18 @@ test("console shows Signal/RAID toggles for a member and no Admin role option", 
   assert.match(res.text, /members\/mem\/apps\/signal/);
   assert.match(res.text, /members\/mem\/apps\/raid/);
 });
+
+test("owner of one company cannot toggle a member of another company (404, cross-tenant)", async () => {
+  const { app, db, org, sid } = await build({ role: "owner" }); // sid = owner of "acme"
+  // Create a SECOND company with its own member "outsider"
+  const other = org.createCompany({ name: "Globex", slug: "globex" });
+  db.prepare("INSERT INTO users (id,email,created_at) VALUES (?,?,?)").run("outsider", "out@b.c", now());
+  org.addCompanyMember({ userId: "outsider", companyId: other.id, role: "member" });
+  // Acme's owner tries to grant RAID to Globex's member via Acme's URL scope
+  const res = await request(app).post("/company/acme/members/outsider/apps/raid")
+    .type("form").send({ action: "grant" }).set("Cookie", cookie(sid));
+  assert.equal(res.status, 404);
+  // And no entitlement was created for the outsider
+  const ent = db.prepare("SELECT 1 FROM app_entitlements WHERE principal_type='user' AND principal_id='outsider'").get();
+  assert.equal(ent, undefined);
+});
