@@ -307,3 +307,13 @@ test("a non-owner cannot reach the per-member app toggle (owner-only)", async ()
     .type("form").send({ action: "grant" }).set("Cookie", cookie(sid));
   assert.equal(res.status, 403);
 });
+
+test("console shows Signal/RAID toggles for a member and no Admin role option", async () => {
+  const { app, db, org, company, sid } = await build({ role: "owner" });
+  addMember(db, org, company);
+  const res = await request(app).get("/company/acme").set("Cookie", cookie(sid));
+  assert.equal(res.status, 200);
+  assert.ok(!/>Admin</.test(res.text), "Admin role option should be gone");
+  assert.match(res.text, /members\/mem\/apps\/signal/);
+  assert.match(res.text, /members\/mem\/apps\/raid/);
+});
