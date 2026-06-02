@@ -19,25 +19,29 @@ function createSessionsStore(dbPath) {
       last_validated_at INTEGER NOT NULL,
       expires_at INTEGER NOT NULL,
       entitled INTEGER NOT NULL DEFAULT 0,
-      teams TEXT NOT NULL DEFAULT '[]'
+      teams TEXT NOT NULL DEFAULT '[]',
+      company TEXT NOT NULL DEFAULT 'null'
     );
     CREATE INDEX IF NOT EXISTS idx_app_sessions_central ON app_sessions(central_session_id);
   `);
   const cols = db.prepare("PRAGMA table_info(app_sessions)").all().map((c) => c.name);
   if (!cols.includes("entitled")) db.exec("ALTER TABLE app_sessions ADD COLUMN entitled INTEGER NOT NULL DEFAULT 0");
   if (!cols.includes("teams")) db.exec("ALTER TABLE app_sessions ADD COLUMN teams TEXT NOT NULL DEFAULT '[]'");
+  if (!cols.includes("company")) db.exec("ALTER TABLE app_sessions ADD COLUMN company TEXT NOT NULL DEFAULT 'null'");
   return {
-    create({ id, userId, centralSessionId, expiresAt, entitled = false, teams = [] }) {
+    create({ id, userId, centralSessionId, expiresAt, entitled = false, teams = [], company = null }) {
       const t = Date.now();
-      db.prepare(`INSERT INTO app_sessions (id,user_id,central_session_id,created_at,last_validated_at,expires_at,entitled,teams) VALUES (?,?,?,?,?,?,?,?)`)
-        .run(id, userId, centralSessionId, t, t, expiresAt, entitled ? 1 : 0, JSON.stringify(teams));
+      db.prepare(`INSERT INTO app_sessions (id,user_id,central_session_id,created_at,last_validated_at,expires_at,entitled,teams,company) VALUES (?,?,?,?,?,?,?,?,?)`)
+        .run(id, userId, centralSessionId, t, t, expiresAt, entitled ? 1 : 0, JSON.stringify(teams), JSON.stringify(company ?? null));
     },
     get(id) {
       const row = db.prepare("SELECT * FROM app_sessions WHERE id = ? AND expires_at > ?").get(id, Date.now());
       if (!row) return undefined;
       let teams;
       try { teams = JSON.parse(row.teams || "[]"); } catch { teams = []; }
-      return { ...row, entitled: !!row.entitled, teams };
+      let company;
+      try { company = JSON.parse(row.company || "null"); } catch { company = null; }
+      return { ...row, entitled: !!row.entitled, teams, company };
     },
     touch(id) {
       db.prepare("UPDATE app_sessions SET last_validated_at = ? WHERE id = ?").run(Date.now(), id);
