@@ -24,6 +24,12 @@ async function build({ role = "owner" } = {}) {
 
 const cookie = (sid) => `hub_session=${sid}`;
 
+function addMember(db, org, company, userId = "mem") {
+  db.prepare("INSERT INTO users (id,email,created_at) VALUES (?,?,?)").run(userId, userId + "@b.c", now());
+  org.addCompanyMember({ userId, companyId: company.id, role: "member" });
+  return userId;
+}
+
 test("GET /company/:slug renders the console for an owner", async () => {
   const { app, org, company, sid } = await build({ role: "owner" });
   org.createTeam({ companyId: company.id, name: "Squad A" });
@@ -68,27 +74,27 @@ test("invalid email is rejected with 400", async () => {
   assert.equal(res.status, 400);
 });
 
-test("admin cannot invite an owner (403)", async () => {
-  const { app, sid } = await build({ role: "admin" });
+test("a member cannot invite anyone (403)", async () => {
+  const { app, sid } = await build({ role: "member" });
   const res = await request(app).post("/company/acme/members")
-    .type("form").send({ email: "x@b.c", role: "owner" })
+    .type("form").send({ email: "x@b.c", role: "member" })
     .set("Cookie", cookie(sid));
   assert.equal(res.status, 403);
 });
 
-test("owner can change a member's role", async () => {
+test("owner can change a member's role to owner", async () => {
   const { app, db, company, org, sid } = await build({ role: "owner" });
   db.prepare("INSERT INTO users (id,email,created_at) VALUES (?,?,?)").run("u2", "m@b.c", now());
   org.addCompanyMember({ userId: "u2", companyId: company.id, role: "member" });
   const res = await request(app).post("/company/acme/members/u2/role")
-    .type("form").send({ role: "admin" }).set("Cookie", cookie(sid));
+    .type("form").send({ role: "owner" }).set("Cookie", cookie(sid));
   assert.equal(res.status, 302);
   const m = db.prepare("SELECT role FROM company_members WHERE user_id=? AND company_id=?").get("u2", company.id);
-  assert.equal(m.role, "admin");
+  assert.equal(m.role, "owner");
 });
 
-test("admin cannot promote anyone to owner (403)", async () => {
-  const { app, db, company, org, sid } = await build({ role: "admin" });
+test("a member cannot change anyone's role (403)", async () => {
+  const { app, db, company, org, sid } = await build({ role: "member" });
   db.prepare("INSERT INTO users (id,email,created_at) VALUES (?,?,?)").run("u2", "m@b.c", now());
   org.addCompanyMember({ userId: "u2", companyId: company.id, role: "member" });
   const res = await request(app).post("/company/acme/members/u2/role")
@@ -96,8 +102,8 @@ test("admin cannot promote anyone to owner (403)", async () => {
   assert.equal(res.status, 403);
 });
 
-test("admin cannot change an owner's role (403)", async () => {
-  const { app, db, company, org, sid } = await build({ role: "admin" });
+test("a plain member cannot change an owner's role (403)", async () => {
+  const { app, db, company, org, sid } = await build({ role: "member" });
   db.prepare("INSERT INTO users (id,email,created_at) VALUES (?,?,?)").run("u2", "o2@b.c", now());
   org.addCompanyMember({ userId: "u2", companyId: company.id, role: "owner" });
   const res = await request(app).post("/company/acme/members/u2/role")
@@ -123,8 +129,8 @@ test("owner can remove a member", async () => {
   assert.equal(m, undefined);
 });
 
-test("admin cannot remove an owner (403)", async () => {
-  const { app, db, company, org, sid } = await build({ role: "admin" });
+test("a member cannot remove anyone (403)", async () => {
+  const { app, db, company, org, sid } = await build({ role: "member" });
   db.prepare("INSERT INTO users (id,email,created_at) VALUES (?,?,?)").run("u2", "o2@b.c", now());
   org.addCompanyMember({ userId: "u2", companyId: company.id, role: "owner" });
   const res = await request(app).post("/company/acme/members/u2/remove").set("Cookie", cookie(sid));
@@ -251,4 +257,43 @@ test("adding a user already on the team shows a friendly 400, not a 500", async 
     .type("form").send({ userId: "u2" }).set("Cookie", cookie(sid));
   assert.equal(res.status, 400);
   assert.match(res.text, /already on this team/i);
+});
+
+test("owner can grant then revoke RAID for a member", async () => {
+  const { app, db, org, company, sid } = await build({ role: "owner" });
+  addMember(db, org, company);
+  let res = await request(app).post("/company/acme/members/mem/apps/raid")
+    .type("form").send({ action: "grant" }).set("Cookie", cookie(sid));
+  assert.equal(res.status, 302);
+  let ent = db.prepare("SELECT quota_limit,status FROM app_entitlements WHERE app='raid' AND principal_type='user' AND principal_id='mem'").get();
+  assert.equal(ent.status, "active");
+  assert.equal(ent.quota_limit, 25);
+  res = await request(app).post("/company/acme/members/mem/apps/raid")
+    .type("form").send({ action: "revoke" }).set("Cookie", cookie(sid));
+  assert.equal(res.status, 302);
+  ent = db.prepare("SELECT status FROM app_entitlements WHERE app='raid' AND principal_type='user' AND principal_id='mem'").get();
+  assert.equal(ent.status, "suspended");
+});
+
+test("grant rejects a non-togglable app", async () => {
+  const { app, db, org, company, sid } = await build({ role: "owner" });
+  addMember(db, org, company);
+  const res = await request(app).post("/company/acme/members/mem/apps/poker")
+    .type("form").send({ action: "grant" }).set("Cookie", cookie(sid));
+  assert.equal(res.status, 400);
+});
+
+test("cannot toggle an owner row", async () => {
+  const { app, sid } = await build({ role: "owner" }); // u1 is the owner
+  const res = await request(app).post("/company/acme/members/u1/apps/signal")
+    .type("form").send({ action: "revoke" }).set("Cookie", cookie(sid));
+  assert.equal(res.status, 400);
+});
+
+test("a non-owner cannot reach the per-member app toggle (owner-only)", async () => {
+  const { app, db, org, company, sid } = await build({ role: "member" }); // u1 is a member
+  addMember(db, org, company, "mem2");
+  const res = await request(app).post("/company/acme/members/mem2/apps/signal")
+    .type("form").send({ action: "grant" }).set("Cookie", cookie(sid));
+  assert.equal(res.status, 403);
 });
