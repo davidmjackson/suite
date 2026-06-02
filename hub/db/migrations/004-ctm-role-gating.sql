@@ -27,3 +27,6 @@ UPDATE app_entitlements SET status = 'suspended'
 WHERE principal_type = 'company'
   AND status = 'active'
   AND app IN ('signal', 'raid');
+
+INSERT INTO schema_version (version, applied_at) VALUES (4, strftime('%s','now')*1000)
+  ON CONFLICT(version) DO NOTHING;

@@ -32,10 +32,12 @@ function seedLegacy(db) {
 
 test("migration 004 collapses admin to member", () => {
   const db = openDb(":memory:");
-  const { adminId, companyId } = seedLegacy(db);
+  const { ownerId, adminId, companyId } = seedLegacy(db);
   runMigration(db);
   const role = db.prepare("SELECT role FROM company_members WHERE user_id=? AND company_id=?").get(adminId, companyId).role;
   assert.equal(role, "member");
+  const ownerRole = db.prepare("SELECT role FROM company_members WHERE user_id=? AND company_id=?").get(ownerId, companyId).role;
+  assert.equal(ownerRole, "owner");
   db.close();
 });
 
