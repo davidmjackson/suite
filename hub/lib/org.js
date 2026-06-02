@@ -1,7 +1,7 @@
 // lib/org.js
 import { randomId, now } from "./tokens.js";
 
-const COMPANY_ROLES = new Set(["owner", "admin", "member"]);
+const COMPANY_ROLES = new Set(["owner", "member"]);
 const TEAM_ROLES = new Set(["lead", "member"]);
 
 export function createOrg(db) {
@@ -117,7 +117,7 @@ export function createOrg(db) {
       SELECT c.id AS id, c.name AS name, c.slug AS slug, cm.role AS role
       FROM company_members cm
       JOIN companies c ON c.id = cm.company_id
-      WHERE cm.user_id = ? AND cm.role IN ('owner','admin')
+      WHERE cm.user_id = ? AND cm.role = 'owner'
       ORDER BY c.name
     `).all(userId);
   }
