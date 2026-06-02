@@ -20,7 +20,7 @@ async function setup({ role } = {}) {
   const { createRequireCompanyRole } = await import("../middleware/requireCompanyRole.js?t=" + Date.now());
   const requireSession = createRequireSession(db);
   const companyRole = createRequireCompanyRole(db);
-  app.get("/company/:slug/probe", requireSession, companyRole(["owner", "admin"]), (req, res) => {
+  app.get("/company/:slug/probe", requireSession, companyRole(["owner"]), (req, res) => {
     res.json({ company: req.company.slug, role: req.companyRole });
   });
   return { app, sid };
