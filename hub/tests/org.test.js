@@ -73,7 +73,7 @@ test("cannot demote or remove the last owner", () => {
   seedUser(db, "u1", "a@b.c");
   const c = org.createCompany({ name: "Acme", slug: "acme" });
   org.addCompanyMember({ userId: "u1", companyId: c.id, role: "owner" });
-  assert.throws(() => org.setCompanyMemberRole({ userId: "u1", companyId: c.id, role: "admin" }), /last_owner/);
+  assert.throws(() => org.setCompanyMemberRole({ userId: "u1", companyId: c.id, role: "member" }), /last_owner/);
   assert.throws(() => org.removeCompanyMember({ userId: "u1", companyId: c.id }), /last_owner/);
   db.close();
 });
@@ -85,9 +85,9 @@ test("can demote an owner when another owner exists", () => {
   const c = org.createCompany({ name: "Acme", slug: "acme" });
   org.addCompanyMember({ userId: "u1", companyId: c.id, role: "owner" });
   org.addCompanyMember({ userId: "u2", companyId: c.id, role: "owner" });
-  org.setCompanyMemberRole({ userId: "u1", companyId: c.id, role: "admin" });
+  org.setCompanyMemberRole({ userId: "u1", companyId: c.id, role: "member" });
   const row = db.prepare("SELECT role FROM company_members WHERE user_id=? AND company_id=?").get("u1", c.id);
-  assert.equal(row.role, "admin");
+  assert.equal(row.role, "member");
   db.close();
 });
 
@@ -188,20 +188,25 @@ test("teamsForUser returns the user's teams in a company with their role, exclud
 });
 
 // --- Layer 3 console read helpers ---
-test("adminCompaniesForUser returns only companies where user is owner/admin", () => {
+test("addCompanyMember rejects the removed admin role", () => {
   const db = openDb(":memory:");
   const org = createOrg(db);
-  seedUser(db, "u1", "u1@b.c");
-  const a = org.createCompany({ name: "Acme", slug: "acme" });
-  const b = org.createCompany({ name: "Beta", slug: "beta" });
-  const c = org.createCompany({ name: "Gamma", slug: "gamma" });
-  org.addCompanyMember({ userId: "u1", companyId: a.id, role: "owner" });
-  org.addCompanyMember({ userId: "u1", companyId: b.id, role: "admin" });
-  org.addCompanyMember({ userId: "u1", companyId: c.id, role: "member" });
-  const rows = org.adminCompaniesForUser("u1");
-  assert.deepEqual(rows.map((r) => r.slug), ["acme", "beta"]);
-  assert.equal(rows[0].role, "owner");
-  assert.equal(rows[1].role, "admin");
+  const c = org.createCompany({ name: "Acme", slug: "acme" });
+  db.prepare("INSERT INTO users (id,email,is_admin,created_at) VALUES ('u1','u1@x',0,1)").run();
+  assert.throws(() => org.addCompanyMember({ userId: "u1", companyId: c.id, role: "admin" }), /invalid_company_role/);
+  db.close();
+});
+
+test("adminCompaniesForUser returns only companies where the user is owner", () => {
+  const db = openDb(":memory:");
+  const org = createOrg(db);
+  const c = org.createCompany({ name: "Acme", slug: "acme" });
+  db.prepare("INSERT INTO users (id,email,is_admin,created_at) VALUES ('owner','o@x',0,1)").run();
+  db.prepare("INSERT INTO users (id,email,is_admin,created_at) VALUES ('mem','m@x',0,1)").run();
+  org.addCompanyMember({ userId: "owner", companyId: c.id, role: "owner" });
+  org.addCompanyMember({ userId: "mem", companyId: c.id, role: "member" });
+  assert.equal(org.adminCompaniesForUser("owner").length, 1);
+  assert.equal(org.adminCompaniesForUser("mem").length, 0);
   db.close();
 });
 
@@ -280,11 +285,11 @@ test("inviteCompanyMember reuses an existing user", () => {
   const org = createOrg(db);
   seedUser(db, "u1", "exists@b.c");
   const a = org.createCompany({ name: "Acme", slug: "acme" });
-  const r = org.inviteCompanyMember({ email: "exists@b.c", companyId: a.id, role: "admin" });
+  const r = org.inviteCompanyMember({ email: "exists@b.c", companyId: a.id, role: "member" });
   assert.equal(r.alreadyMember, false);
   assert.equal(r.user.id, "u1");
   const m = db.prepare("SELECT role FROM company_members WHERE user_id=? AND company_id=?").get("u1", a.id);
-  assert.equal(m.role, "admin");
+  assert.equal(m.role, "member");
   db.close();
 });
 

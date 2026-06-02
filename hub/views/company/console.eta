@@ -9,14 +9,13 @@
 <p>
 <select name="role">
 <option value="member">Member</option>
-<option value="admin">Admin</option>
 <% if (it.companyRole === "owner") { %><option value="owner">Owner</option><% } %>
 </select>
 <button class="btn" type="submit">Invite member</button>
 </p>
 </form>
 <table>
-<thead><tr><th>Email</th><th>Role</th><th>Status</th><th></th></tr></thead>
+<thead><tr><th>Email</th><th>Role</th><th>Apps</th><th>Status</th><th></th></tr></thead>
 <tbody>
 <% for (const m of it.members) { %>
 <tr>
@@ -27,12 +26,23 @@
 <form method="POST" action="/company/<%= it.company.slug %>/members/<%= m.userId %>/role" style="display:inline;">
 <select name="role">
 <option value="member" <%= m.role === "member" ? "selected" : "" %>>Member</option>
-<option value="admin" <%= m.role === "admin" ? "selected" : "" %>>Admin</option>
 <% if (it.companyRole === "owner") { %><option value="owner" <%= m.role === "owner" ? "selected" : "" %>>Owner</option><% } %>
 </select>
 <button class="btn" type="submit">Save</button>
 </form>
 <% } else { %><%= m.role %><% } %>
+</td>
+<td>
+<% if (m.role === "owner") { %>
+  <span title="Owners always have every app">Signal ✓ · RAID ✓</span>
+<% } else { %>
+  <% for (const a of [["signal","Signal", m.signalOn],["raid","RAID", m.raidOn]]) { %>
+    <form method="POST" action="/company/<%= it.company.slug %>/members/<%= m.userId %>/apps/<%= a[0] %>" style="display:inline;">
+      <input type="hidden" name="action" value="<%= a[2] ? 'revoke' : 'grant' %>">
+      <button class="btn" type="submit"><%= a[1] %>: <%= a[2] ? 'On' : 'Off' %></button>
+    </form>
+  <% } %>
+<% } %>
 </td>
 <td><%= m.hasLoggedIn ? "Active" : "Invited — not joined yet" %></td>
 <td>

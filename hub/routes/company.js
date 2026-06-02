@@ -3,8 +3,13 @@ import { createRequireSession } from "../middleware/requireSession.js";
 import { createRequireCompanyRole } from "../middleware/requireCompanyRole.js";
 import { createOrg } from "../lib/org.js";
 import { createAuditLogger } from "../lib/audit.js";
+import { createEntitlements } from "../lib/entitlements.js";
 
 const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+const TOGGLABLE_APPS = {
+  signal: { quotaLimit: null, quotaPeriod: null },
+  raid: { quotaLimit: 25, quotaPeriod: "month" },
+};
 
 export function mountCompany(app) {
   const db = app.locals.db;
@@ -12,7 +17,8 @@ export function mountCompany(app) {
   const companyRole = createRequireCompanyRole(db);
   const org = createOrg(db);
   const audit = createAuditLogger(db);
-  const manage = [requireSession, companyRole(["owner", "admin"])];
+  const ent = createEntitlements(db);
+  const manage = [requireSession, companyRole(["owner"])];
 
   // Resolve a team that must belong to req.company; render 404 otherwise.
   function loadTeam(req, res) {
@@ -41,7 +47,11 @@ export function mountCompany(app) {
   });
 
   app.get("/company/:slug", ...manage, (req, res) => {
-    const members = org.listCompanyMembers(req.company.id);
+    const members = org.listCompanyMembers(req.company.id).map((m) => ({
+      ...m,
+      signalOn: ent.resolveEntitlement(m.userId, "signal").entitled,
+      raidOn: ent.resolveEntitlement(m.userId, "raid").entitled,
+    }));
     const teams = org.listTeams(req.company.id);
     res.render("company/console", {
       user: req.user,
@@ -58,11 +68,8 @@ export function mountCompany(app) {
     if (!EMAIL_RE.test(email)) {
       return res.status(400).render("error", { title: "Bad request", message: "Invalid email." });
     }
-    if (!["owner", "admin", "member"].includes(role)) {
+    if (!["owner", "member"].includes(role)) {
       return res.status(400).render("error", { title: "Bad request", message: "Invalid role." });
-    }
-    if (req.companyRole === "admin" && role === "owner") {
-      return res.status(403).render("error", { title: "Forbidden", message: "Only an owner can grant the owner role." });
     }
     const r = org.inviteCompanyMember({ email, companyId: req.company.id, role });
     if (!r.alreadyMember) {
@@ -74,16 +81,13 @@ export function mountCompany(app) {
   app.post("/company/:slug/members/:userId/role", ...manage, (req, res) => {
     const role = req.body.role;
     const targetId = req.params.userId;
-    if (!["owner", "admin", "member"].includes(role)) {
+    if (!["owner", "member"].includes(role)) {
       return res.status(400).render("error", { title: "Bad request", message: "Invalid role." });
     }
     const target = db.prepare("SELECT role FROM company_members WHERE user_id=? AND company_id=?")
       .get(targetId, req.company.id);
     if (!target) {
       return res.status(404).render("error", { title: "Not found", message: "Not a member of this company." });
-    }
-    if (req.companyRole === "admin" && (role === "owner" || target.role === "owner")) {
-      return res.status(403).render("error", { title: "Forbidden", message: "Only an owner can manage owners." });
     }
     try {
       org.setCompanyMemberRole({ userId: targetId, companyId: req.company.id, role });
@@ -168,9 +172,6 @@ export function mountCompany(app) {
     if (!target) {
       return res.status(404).render("error", { title: "Not found", message: "Not a member of this company." });
     }
-    if (req.companyRole === "admin" && target.role === "owner") {
-      return res.status(403).render("error", { title: "Forbidden", message: "Only an owner can remove an owner." });
-    }
     try {
       org.removeCompanyMember({ userId: targetId, companyId: req.company.id });
     } catch (e) {
@@ -180,6 +181,42 @@ export function mountCompany(app) {
       throw e;
     }
     audit.log({ userId: req.user.id, eventType: "company_member_removed", metadata: { company: req.company.slug, target: targetId }, ip: req.ip });
+    res.redirect("/company/" + req.company.slug);
+  });
+
+  // TODO(multi-tenancy): grants/revokes here are user-scoped (principal_id = user),
+  // not company-scoped, and console "On/Off" state derives from resolveEntitlement
+  // (which sees company- and team-level grants too). Correct while Signal/RAID live
+  // only at user level and every user is single-company; revisit if either changes.
+  app.post("/company/:slug/members/:userId/apps/:app", ...manage, (req, res) => {
+    const appName = req.params.app;
+    const action = req.body.action;
+    const targetId = req.params.userId;
+    const spec = TOGGLABLE_APPS[appName];
+    if (!spec) {
+      return res.status(400).render("error", { title: "Bad request", message: "That app is not granted per-member." });
+    }
+    if (action !== "grant" && action !== "revoke") {
+      return res.status(400).render("error", { title: "Bad request", message: "Unknown action." });
+    }
+    const target = db.prepare("SELECT role FROM company_members WHERE user_id=? AND company_id=?")
+      .get(targetId, req.company.id);
+    if (!target) {
+      return res.status(404).render("error", { title: "Not found", message: "Not a member of this company." });
+    }
+    if (target.role === "owner") {
+      return res.status(400).render("error", { title: "Can't change", message: "Owners always have access to every app." });
+    }
+    if (action === "grant") {
+      ent.grantEntitlement({
+        app: appName, principalType: "user", principalId: targetId,
+        quotaLimit: spec.quotaLimit, quotaPeriod: spec.quotaPeriod, grantedBy: req.user.id,
+      });
+      audit.log({ userId: req.user.id, eventType: "member_app_granted", metadata: { company: req.company.slug, target: targetId, app: appName }, ip: req.ip });
+    } else {
+      ent.revokeEntitlement({ app: appName, principalType: "user", principalId: targetId });
+      audit.log({ userId: req.user.id, eventType: "member_app_revoked", metadata: { company: req.company.slug, target: targetId, app: appName }, ip: req.ip });
+    }
     res.redirect("/company/" + req.company.slug);
   });
 }

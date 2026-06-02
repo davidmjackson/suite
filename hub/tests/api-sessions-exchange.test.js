@@ -153,6 +153,34 @@ test("exchange returns the user's teams scoped to the per-company entitled app",
   assert.deepEqual(res.body.teams, [{ id: team.id, name: "Alpha", role: "lead", company: "Acme" }]);
 });
 
+test("exchange returns company context for a user-typed entitlement (signal/raid)", async () => {
+  const { app, db } = await buildWithApi();
+  const { createOrg } = await import("../lib/org.js?t=" + Date.now());
+  const { createEntitlements } = await import("../lib/entitlements.js?t=" + Date.now());
+  const org = createOrg(db);
+  const ent = createEntitlements(db);
+  db.prepare("INSERT INTO users (id,email,display_name,created_at) VALUES (?,?,?,?)").run("u1", "a@b.c", "Alice", now());
+  const c = org.createCompany({ name: "Acme", slug: "acme" });
+  org.addCompanyMember({ userId: "u1", companyId: c.id, role: "member" });
+  const team = org.createTeam({ companyId: c.id, name: "Squad" });
+  org.addTeamMember({ userId: "u1", teamId: team.id, role: "member" });
+  // RAID granted at USER level only — no company-level RAID exists.
+  // grantedBy: null (not "op") because granted_by has a FK to users(id) and foreign_keys = ON.
+  ent.grantEntitlement({ app: "raid", principalType: "user", principalId: "u1", quotaLimit: 25, quotaPeriod: "month", grantedBy: null });
+  const sid = randomToken();
+  db.prepare("INSERT INTO central_sessions (id,user_id,created_at,last_heartbeat_at,expires_at) VALUES (?,?,?,?,?)").run(sid, "u1", now(), now(), now() + 60_000);
+  const tok = randomToken();
+  db.prepare("INSERT INTO launch_tokens (token,central_session_id,target_app,created_at,expires_at) VALUES (?,?,?,?,?)").run(tok, sid, "raid", now(), now() + 30_000);
+
+  const res = await request(app).post("/api/sessions/exchange")
+    .set("Authorization", "Bearer k-raid").send({ launch_token: tok });
+  assert.equal(res.status, 200);
+  assert.equal(res.body.entitlement.entitled, true);
+  assert.equal(res.body.entitlement.principal.type, "user");
+  assert.equal(res.body.teams.length, 1);
+  assert.equal(res.body.teams[0].company, "Acme");
+});
+
 test("exchange returns teams:[] when not entitled or principal is not a company", async () => {
   const { app, db } = await buildWithApi();
   db.prepare("INSERT INTO users (id,email,created_at) VALUES (?,?,?)").run("u1", "a@b.c", now());

@@ -42,8 +42,12 @@ test("approve provisions and emails the CR", async () => {
   assert.equal(res.status, 302);
   const company = db.prepare("SELECT * FROM companies WHERE slug='ibm'").get();
   assert.ok(company);
-  const ents = db.prepare("SELECT app FROM app_entitlements WHERE principal_id=?").all(company.id);
-  assert.equal(ents.length, 4);
+  // Poker + Retro at company level; Signal + RAID at user level (owner only)
+  const compEnts = db.prepare("SELECT app FROM app_entitlements WHERE principal_type='company' AND principal_id=? ORDER BY app").all(company.id);
+  assert.deepEqual(compEnts.map((e) => e.app), ["poker", "retro"]);
+  const user = db.prepare("SELECT id FROM users WHERE email='james@ibm.com'").get();
+  const userEnts = db.prepare("SELECT app FROM app_entitlements WHERE principal_type='user' AND principal_id=? ORDER BY app").all(user.id);
+  assert.deepEqual(userEnts.map((e) => e.app), ["raid", "signal"]);
   assert.equal(sent.length, 1);
   assert.match(sent[0].url, /auth\/magic\?token=/);
   assert.equal(sent[0].to, "james@ibm.com");
