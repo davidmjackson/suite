@@ -13,7 +13,7 @@ test("returns context for a fresh session (no hub call)", async () => {
   let called = false;
   const verifySession = createVerifySession(ctxWith(store, async () => { called = true; return "ok"; }));
   const res = await verifySession("poker_session=s1");
-  assert.deepEqual(res, { userId: "u1", entitled: true, teams: [{ id: "t1", name: "Alpha", role: "lead" }] });
+  assert.deepEqual(res, { userId: "u1", entitled: true, teams: [{ id: "t1", name: "Alpha", role: "lead" }], company: null });
   assert.equal(called, false);
 });
 
@@ -54,4 +54,12 @@ test("returns null when hub is unavailable and grace period has passed", async (
   ctx.graceMs = 0;
   const verifySession = createVerifySession(ctx);
   assert.equal(await verifySession("poker_session=s1"), null);
+});
+
+test("verifySession includes company from the stored session", async () => {
+  const store = createSessionsStore(":memory:");
+  store.create({ id: "sid", userId: "u1", centralSessionId: "c1", expiresAt: Date.now() + 60_000, entitled: true, company: { id: "co1", name: "Acme" } });
+  const verifySession = createVerifySession(ctxWith(store));
+  const result = await verifySession("poker_session=sid");
+  assert.deepEqual(result.company, { id: "co1", name: "Acme" });
 });

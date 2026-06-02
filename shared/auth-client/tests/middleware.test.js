@@ -130,3 +130,20 @@ test("requireAuth attaches entitled+teams from the session to req.user", async (
   assert.equal(req.user.entitled, true);
   assert.deepEqual(req.user.teams, [{ id: "t1", name: "Alpha", role: "lead" }]);
 });
+
+test("requireAuth attaches company from the session to req.user", async () => {
+  const store = createSessionsStore(":memory:");
+  const requireAuth = createRequireAuth({
+    store, hubApi: { heartbeat: async () => "ok" },
+    cookieName: "poker_session", cacheTtlMs: 60_000, graceMs: 300_000,
+  });
+  store.create({
+    id: "s2", userId: "u1", centralSessionId: "c1", expiresAt: Date.now() + 60_000,
+    entitled: true, company: { id: "co1", name: "Acme" },
+  });
+  const req = { headers: { cookie: "poker_session=s2" } };
+  let nexted = false;
+  await requireAuth(req, { redirect() {} }, () => { nexted = true; });
+  assert.equal(nexted, true);
+  assert.deepEqual(req.user.company, { id: "co1", name: "Acme" });
+});
