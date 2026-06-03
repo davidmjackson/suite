@@ -10,3 +10,8 @@ build/
 .idea/
 *.swp
 .claude/
+
+# Design workspace — source-of-truth zips + extracted "Instrument" handoff,
+# large assets/screenshots. Kept out of the repo; shippable CSS/tokens get
+# integrated into each app's source tree during the redesign build.
+project-design-docs/
