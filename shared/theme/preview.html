@@ -67,6 +67,27 @@
         <svg width="30" height="30"><use href="./glyphs.svg#glyph-poker"/></svg>
       </p>
     </div>
+
+    <section class="card">
+      <h2>Tables &amp; form controls</h2>
+      <div class="table-wrap"><table class="table">
+        <thead><tr><th>Company</th><th>Status</th><th>Members</th><th></th></tr></thead>
+        <tbody>
+          <tr><td>Acme</td><td><span class="pill pill-ok">active</span></td><td>12</td><td><div class="tbacts"><button class="btn btn-ghost btn-sm">Edit</button><button class="btn btn-danger btn-sm">Remove</button></div></td></tr>
+          <tr><td>Globex</td><td><span class="pill pill-closed">disabled</span></td><td>3</td><td><div class="tbacts"><button class="btn btn-ghost btn-sm">Edit</button></div></td></tr>
+        </tbody>
+      </table></div>
+      <div style="display:flex;flex-direction:column;gap:14px;max-width:420px;margin-top:18px;">
+        <div class="field"><label class="label">Team size</label>
+          <select class="input"><option>Select…</option><option>1–10</option><option>11–50</option></select></div>
+        <div class="field"><label class="label">Apps</label>
+          <div class="checks">
+            <label class="check"><input type="checkbox" checked> Sprintpoker</label>
+            <label class="check"><input type="checkbox"> Sprintretro</label>
+          </div></div>
+        <div class="field"><label class="label">Notes</label><textarea class="input" rows="3"></textarea></div>
+      </div>
+    </section>
   </div>
   <footer class="footer">Instrument foundation · preview</footer>
   <script type="module" src="./oscilloscope.js"></script>

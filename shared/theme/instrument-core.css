@@ -72,3 +72,15 @@
   .ins .authleft{position:relative; overflow:hidden; background:linear-gradient(160deg,var(--green),oklch(0.36 0.07 168)); color:#fff; padding:38px 34px; display:flex; flex-direction:column; justify-content:space-between;}
   .ins .authleft .waves{color:oklch(0.85 0.06 200); opacity:0.38;}
   .ins .authright{padding:44px 42px; display:flex; flex-direction:column; justify-content:center; gap:18px;}
+  /* tables */
+  .ins .table-wrap{overflow-x:auto;}
+  .ins table.table{width:100%; border-collapse:collapse; font-size:14px;}
+  .ins .table th,.ins .table td{text-align:left; padding:11px 14px; border-bottom:1px solid var(--line); vertical-align:middle;}
+  .ins .table th{font-family:'IBM Plex Mono',monospace; font-size:11px; letter-spacing:0.08em; text-transform:uppercase; color:var(--faint); font-weight:600; background:var(--bone); border-bottom:1px solid var(--line2);}
+  .ins .table tbody tr:last-child td{border-bottom:none;}
+  /* form controls (extend .input to select/textarea; checkbox list) */
+  .ins select.input{appearance:none; -webkit-appearance:none; cursor:pointer; padding-right:34px; background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'%3E%3Cpath d='M2 4l4 4 4-4' fill='none' stroke='%2364748b' stroke-width='1.6'/%3E%3C/svg%3E"); background-repeat:no-repeat; background-position:right 12px center;}
+  .ins textarea.input{min-height:84px; resize:vertical; line-height:1.5;}
+  .ins .checks{display:flex; flex-direction:column; gap:9px;}
+  .ins .check{display:flex; align-items:center; gap:9px; font-size:14px; color:var(--ink); cursor:pointer;}
+  .ins .check input{width:16px; height:16px; accent-color:var(--green);}
