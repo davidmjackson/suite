@@ -50,6 +50,18 @@ test("dashboard shows a Manage link for companies the user owns/admins", async (
   assert.match(res.text, /Acme/);
 });
 
+test("dashboard leads with the band and renders glyph tiles", async () => {
+  const { app, db } = await buildWithDashboard();
+  db.prepare("INSERT INTO users (id,email,created_at) VALUES (?,?,?)").run("u1", "a@b.c", now());
+  const sid = randomToken();
+  db.prepare("INSERT INTO central_sessions (id,user_id,created_at,last_heartbeat_at,expires_at) VALUES (?,?,?,?,?)")
+    .run(sid, "u1", now(), now(), now() + 60_000);
+  const res = await request(app).get("/dashboard").set("Cookie", `hub_session=${sid}`);
+  assert.equal(res.status, 200);
+  assert.match(res.text, /class="band"/);
+  assert.match(res.text, /class="applist"/);
+});
+
 test("dashboard renders a launchable tile only for entitled apps", async () => {
   const { app, db } = await buildWithDashboard();
   db.prepare("INSERT INTO users (id,email,created_at) VALUES (?,?,?)").run("u1", "a@b.c", now());
