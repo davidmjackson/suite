@@ -3,7 +3,7 @@
   <div class="authleft"><div class="waves"></div><div class="brand" style="color:#fff"><svg class="mk" width="22" height="22" style="color:#fff" aria-hidden="true"><use href="/illos/glyphs.svg#glyph-suite"/></svg> Sprint Suite</div><div><p style="font-size:20px;font-family:'Bricolage Grotesque',sans-serif;">Almost there.</p></div></div>
   <div class="authright">
     <h1 style="font-size:24px;">Check your email</h1>
-    <div class="notice">A sign-in link is on its way to <strong><%= it.email %></strong>. It expires in 15 minutes.</div>
+    <div class="notice"><span>A sign-in link is on its way to <strong><%= it.email %></strong>. It expires in 15 minutes.</span></div>
     <p><a class="lnk" href="/login">Use a different email</a></p>
   </div>
 </div>
