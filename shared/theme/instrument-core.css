@@ -1,0 +1,74 @@
+/* Instrument — self-hosted fonts (see shared/theme/fonts/) */
+@font-face { font-family: "Bricolage Grotesque"; font-weight: 700; font-style: normal; font-display: swap; src: url("/fonts/bricolage-grotesque-700.woff2") format("woff2"); }
+@font-face { font-family: "Hanken Grotesk"; font-weight: 400; font-style: normal; font-display: swap; src: url("/fonts/hanken-grotesk-400.woff2") format("woff2"); }
+@font-face { font-family: "Hanken Grotesk"; font-weight: 500; font-style: normal; font-display: swap; src: url("/fonts/hanken-grotesk-500.woff2") format("woff2"); }
+@font-face { font-family: "Hanken Grotesk"; font-weight: 600; font-style: normal; font-display: swap; src: url("/fonts/hanken-grotesk-600.woff2") format("woff2"); }
+@font-face { font-family: "Hanken Grotesk"; font-weight: 700; font-style: normal; font-display: swap; src: url("/fonts/hanken-grotesk-700.woff2") format("woff2"); }
+@font-face { font-family: "IBM Plex Mono"; font-weight: 400; font-style: normal; font-display: swap; src: url("/fonts/ibm-plex-mono-400.woff2") format("woff2"); }
+@font-face { font-family: "IBM Plex Mono"; font-weight: 500; font-style: normal; font-display: swap; src: url("/fonts/ibm-plex-mono-500.woff2") format("woff2"); }
+@font-face { font-family: "IBM Plex Mono"; font-weight: 600; font-style: normal; font-display: swap; src: url("/fonts/ibm-plex-mono-600.woff2") format("woff2"); }
+
+  .ins{
+    --bone:oklch(0.964 0.004 240); --panel:oklch(0.996 0.002 240);
+    --ink:oklch(0.235 0.013 250); --soft:oklch(0.455 0.012 250); --faint:oklch(0.6 0.01 250);
+    --line:oklch(0.9 0.006 250); --line2:oklch(0.84 0.008 250);
+    --green:oklch(0.45 0.077 162); --greenwash:oklch(0.95 0.03 165);
+    --teal:oklch(0.58 0.088 206); --tealwash:oklch(0.95 0.03 206);
+    --amber:oklch(0.70 0.125 72); --amberwash:oklch(0.95 0.05 78);
+    background:var(--bone); color:var(--ink);
+    font-family:'Hanken Grotesk',system-ui,sans-serif; font-size:15px; line-height:1.5;
+    -webkit-font-smoothing:antialiased;
+  }
+  .ins { --accent: var(--green); }
+  .ins[data-app="raid"]  { --accent: var(--amber); }
+  .ins[data-app="signal"]{ --accent: var(--green); }
+  .ins[data-app="retro"] { --accent: var(--teal); }
+  .ins[data-app="poker"] { --accent: var(--ink); }
+  .ins *{box-sizing:border-box; margin:0;}
+  .ins h1,.ins h2,.ins h3,.ins .disp{font-family:'Bricolage Grotesque',sans-serif; font-weight:700; letter-spacing:-0.02em;}
+  .ins .mono{font-family:'IBM Plex Mono',monospace;}
+  .ins .micro{font-family:'IBM Plex Mono',monospace; font-size:11px; letter-spacing:0.16em; text-transform:uppercase; color:var(--faint); font-weight:500;}
+  .ins .topbar{display:flex; align-items:center; justify-content:space-between; padding:14px 40px; border-bottom:1px solid var(--line2); background:var(--panel);}
+  .ins .brand{display:flex; align-items:center; gap:10px; font-family:'Bricolage Grotesque',sans-serif; font-size:18px; font-weight:700; letter-spacing:-0.02em; white-space:nowrap; flex-shrink:0;}
+  .ins .tbacts-x{}
+  .ins .brand .mk{color:var(--green); display:flex;}
+  .ins .tbacts{display:flex; gap:8px; align-items:center;}
+  .ins .btn{font-family:'Hanken Grotesk',sans-serif; font-size:13.5px; font-weight:600; border-radius:6px; padding:9px 16px; border:1px solid transparent; cursor:pointer; display:inline-flex; align-items:center; gap:7px; line-height:1; text-decoration:none; white-space:nowrap;}
+  .ins .btn-pri{background:var(--green); color:#fff;}
+  .ins .btn-ghost{background:var(--panel); color:var(--ink); border-color:var(--line2);}
+  .ins .btn-sm{padding:7px 12px; font-size:12.5px;}
+  .ins .btn-danger{background:var(--panel); color:oklch(0.5 0.13 25); border-color:var(--line2);}
+  .ins .band{position:relative; overflow:hidden; background:var(--panel); border-bottom:1px solid var(--line2);}
+  .ins .waves{position:absolute; inset:0; color:var(--green);}
+  .ins .waves-drift{animation:insdrift 9s linear infinite;}
+  @keyframes insdrift{to{transform:translateX(-600px);}}
+  @media (prefers-reduced-motion:reduce){.ins .waves-drift{animation:none;}}
+  .ins .band-in{position:relative; padding:34px 40px 30px; max-width:1120px; margin:0 auto;}
+  .ins .eyebrow{font-family:'IBM Plex Mono',monospace; font-size:11px; letter-spacing:0.2em; text-transform:uppercase; color:var(--teal); font-weight:600;}
+  .ins .band h1{font-size:44px; line-height:1.0; margin:8px 0 4px;}
+  .ins .band .sub{color:var(--soft); font-size:15px;}
+  .ins .page{max-width:1120px; margin:0 auto; padding:30px 40px 40px; display:flex; flex-direction:column; gap:18px;}
+  .ins .card{background:var(--panel); border:1px solid var(--line2); border-radius:10px; padding:24px 26px;}
+  .ins .card h2{font-size:21px;}
+  .ins .lede{color:var(--soft); font-size:14px;}
+  .ins .pill{font-family:'IBM Plex Mono',monospace; font-size:10.5px; font-weight:600; letter-spacing:0.08em; text-transform:uppercase; padding:4px 9px; border-radius:5px; display:inline-flex; align-items:center; gap:5px;}
+  .ins .pill-ok{background:var(--greenwash); color:var(--green);}
+  .ins .pill-flag{background:var(--amberwash); color:oklch(0.5 0.12 60);}
+  .ins .pill-closed{background:oklch(0.93 0.006 250); color:var(--faint);}
+  .ins .keybox{font-family:'IBM Plex Mono',monospace; font-size:13px; background:var(--bone); border:1px solid var(--line2); border-radius:7px; padding:12px 14px; color:var(--soft);}
+  .ins .footer{border-top:1px solid var(--line2); padding:20px 40px; text-align:center; color:var(--faint); font-size:12.5px;}
+  .ins a.lnk{color:var(--green); text-decoration:none; border-bottom:1px solid color-mix(in oklab,var(--green) 30%,transparent);}
+  .ins .field{display:flex; flex-direction:column; gap:7px;}
+  .ins .label{font-size:13px; font-weight:600; color:var(--ink);}
+  .ins .input{font-family:'Hanken Grotesk',sans-serif; font-size:15px; padding:12px 14px; border:1px solid var(--line2); border-radius:8px; background:var(--bone); color:var(--ink); width:100%;}
+  .ins .input::placeholder{color:var(--faint);}
+  .ins .input:focus{outline:none; border-color:var(--green); box-shadow:0 0 0 3px var(--greenwash);}
+  .ins .helper{font-size:13px; color:var(--faint);}
+  .ins .notice{font-size:13px; padding:10px 13px; border-radius:8px; background:var(--tealwash); color:var(--ink); border:1px solid color-mix(in oklab,var(--teal) 28%,var(--line2)); display:flex; gap:8px; align-items:flex-start;}
+  .ins .tok-row{display:grid; grid-template-columns:46px 1fr auto; align-items:center; gap:14px; padding:10px 0; border-top:1px solid var(--line);}
+  .ins .swatch{width:46px; height:34px; border-radius:7px; border:1px solid var(--line2);}
+  .ins .authwrap{min-height:100%; display:flex; align-items:center; justify-content:center; padding:48px 40px;}
+  .ins .authcard{display:grid; grid-template-columns:0.92fr 1.08fr; width:100%; max-width:940px; background:var(--panel); border:1px solid var(--line2); border-radius:16px; overflow:hidden; box-shadow:0 30px 70px -50px oklch(0.3 0.05 240 / 0.8);}
+  .ins .authleft{position:relative; overflow:hidden; background:linear-gradient(160deg,var(--green),oklch(0.36 0.07 168)); color:#fff; padding:38px 34px; display:flex; flex-direction:column; justify-content:space-between;}
+  .ins .authleft .waves{color:oklch(0.85 0.06 200); opacity:0.38;}
+  .ins .authright{padding:44px 42px; display:flex; flex-direction:column; justify-content:center; gap:18px;}

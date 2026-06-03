@@ -1,0 +1,30 @@
+<svg xmlns="http://www.w3.org/2000/svg" style="display:none">
+  <symbol id="glyph-suite" viewBox="0 0 24 24" fill="none">
+    <g fill="currentColor">
+      <rect x="3" y="3" width="7.5" height="7.5" rx="2"/>
+      <rect x="13.5" y="3" width="7.5" height="7.5" rx="2" opacity="0.55"/>
+      <rect x="3" y="13.5" width="7.5" height="7.5" rx="2" opacity="0.55"/>
+      <rect x="13.5" y="13.5" width="7.5" height="7.5" rx="2"/>
+    </g>
+  </symbol>
+  <symbol id="glyph-raid" viewBox="0 0 24 24" fill="none">
+    <rect x="12" y="2.5" width="13.4" height="13.4" rx="2.5" transform="rotate(45 12 2.5)" stroke="currentColor" stroke-width="2"/>
+    <circle cx="12" cy="12" r="2" fill="currentColor"/>
+  </symbol>
+  <symbol id="glyph-signal" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
+    <path d="M4 16a8 8 0 0 1 16 0" opacity="0.45"/>
+    <path d="M7.5 16a4.5 4.5 0 0 1 9 0" opacity="0.75"/>
+    <circle cx="12" cy="16" r="1.6" fill="currentColor" stroke="none"/>
+  </symbol>
+  <symbol id="glyph-retro" viewBox="0 0 24 24" fill="none">
+    <g fill="currentColor">
+      <rect x="3.5" y="9" width="4.2" height="11" rx="1.4"/>
+      <rect x="9.9" y="5" width="4.2" height="15" rx="1.4" opacity="0.62"/>
+      <rect x="16.3" y="12" width="4.2" height="8" rx="1.4"/>
+    </g>
+  </symbol>
+  <symbol id="glyph-poker" viewBox="0 0 24 24" fill="none">
+    <rect x="6.5" y="4" width="11" height="15" rx="2.4" transform="rotate(-9 12 11.5)" stroke="currentColor" stroke-width="2" opacity="0.5"/>
+    <rect x="7.5" y="6" width="11" height="15" rx="2.4" transform="rotate(7 12 13)" fill="currentColor"/>
+  </symbol>
+</svg>
