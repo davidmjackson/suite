@@ -38,7 +38,8 @@ test("GET /company/:slug renders the console for an owner", async () => {
   assert.match(res.text, /Acme/);
   assert.match(res.text, /owner@b\.c/);
   assert.match(res.text, /Squad A/);
-  assert.match(res.text, /Back to dashboard/);
+  assert.match(res.text, /Dashboard/);
+  assert.match(res.text, /class="table"/);
 });
 
 test("GET /company/:slug is 403 for a plain member", async () => {
