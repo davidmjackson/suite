@@ -1,6 +1,6 @@
 <%~ include("../partials/header", { title: "Admin · Users", user: it.user }) %>
 <nav style="margin-bottom:24px;">
-<a href="/admin">Users</a> · <a href="/admin/sessions">Active sessions</a> · <a href="/admin/audit">Audit log</a> · <a href="/admin/companies">Companies &amp; requests</a>
+<a href="/dashboard">← Back to dashboard</a> · <a href="/admin">Users</a> · <a href="/admin/sessions">Active sessions</a> · <a href="/admin/audit">Audit log</a> · <a href="/admin/companies">Companies &amp; requests</a>
 </nav>
 <div class="card">
 <h2>Add user</h2>

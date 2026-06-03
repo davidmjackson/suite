@@ -108,9 +108,22 @@ export function mountAdmin(app, { emailSender } = {}) {
     const companies = org.listAllCompanies();
     const appsByCompany = {};
     for (const c of companies) appsByCompany[c.id] = ent.listCompanyApps(c.id);
-    const requests = reqs.listByStatus("pending").map((r) => ({
+    const pending = reqs.listByStatus("pending");
+    // Flag likely-duplicate requests so the operator doesn't provision a second
+    // company for the same person/name: same email across pending requests, or a
+    // requested company name that already matches an existing company.
+    const norm = (s) => (s || "").trim().toLowerCase();
+    const emailCounts = new Map();
+    for (const r of pending) {
+      const k = norm(r.email);
+      if (k) emailCounts.set(k, (emailCounts.get(k) || 0) + 1);
+    }
+    const existingNames = new Set(companies.map((c) => norm(c.name)));
+    const requests = pending.map((r) => ({
       ...r,
       appsLabel: r.apps_interest ? safeAppsLabel(r.apps_interest) : null,
+      dupeEmail: !!norm(r.email) && emailCounts.get(norm(r.email)) > 1,
+      existingCompany: !!norm(r.company_name) && existingNames.has(norm(r.company_name)),
     }));
     res.render("admin/companies", { user: req.user, companies, appsByCompany, requests });
   });
