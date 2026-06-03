@@ -1,0 +1,15 @@
+/* hub.css — hub-specific composition layered over instrument-core.css */
+.ins .applist{display:grid; grid-template-columns:repeat(auto-fit,minmax(240px,1fr)); gap:16px;}
+.ins .apptile{display:flex; flex-direction:column; gap:8px; text-decoration:none; color:var(--ink); transition:border-color .15s;}
+.ins .apptile:hover{border-color:var(--green);}
+.ins .apptile h3{display:flex; align-items:center; gap:10px; font-size:18px;}
+.ins .apptile .glyph{color:var(--green); flex-shrink:0;}
+.ins .apptile p{color:var(--soft); font-size:14px;}
+.ins .apptile.is-locked{opacity:0.62;}
+.ins .apptile.is-locked:hover{border-color:var(--line2);}
+.ins button.apptile{width:100%; text-align:left; cursor:pointer; font-family:inherit;}
+.ins form.tileform{margin:0;}
+.ins .subnav{display:flex; flex-wrap:wrap; gap:16px; align-items:center; font-size:14px;}
+.ins ul.plain{list-style:none; display:flex; flex-direction:column; gap:8px;}
+.ins ul.plain li{display:flex; align-items:center; gap:10px;}
+.ins .authwrap{min-height:78vh;}

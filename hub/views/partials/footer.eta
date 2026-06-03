@@ -1,4 +1,4 @@
 <!-- views/partials/footer.eta -->
 </main>
-<footer><small>Sprint Suite</small></footer>
+<footer class="footer">Sprint Suite</footer>
 </body></html>

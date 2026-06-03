@@ -1,0 +1,8 @@
+<!-- views/partials/admin-nav.eta -->
+<nav class="subnav">
+<a class="lnk" href="/dashboard">← Dashboard</a>
+<a class="lnk" href="/admin">Users</a>
+<a class="lnk" href="/admin/sessions">Active sessions</a>
+<a class="lnk" href="/admin/audit">Audit log</a>
+<a class="lnk" href="/admin/companies">Companies &amp; requests</a>
+</nav>
