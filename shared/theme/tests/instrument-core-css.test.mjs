@@ -9,6 +9,7 @@ const css = readFileSync(join(dirname(fileURLToPath(import.meta.url)), "../instr
 test("defines a table component", () => {
   assert.match(css, /\.ins table\.table\b/);
   assert.match(css, /\.ins \.table-wrap\b/);
+  assert.match(css, /\.ins \.table-wrap\{[^}]*overflow-x\s*:\s*auto/);
 });
 
 test("styles select, textarea and checkbox-list form controls", () => {
