@@ -1,0 +1,74 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Instrument — Style Guide</title>
+<link rel="stylesheet" href="./instrument-core.css">
+</head>
+<body class="ins" data-app="signal">
+  <header class="topbar">
+    <span class="brand"><span class="mk"><svg width="22" height="22"><use href="./glyphs.svg#glyph-suite"/></svg></span>Sprint Suite</span>
+    <span class="tbacts"><a class="btn btn-ghost btn-sm">Sign out</a></span>
+  </header>
+  <div class="band">
+    <div class="waves" aria-hidden="true"></div>
+    <div class="band-in">
+      <p class="eyebrow">Style Guide</p>
+      <h1>Instrument foundation</h1>
+      <p class="sub">Every token and component, foundation files only.</p>
+    </div>
+  </div>
+
+  <div class="page">
+    <div class="card">
+      <h2>Colour tokens</h2>
+      <div class="tok-row"><span class="swatch" style="background:var(--bone)"></span><span>--bone</span><span class="mono">ground</span></div>
+      <div class="tok-row"><span class="swatch" style="background:var(--green)"></span><span>--green</span><span class="mono">primary</span></div>
+      <div class="tok-row"><span class="swatch" style="background:var(--teal)"></span><span>--teal</span><span class="mono">signal</span></div>
+      <div class="tok-row"><span class="swatch" style="background:var(--amber)"></span><span>--amber</span><span class="mono">flag</span></div>
+      <div class="tok-row"><span class="swatch" style="background:var(--ink)"></span><span>--ink</span><span class="mono">text</span></div>
+    </div>
+
+    <div class="card">
+      <h2>Type</h2>
+      <p class="disp" style="font-size:44px">Display 44 — Bricolage</p>
+      <p>Body 15 — Hanken Grotesk. The quick brown fox jumps over the lazy dog.</p>
+      <p class="micro">MICRO — IBM PLEX MONO</p>
+    </div>
+
+    <div class="card">
+      <h2>Buttons &amp; pills</h2>
+      <p>
+        <button class="btn btn-pri">Primary</button>
+        <button class="btn btn-ghost">Ghost</button>
+        <button class="btn btn-danger">Danger</button>
+      </p>
+      <p>
+        <span class="pill pill-ok">Open</span>
+        <span class="pill pill-flag">Flagged</span>
+        <span class="pill pill-closed">Closed</span>
+      </p>
+    </div>
+
+    <div class="card">
+      <h2>Form</h2>
+      <div class="field"><label class="label">Email</label><input class="input" placeholder="you@example.com"><span class="helper">We send a magic link.</span></div>
+      <p class="notice">A teal notice, for hints and confirmations.</p>
+    </div>
+
+    <div class="card">
+      <h2>App glyphs</h2>
+      <p style="display:flex; gap:18px; color:var(--green)">
+        <svg width="30" height="30"><use href="./glyphs.svg#glyph-suite"/></svg>
+        <svg width="30" height="30"><use href="./glyphs.svg#glyph-raid"/></svg>
+        <svg width="30" height="30"><use href="./glyphs.svg#glyph-signal"/></svg>
+        <svg width="30" height="30"><use href="./glyphs.svg#glyph-retro"/></svg>
+        <svg width="30" height="30"><use href="./glyphs.svg#glyph-poker"/></svg>
+      </p>
+    </div>
+  </div>
+  <footer class="footer">Instrument foundation · preview</footer>
+  <script type="module" src="./oscilloscope.js"></script>
+</body>
+</html>
