@@ -11,6 +11,9 @@ build/
 *.swp
 .claude/
 
+# Brainstorming visual-companion artifacts
+.superpowers/
+
 # Design workspace — source-of-truth zips + extracted "Instrument" handoff,
 # large assets/screenshots. Kept out of the repo; shippable CSS/tokens get
 # integrated into each app's source tree during the redesign build.
