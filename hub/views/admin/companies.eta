@@ -1,6 +1,6 @@
 <%~ include("../partials/header", { title: "Admin · Companies", user: it.user }) %>
 <nav style="margin-bottom:24px;">
-<a href="/admin">Users</a> · <a href="/admin/sessions">Active sessions</a> · <a href="/admin/audit">Audit log</a> · <a href="/admin/companies">Companies &amp; requests</a>
+<a href="/dashboard">← Back to dashboard</a> · <a href="/admin">Users</a> · <a href="/admin/sessions">Active sessions</a> · <a href="/admin/audit">Audit log</a> · <a href="/admin/companies">Companies &amp; requests</a>
 </nav>
 <div class="card">
 <h2>Pending requests (<%= it.requests.length %>)</h2>
@@ -10,9 +10,9 @@
 <tbody>
 <% for (const r of it.requests) { %>
 <tr>
-<td><%= r.company_name %></td>
+<td><%= r.company_name %><% if (r.existingCompany) { %> <span style="color:#b45309;font-size:12px;" title="A company with this name already exists">⚠ existing company</span><% } %></td>
 <td><%= r.contact_name %></td>
-<td><%= r.email %></td>
+<td><%= r.email %><% if (r.dupeEmail) { %> <span style="color:#b45309;font-size:12px;" title="Another pending request uses this email">⚠ duplicate email</span><% } %></td>
 <td><%= r.appsLabel || "—" %></td>
 <td>
 <form method="POST" action="/admin/requests/<%= r.id %>/approve" style="display:inline;"><button class="btn" type="submit">Approve</button></form>

@@ -86,6 +86,36 @@ test("approve still succeeds (302) when no emailSender is wired", async () => {
   assert.ok(db.prepare("SELECT 1 FROM companies WHERE slug='ibm'").get());
 });
 
+test("pending requests sharing an email are flagged as duplicates", async () => {
+  const { app, db, sid } = await setup();
+  const ar = createAccessRequests(db);
+  ar.createRequest({ companyName: "Acme", contactName: "A", email: "dup@acme.com" });
+  ar.createRequest({ companyName: "Acme Two", contactName: "B", email: "dup@acme.com" });
+  const res = await request(app).get("/admin/companies").set("Cookie", `hub_session=${sid}`);
+  assert.equal(res.status, 200);
+  assert.match(res.text, /duplicate email/i);
+});
+
+test("a pending request whose company name already exists is flagged", async () => {
+  const { app, db, sid } = await setup();
+  const ar = createAccessRequests(db);
+  // Provision an existing 'Globex' company by approving a first request.
+  const first = ar.createRequest({ companyName: "Globex", contactName: "G", email: "g@globex.com" });
+  await request(app).post(`/admin/requests/${first.id}/approve`).set("Cookie", `hub_session=${sid}`);
+  // A new pending request reuses the same company name.
+  ar.createRequest({ companyName: "Globex", contactName: "H", email: "h@globex.com" });
+  const res = await request(app).get("/admin/companies").set("Cookie", `hub_session=${sid}`);
+  assert.match(res.text, /existing company/i);
+});
+
+test("a lone pending request is not falsely flagged as a duplicate", async () => {
+  const { app, db, sid } = await setup();
+  createAccessRequests(db).createRequest({ companyName: "Initech", contactName: "P", email: "p@initech.com" });
+  const res = await request(app).get("/admin/companies").set("Cookie", `hub_session=${sid}`);
+  assert.doesNotMatch(res.text, /duplicate email/i);
+  assert.doesNotMatch(res.text, /existing company/i);
+});
+
 test("pending request shows a human-readable apps label, not raw JSON", async () => {
   const { app, db, sid } = await setup();
   createAccessRequests(db).createRequest({ companyName: "IBM", contactName: "James", email: "james@ibm.com", appsInterest: ["poker", "retro"] });
