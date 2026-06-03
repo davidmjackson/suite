@@ -14,3 +14,12 @@ test("GET / renders landing page with all four apps", async () => {
   assert.match(res.text, /Sprintpoker/);
   assert.match(res.text, /Sign in/);
 });
+
+test("landing uses the band and app glyphs", async () => {
+  const { app } = await buildTestApp();
+  const res = await request(app).get("/");
+  assert.equal(res.status, 200);
+  assert.match(res.text, /class="band"/);
+  assert.match(res.text, /glyph-raid/);
+  assert.match(res.text, /class="card apptile"/);
+});
