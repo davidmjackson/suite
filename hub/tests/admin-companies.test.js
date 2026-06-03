@@ -33,6 +33,8 @@ test("admin sees companies and pending requests", async () => {
   assert.equal(res.status, 200);
   assert.match(res.text, /IBM/);
   assert.match(res.text, /james@ibm.com/);
+  assert.match(res.text, /class="table"/);
+  assert.match(res.text, /class="subnav"/);
 });
 
 test("approve provisions and emails the CR", async () => {

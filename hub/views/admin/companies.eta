@@ -1,42 +1,40 @@
 <%~ include("../partials/header", { title: "Admin · Companies", user: it.user }) %>
-<nav style="margin-bottom:24px;">
-<a href="/dashboard">← Back to dashboard</a> · <a href="/admin">Users</a> · <a href="/admin/sessions">Active sessions</a> · <a href="/admin/audit">Audit log</a> · <a href="/admin/companies">Companies &amp; requests</a>
-</nav>
+<%~ include("../partials/admin-nav") %>
 <div class="card">
 <h2>Pending requests (<%= it.requests.length %>)</h2>
-<% if (it.requests.length === 0) { %><p class="muted">No pending requests.</p><% } else { %>
-<table>
+<% if (it.requests.length === 0) { %><p class="lede">No pending requests.</p><% } else { %>
+<div class="table-wrap"><table class="table">
 <thead><tr><th>Company</th><th>Contact</th><th>Email</th><th>Apps</th><th></th></tr></thead>
 <tbody>
 <% for (const r of it.requests) { %>
 <tr>
-<td><%= r.company_name %><% if (r.existingCompany) { %> <span style="color:#b45309;font-size:12px;" title="A company with this name already exists">⚠ existing company</span><% } %></td>
+<td><%= r.company_name %><% if (r.existingCompany) { %> <span class="pill pill-flag" title="A company with this name already exists">existing company</span><% } %></td>
 <td><%= r.contact_name %></td>
-<td><%= r.email %><% if (r.dupeEmail) { %> <span style="color:#b45309;font-size:12px;" title="Another pending request uses this email">⚠ duplicate email</span><% } %></td>
+<td><%= r.email %><% if (r.dupeEmail) { %> <span class="pill pill-flag" title="Another pending request uses this email">duplicate email</span><% } %></td>
 <td><%= r.appsLabel || "—" %></td>
-<td>
-<form method="POST" action="/admin/requests/<%= r.id %>/approve" style="display:inline;"><button class="btn" type="submit">Approve</button></form>
-<form method="POST" action="/admin/requests/<%= r.id %>/reject" style="display:inline;" onsubmit="return confirm('Reject this request?')"><button class="btn danger" type="submit">Reject</button></form>
-</td>
+<td><div class="tbacts">
+<form method="POST" action="/admin/requests/<%= r.id %>/approve"><button class="btn btn-pri btn-sm" type="submit">Approve</button></form>
+<form method="POST" action="/admin/requests/<%= r.id %>/reject" onsubmit="return confirm('Reject this request?')"><button class="btn btn-danger btn-sm" type="submit">Reject</button></form>
+</div></td>
 </tr>
 <% } %>
-</tbody></table>
+</tbody></table></div>
 <% } %>
 </div>
 <div class="card">
 <h2>Companies (<%= it.companies.length %>)</h2>
-<table>
+<div class="table-wrap"><table class="table">
 <thead><tr><th>Name</th><th>Slug</th><th>Status</th><th>Members</th><th>Apps</th></tr></thead>
 <tbody>
 <% for (const c of it.companies) { %>
 <tr>
-<td><a href="/company/<%= c.slug %>"><%= c.name %></a></td>
-<td><%= c.slug %></td>
-<td><%= c.status %></td>
+<td><a class="lnk" href="/company/<%= c.slug %>"><%= c.name %></a></td>
+<td class="mono"><%= c.slug %></td>
+<td><span class="pill <%= c.status === 'active' ? 'pill-ok' : 'pill-closed' %>"><%= c.status %></span></td>
 <td><%= c.memberCount %></td>
 <td><%= (it.appsByCompany[c.id] || []).join(", ") || "—" %></td>
 </tr>
 <% } %>
-</tbody></table>
+</tbody></table></div>
 </div>
 <%~ include("../partials/footer") %>
