@@ -74,3 +74,14 @@ test("POST /request with a bad email re-renders with entered values restored", a
   assert.match(res.text, /value="poker" checked/);
   assert.match(res.text, /keep me/);
 });
+
+test("request form uses Instrument fields, select, checks and textarea", async () => {
+  const { app } = await setup();
+  const res = await request(app).get("/request");
+  assert.equal(res.status, 200);
+  assert.match(res.text, /class="field"/);
+  assert.match(res.text, /class="checks"/);
+  assert.match(res.text, /<select class="input" name="team_size"/);
+  assert.match(res.text, /<textarea class="input" name="message"/);
+  assert.match(res.text, /name="website"/); // honeypot preserved
+});

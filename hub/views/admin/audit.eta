@@ -1,21 +1,19 @@
 <%~ include("../partials/header", { title: "Admin · Audit", user: it.user }) %>
-<nav style="margin-bottom:24px;">
-<a href="/dashboard">← Back to dashboard</a> · <a href="/admin">Users</a> · <a href="/admin/sessions">Active sessions</a> · <a href="/admin/audit">Audit log</a> · <a href="/admin/companies">Companies &amp; requests</a>
-</nav>
+<%~ include("../partials/admin-nav") %>
 <div class="card">
 <h2>Recent audit events</h2>
-<table>
+<div class="table-wrap"><table class="table">
 <thead><tr><th>When</th><th>Event</th><th>User</th><th>App</th><th>IP</th></tr></thead>
 <tbody>
 <% for (const e of it.events) { %>
 <tr>
-<td><%= new Date(e.created_at).toISOString().slice(0,19).replace("T"," ") %></td>
+<td class="mono"><%= new Date(e.created_at).toISOString().slice(0,19).replace("T"," ") %></td>
 <td><%= e.event_type %></td>
-<td class="muted"><%= e.email || e.user_id || "—" %></td>
+<td><%= e.email || e.user_id || "—" %></td>
 <td><%= e.app || "—" %></td>
-<td class="muted"><%= e.ip || "—" %></td>
+<td><%= e.ip || "—" %></td>
 </tr>
 <% } %>
-</tbody></table>
+</tbody></table></div>
 </div>
 <%~ include("../partials/footer") %>

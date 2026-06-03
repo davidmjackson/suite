@@ -1,21 +1,19 @@
 <%~ include("../partials/header", { title: "Admin · Sessions", user: it.user }) %>
-<nav style="margin-bottom:24px;">
-<a href="/dashboard">← Back to dashboard</a> · <a href="/admin">Users</a> · <a href="/admin/sessions">Active sessions</a> · <a href="/admin/audit">Audit log</a> · <a href="/admin/companies">Companies &amp; requests</a>
-</nav>
+<%~ include("../partials/admin-nav") %>
 <div class="card">
 <h2>Active sessions (<%= it.sessions.length %>)</h2>
-<table>
+<div class="table-wrap"><table class="table">
 <thead><tr><th>User</th><th>Created</th><th>Last heartbeat</th><th>IP</th><th></th></tr></thead>
 <tbody>
 <% for (const s of it.sessions) { %>
 <tr>
 <td><%= s.email %></td>
-<td><%= new Date(s.created_at).toISOString().slice(0,19).replace("T"," ") %></td>
-<td><%= new Date(s.last_heartbeat_at).toISOString().slice(0,19).replace("T"," ") %></td>
-<td class="muted"><%= s.ip || "—" %></td>
-<td><form method="POST" action="/admin/sessions/<%= s.id %>/kill" style="display:inline;"><button class="btn danger">Kill</button></form></td>
+<td class="mono"><%= new Date(s.created_at).toISOString().slice(0,19).replace("T"," ") %></td>
+<td class="mono"><%= new Date(s.last_heartbeat_at).toISOString().slice(0,19).replace("T"," ") %></td>
+<td><%= s.ip || "—" %></td>
+<td><form method="POST" action="/admin/sessions/<%= s.id %>/kill"><button class="btn btn-danger btn-sm">Kill</button></form></td>
 </tr>
 <% } %>
-</tbody></table>
+</tbody></table></div>
 </div>
 <%~ include("../partials/footer") %>

@@ -1,25 +1,22 @@
-<%~ include("partials/header", { title: "Dashboard", user: it.user }) %>
-<h1>Your apps</h1>
-<section class="grid-4">
+<%~ include("partials/header", { title: "Dashboard", user: it.user, band: { eyebrow: "Dashboard", title: "Your apps" } }) %>
+<section class="applist">
 <% it.apps.forEach(function (a) { %>
   <% if (a.entitled) { %>
-  <form method="POST" action="/launch/<%= a.key %>"><button class="tile" type="submit" style="width:100%;text-align:left;cursor:pointer;border:1px solid var(--border);">
-  <h3><%= a.icon %> <%= a.name %></h3><p><%= a.desc %></p></button></form>
+  <form class="tileform" method="POST" action="/launch/<%= a.key %>"><button class="card apptile" type="submit"><h3><svg class="glyph" width="26" height="26" aria-hidden="true"><use href="/illos/glyphs.svg#glyph-<%= a.key %>"/></svg> <%= a.name %></h3><p><%= a.desc %></p></button></form>
   <% } else { %>
-  <div class="tile" style="width:100%;text-align:left;border:1px solid var(--border);opacity:0.55;">
-  <h3><%= a.icon %> <%= a.name %></h3><p><%= a.desc %></p><p><em>Request access</em></p></div>
+  <div class="card apptile is-locked"><h3><svg class="glyph" width="26" height="26" aria-hidden="true"><use href="/illos/glyphs.svg#glyph-<%= a.key %>"/></svg> <%= a.name %></h3><p><%= a.desc %></p><p><span class="pill pill-closed">Request access</span></p></div>
   <% } %>
 <% }); %>
 </section>
 <% if (it.manageable && it.manageable.length) { %>
-<section style="margin-top:32px;">
+<section class="card">
 <h2>Manage</h2>
-<ul>
+<ul class="plain">
 <% it.manageable.forEach(function (c) { %>
-<li><a href="/company/<%= c.slug %>">Manage <%= c.name %></a> (<%= c.role %>)</li>
+<li><a class="lnk" href="/company/<%= c.slug %>"><%= c.name %></a> <span class="micro"><%= c.role %></span></li>
 <% }); %>
 </ul>
 </section>
 <% } %>
-<% if (it.user.isAdmin) { %><p style="margin-top:32px;"><a href="/admin">Admin</a></p><% } %>
+<% if (it.user.isAdmin) { %><p><a class="lnk" href="/admin">Admin console →</a></p><% } %>
 <%~ include("partials/footer") %>

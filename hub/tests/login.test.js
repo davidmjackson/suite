@@ -19,6 +19,15 @@ test("GET /login renders the email form", async () => {
   assert.match(res.text, /name="email"/);
 });
 
+test("login renders the Instrument auth card", async () => {
+  const { app } = await buildWithLogin();
+  const res = await request(app).get("/login");
+  assert.equal(res.status, 200);
+  assert.match(res.text, /class="authcard"/);
+  assert.match(res.text, /class="authleft"/);
+  assert.match(res.text, /name="email"/);
+});
+
 test("POST /login with unknown email still renders check-email (no leak)", async () => {
   const { app, db } = await buildWithLogin();
   const res = await request(app).post("/login").type("form").send({ email: "unknown@test.com.com" });

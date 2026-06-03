@@ -1,18 +1,33 @@
 <!-- views/partials/header.eta -->
 <!doctype html>
-<html><head>
+<html lang="en"><head>
 <meta charset="utf-8">
 <title><%= it.title || "Sprint Suite" %></title>
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<link rel="stylesheet" href="/styles.css">
+<link rel="stylesheet" href="/css/instrument-core.css">
+<link rel="stylesheet" href="/hub.css">
+<script type="module" src="/js/oscilloscope.js"></script>
 </head>
-<body>
+<body class="ins">
+<% if (!it.bare) { %>
 <header class="topbar">
-  <a href="/" class="brand">Sprint Suite</a>
+  <a href="/" class="brand"><svg class="mk" width="22" height="22" aria-hidden="true"><use href="/illos/glyphs.svg#glyph-suite"/></svg> Sprint Suite</a>
+  <nav class="tbacts">
   <% if (it.user) { %>
-    <nav><span class="email"><%= it.user.email %></span> · <a href="/logout">Sign out</a></nav>
+    <span class="micro"><%= it.user.email %></span> <a class="btn btn-ghost btn-sm" href="/logout">Sign out</a>
   <% } else { %>
-    <nav><a href="/login">Sign in</a></nav>
+    <a class="btn btn-ghost btn-sm" href="/login">Sign in</a>
   <% } %>
+  </nav>
 </header>
-<main>
+<% if (it.band) { %>
+<div class="band"><div class="waves"></div><div class="band-in">
+  <% if (it.band.eyebrow) { %><div class="eyebrow"><%= it.band.eyebrow %></div><% } %>
+  <h1><%= it.band.title %></h1>
+  <% if (it.band.sub) { %><p class="sub"><%= it.band.sub %></p><% } %>
+</div></div>
+<% } %>
+<main class="page">
+<% } else { %>
+<main class="authwrap">
+<% } %>
