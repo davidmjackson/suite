@@ -96,6 +96,13 @@ test("feature rows carry the SEO payload terms and real alt text", async () => {
   for (const term of ["RAID log", "team health check", "retrospective", "scrum poker"]) {
     assert.match(res.text, new RegExp(term, "i"));
   }
-  assert.match(res.text, /alt="Sprintraid RAID log with risks, assumptions, issues and a flagged dependency conflict"/);
+  for (const alt of [
+    "Sprintraid RAID log with risks, assumptions, issues and a flagged dependency conflict",
+    "Sprintsignal health check radar chart and focus areas",
+    "Sprintretro Start Stop Continue board with stat cards and timer",
+    "Sprintpoker estimation room with face-up and face-down cards",
+  ]) {
+    assert.ok(res.text.includes(`alt="${alt}"`), `alt present: ${alt}`);
+  }
   assert.doesNotMatch(res.text, /data:image\//, "no base64 images in production template");
 });

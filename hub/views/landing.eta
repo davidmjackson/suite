@@ -88,7 +88,7 @@
   </div>
 </section>
 
-<section class="features" id="features">
+<section class="features" id="features" aria-label="App features">
   <div class="frow" data-app="raid">
     <div class="ftext">
       <p class="frow-eyebrow">Sprintraid</p>
@@ -101,7 +101,7 @@
       </ul>
     </div>
     <figure class="shot">
-      <div class="chrome"><i></i><i></i><i></i><span class="url">sprintraid.uk</span></div>
+      <div class="chrome" aria-hidden="true"><i></i><i></i><i></i><span class="url">sprintraid.uk</span></div>
       <img src="/img/shot-raid.png" width="1180" height="865" loading="lazy" decoding="async"
         alt="Sprintraid RAID log with risks, assumptions, issues and a flagged dependency conflict">
     </figure>
@@ -119,7 +119,7 @@
       </ul>
     </div>
     <figure class="shot">
-      <div class="chrome"><i></i><i></i><i></i><span class="url">sprintsignal.uk</span></div>
+      <div class="chrome" aria-hidden="true"><i></i><i></i><i></i><span class="url">sprintsignal.uk</span></div>
       <img src="/img/shot-signal.png" width="1090" height="475" loading="lazy" decoding="async"
         alt="Sprintsignal health check radar chart and focus areas">
     </figure>
@@ -137,7 +137,7 @@
       </ul>
     </div>
     <figure class="shot">
-      <div class="chrome"><i></i><i></i><i></i><span class="url">sprintretro.uk</span></div>
+      <div class="chrome" aria-hidden="true"><i></i><i></i><i></i><span class="url">sprintretro.uk</span></div>
       <img src="/img/shot-retro.png" width="1200" height="517" loading="lazy" decoding="async"
         alt="Sprintretro Start Stop Continue board with stat cards and timer">
     </figure>
@@ -155,7 +155,7 @@
       </ul>
     </div>
     <figure class="shot">
-      <div class="chrome"><i></i><i></i><i></i><span class="url">sprintpoker.uk</span></div>
+      <div class="chrome" aria-hidden="true"><i></i><i></i><i></i><span class="url">sprintpoker.uk</span></div>
       <img src="/img/shot-poker.png" width="738" height="220" loading="lazy" decoding="async"
         alt="Sprintpoker estimation room with face-up and face-down cards">
     </figure>
