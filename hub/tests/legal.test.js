@@ -17,5 +17,6 @@ for (const p of ["/privacy", "/terms", "/license"]) {
     const res = await request(app).get(p);
     assert.equal(res.status, 200);
     assert.match(res.text, /Sprint Suite/);
+    assert.match(res.text, /being finalised/);
   });
 }

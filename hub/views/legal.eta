@@ -1,6 +1,6 @@
 <%~ include("partials/header", { title: it.title + " — Sprint Suite", user: it.user, band: { eyebrow: "Sprint Suite", title: it.title, sub: "This page is coming soon." } }) %>
 <section class="card">
-  <p class="lede"><%= it.title %> terms for Sprint Suite are being finalised. In the meantime, contact us and we'll answer any questions directly.</p>
+  <p class="lede">Our <%= it.title %> page for Sprint Suite is being finalised. In the meantime, contact us and we'll answer any questions directly.</p>
   <p style="margin-top:14px"><a class="lnk" href="/">Back to home</a></p>
 </section>
 <%~ include("partials/footer") %>
