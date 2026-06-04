@@ -15,6 +15,10 @@ export async function renderAccessApprovedEmail({ url }) {
   return await eta.renderAsync("emails/access-approved", { url });
 }
 
+export async function renderAccessRequestNotificationEmail({ request, reviewUrl }) {
+  return await eta.renderAsync("emails/access-request-notification", { request, reviewUrl });
+}
+
 export function createEmailSender({ apiKey, from }) {
   const resend = new Resend(apiKey);
   return {
@@ -33,6 +37,15 @@ export function createEmailSender({ apiKey, from }) {
         from,
         to,
         subject: "You're approved — sign in to Sprint Suite",
+        html,
+      });
+    },
+    async sendAccessRequestNotification({ to, request, reviewUrl }) {
+      const html = await renderAccessRequestNotificationEmail({ request, reviewUrl });
+      return await resend.emails.send({
+        from,
+        to,
+        subject: `New Sprint Suite access request — ${request.companyName}`,
         html,
       });
     },
