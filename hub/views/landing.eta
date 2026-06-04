@@ -162,6 +162,21 @@
   </div>
 </section>
 
+<section class="faq" id="faq">
+  <h2 class="sec-h">Questions</h2>
+  <div class="qa"><h4>Is it really free?</h4><p>Sprint Suite is free to try as a showcase. Some apps cap usage or AI calls, so it's not unlimited — but you can sign in and use all four tools without paying.</p></div>
+  <div class="qa"><h4>Do I need a password?</h4><p>No. Sign-in is a passwordless magic link sent to your email. The same link both signs you up and signs you in.</p></div>
+  <div class="qa"><h4>Do my guests need accounts?</h4><p>No. Retrospectives and planning poker rooms can be shared with a link, so guests join without creating an account.</p></div>
+  <div class="qa"><h4>Where does my data go?</h4><p>Your data stays in Sprint Suite. There's no third-party tracking, and health-check submissions are anonymous.</p></div>
+  <div class="qa"><h4>Can I export?</h4><p>Yes. RAID logs export to Jira, CSV and Markdown so your work doesn't get stuck in another tool.</p></div>
+</section>
+
+<section class="close">
+  <h2>Four sharp tools, one passwordless login.</h2>
+  <p>Sign in to get started — no setup, no sprawl.</p>
+  <a class="btn btn-pri btn-lg" href="<%= it.signinUrl %>">Sign in to get started</a>
+</section>
+
 </main>
 
 </body>

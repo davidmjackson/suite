@@ -96,3 +96,13 @@
   .frow{grid-template-columns:1fr;gap:24px}
   .frow:nth-child(even) .ftext{order:0}
 }
+
+.faq{border-top:1px solid var(--line);padding:54px 0}
+.qa{padding:20px 0;border-top:1px solid var(--line)}
+.qa:last-child{border-bottom:1px solid var(--line)}
+.qa h4{font-family:'Hanken Grotesk',sans-serif;font-weight:600;font-size:16px}
+.qa p{color:var(--soft);font-size:14.5px;max-width:70ch;margin-top:6px}
+.close{text-align:center;background:var(--panel);border:1px solid var(--line2);
+  border-radius:16px;padding:40px;margin:20px 0 60px}
+.close h2{font-size:30px}
+.close p{color:var(--soft);margin:10px 0 22px}

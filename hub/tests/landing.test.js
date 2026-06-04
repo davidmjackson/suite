@@ -90,6 +90,14 @@ test("app grid shows four cards all linking to /login", async () => {
   assert.equal(cardLinks.length, 4, "four app cards link to /login");
 });
 
+test("FAQ uses 'free to try' framing and the closing CTA links to /login", async () => {
+  const { app } = await buildTestApp();
+  const res = await request(app).get("/");
+  assert.match(res.text, /free to try/i);
+  assert.doesNotMatch(res.text, /free forever/i);
+  assert.match(res.text, /class="close"[\s\S]*href="\/login"/);
+});
+
 test("feature rows carry the SEO payload terms and real alt text", async () => {
   const { app } = await buildTestApp();
   const res = await request(app).get("/");
