@@ -186,20 +186,20 @@
       <p>Four focused agile tools for scrum masters and delivery leads, behind one passwordless login.</p>
     </div>
     <nav class="lp-foot-col" aria-label="Apps">
-      <h2>Apps</h2>
+      <p class="lp-foot-h">Apps</p>
       <a href="<%= it.signinUrl %>">Sprintraid</a>
       <a href="<%= it.signinUrl %>">Sprintsignal</a>
       <a href="<%= it.signinUrl %>">Sprintretro</a>
       <a href="<%= it.signinUrl %>">Sprintpoker</a>
     </nav>
     <nav class="lp-foot-col" aria-label="Product">
-      <h2>Product</h2>
+      <p class="lp-foot-h">Product</p>
       <a href="#features">Features</a>
       <a href="#faq">FAQ</a>
       <a href="<%= it.signinUrl %>">Sign in</a>
     </nav>
     <nav class="lp-foot-col" aria-label="Legal">
-      <h2>Legal</h2>
+      <p class="lp-foot-h">Legal</p>
       <a href="/privacy">Privacy</a>
       <a href="/terms">Terms</a>
       <a href="/license">License</a>
