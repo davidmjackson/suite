@@ -22,6 +22,7 @@ export async function buildTestApp({ env = {} } = {}) {
 
   const { default: config } = await import("../config.js?t=" + Date.now());
   const app = express();
+  app.set("trust proxy", "loopback"); // mirror server.js (real client IP via X-Forwarded-For)
   const viewsDir = path.join(__dirname, "../views");
   const eta = new Eta({ views: viewsDir, cache: false });
   app.engine("eta", (fp, opts, cb) => {

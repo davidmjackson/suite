@@ -22,6 +22,11 @@ import { createEmailSender } from "./lib/email.js";
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const app = express();
 
+// Behind Apache on 127.0.0.1: trust the loopback proxy so req.ip reflects the
+// real client via X-Forwarded-For (per-IP rate limiting + accurate audit IPs).
+// Mirrored in tests/helpers.js — keep both in sync.
+app.set("trust proxy", "loopback");
+
 // Views
 const viewsDir = path.join(__dirname, "views");
 const eta = new Eta({ views: viewsDir, cache: config.nodeEnv === "production" });
