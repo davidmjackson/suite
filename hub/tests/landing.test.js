@@ -79,3 +79,13 @@ test("landing shows the four trust items", async () => {
   assert.match(res.text, /Exports to Jira, CSV &amp; Markdown/);
   assert.match(res.text, /No tracking, no clutter/);
 });
+
+test("app grid shows four cards all linking to /login", async () => {
+  const { app } = await buildTestApp();
+  const res = await request(app).get("/");
+  for (const name of ["Sprintraid", "Sprintsignal", "Sprintretro", "Sprintpoker"]) {
+    assert.match(res.text, new RegExp(name));
+  }
+  const cardLinks = (res.text.match(/class="appcard"[^>]*href="\/login"/g) || []);
+  assert.equal(cardLinks.length, 4, "four app cards link to /login");
+});

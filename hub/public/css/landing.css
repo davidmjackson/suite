@@ -45,3 +45,26 @@
 .trust-item{display:inline-flex;align-items:center;gap:8px}
 .trust .dot{width:6px;height:6px;border-radius:50%;background:var(--green);flex:0 0 auto}
 @media (max-width:720px){.trust-in{padding:14px 18px;gap:18px}}
+
+.section{padding:54px 0}
+.sec-h{font-size:28px;margin-bottom:24px}
+.appgrid{display:grid;grid-template-columns:1fr 1fr;gap:18px}
+.appcard{display:flex;gap:18px;background:var(--panel);border:1px solid var(--line2);
+  border-radius:10px;padding:24px 26px;text-decoration:none;color:var(--ink);
+  transition:border-color .12s,transform .12s}
+.appcard:hover{border-color:var(--green);transform:translateY(-2px)}
+.appcard .tile{width:52px;height:52px;flex:0 0 auto;border-radius:12px;background:var(--bone);
+  border:1px solid var(--line2);display:flex;align-items:center;justify-content:center;color:var(--accent)}
+.appcard[data-app="raid"]{--accent:var(--amber)}
+.appcard[data-app="signal"]{--accent:var(--green)}
+.appcard[data-app="retro"]{--accent:var(--teal)}
+.appcard[data-app="poker"]{--accent:var(--ink)}
+.appcard h3{font-size:21px;display:flex;align-items:center;gap:9px}
+.appcard p{color:var(--soft);font-size:14px;margin-top:7px}
+.tag{font-family:'IBM Plex Mono',monospace;font-size:10px;font-weight:600;letter-spacing:0.06em;
+  text-transform:uppercase;padding:3px 7px;border-radius:5px}
+.tag-raid{background:var(--amberwash);color:oklch(0.5 0.12 60)}
+.tag-signal{background:var(--greenwash);color:var(--green)}
+.tag-retro{background:var(--tealwash);color:var(--teal)}
+.tag-poker{background:oklch(0.93 0.006 250);color:var(--faint)}
+@media (max-width:720px){.appgrid{grid-template-columns:1fr}}
