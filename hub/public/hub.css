@@ -20,3 +20,7 @@
 .ins .formstack{display:flex; flex-direction:column; gap:14px; margin-top:4px;}
 .ins .notice-err{background:color-mix(in oklab, oklch(0.5 0.13 25) 10%, var(--panel)); border-color:color-mix(in oklab, oklch(0.5 0.13 25) 45%, var(--line2));}
 .ins .hp{position:absolute; left:-9999px;}
+/* long-form legal documents (licence, etc.) */
+.ins .legal-doc{max-width:760px; margin:0 auto;}
+.ins .legal-doc > p{font-size:15px; line-height:1.65; color:var(--ink); max-width:74ch; margin-bottom:14px;}
+.ins .legal-meta{font-size:13px; color:var(--faint); margin-bottom:18px;}
