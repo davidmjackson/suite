@@ -1,7 +1,6 @@
-<%~ include("partials/header", { title: "Request received", user: null }) %>
-<section class="card" style="max-width:520px;margin:0 auto;text-align:center;">
-<h1 style="font-size:26px;">Thanks — request received</h1>
-<div class="notice" style="justify-content:center;">We'll review your request and email you a sign-in link once you're approved.</div>
+<%~ include("partials/header", { title: "Request received", user: null, band: { eyebrow: "Get started", title: "Request received", sub: "Thanks — we've got your request." } }) %>
+<section class="card formcard is-centered">
+<div class="notice">We'll review your request and email you a sign-in link once you're approved.</div>
 <p style="margin-top:18px;"><a class="btn btn-pri" href="/">Back to home</a></p>
 </section>
 <%~ include("partials/footer") %>

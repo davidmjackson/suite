@@ -85,3 +85,13 @@ test("request form uses Instrument fields, select, checks and textarea", async (
   assert.match(res.text, /<textarea class="input" name="message"/);
   assert.match(res.text, /name="website"/); // honeypot preserved
 });
+
+test("request page wears the Instrument band header (signature wave chrome)", async () => {
+  const { app } = await setup();
+  const res = await request(app).get("/request");
+  assert.match(res.text, /class="band"/);
+  assert.match(res.text, /class="waves"/);
+  assert.match(res.text, /<h1>Request free access<\/h1>/);
+  const h1s = res.text.match(/<h1[\s>]/g) || [];
+  assert.equal(h1s.length, 1, "exactly one h1 (from the band, not duplicated in the card)");
+});
