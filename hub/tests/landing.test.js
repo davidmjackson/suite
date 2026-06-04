@@ -89,3 +89,13 @@ test("app grid shows four cards all linking to /login", async () => {
   const cardLinks = (res.text.match(/class="appcard"[^>]*href="\/login"/g) || []);
   assert.equal(cardLinks.length, 4, "four app cards link to /login");
 });
+
+test("feature rows carry the SEO payload terms and real alt text", async () => {
+  const { app } = await buildTestApp();
+  const res = await request(app).get("/");
+  for (const term of ["RAID log", "team health check", "retrospective", "scrum poker"]) {
+    assert.match(res.text, new RegExp(term, "i"));
+  }
+  assert.match(res.text, /alt="Sprintraid RAID log with risks, assumptions, issues and a flagged dependency conflict"/);
+  assert.doesNotMatch(res.text, /data:image\//, "no base64 images in production template");
+});

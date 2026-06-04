@@ -88,6 +88,80 @@
   </div>
 </section>
 
+<section class="features" id="features">
+  <div class="frow" data-app="raid">
+    <div class="ftext">
+      <p class="frow-eyebrow">Sprintraid</p>
+      <h3>Turn meeting noise into a clean RAID log.</h3>
+      <p>Paste an email or Teams thread and Sprintraid extracts a structured RAID log — risks, assumptions, issues and dependencies — so nothing slips between sprints.</p>
+      <ul class="flist">
+        <li>Auto-classify risks, assumptions, issues &amp; dependencies</li>
+        <li>Flags dependency conflicts across workstreams</li>
+        <li>Export to Jira, CSV or Markdown</li>
+      </ul>
+    </div>
+    <figure class="shot">
+      <div class="chrome"><i></i><i></i><i></i><span class="url">sprintraid.uk</span></div>
+      <img src="/img/shot-raid.png" width="1180" height="865" loading="lazy" decoding="async"
+        alt="Sprintraid RAID log with risks, assumptions, issues and a flagged dependency conflict">
+    </figure>
+  </div>
+
+  <div class="frow" data-app="signal">
+    <div class="ftext">
+      <p class="frow-eyebrow">Sprintsignal</p>
+      <h3>Run a team health check in minutes.</h3>
+      <p>Sprintsignal turns an anonymous team health check into a radar of focus areas, so you can see where the team is thriving and where it needs support.</p>
+      <ul class="flist">
+        <li>Anonymous submissions, honest signal</li>
+        <li>Radar chart of focus areas over time</li>
+        <li>Share read-only results with stakeholders</li>
+      </ul>
+    </div>
+    <figure class="shot">
+      <div class="chrome"><i></i><i></i><i></i><span class="url">sprintsignal.uk</span></div>
+      <img src="/img/shot-signal.png" width="1090" height="475" loading="lazy" decoding="async"
+        alt="Sprintsignal health check radar chart and focus areas">
+    </figure>
+  </div>
+
+  <div class="frow" data-app="retro">
+    <div class="ftext">
+      <p class="frow-eyebrow">Sprintretro</p>
+      <h3>Retrospectives that don't drag.</h3>
+      <p>Sprintretro runs a focused retrospective with a Start / Stop / Continue board, live stat cards and a timer to keep the conversation moving and end with clear actions.</p>
+      <ul class="flist">
+        <li>Start / Stop / Continue board</li>
+        <li>Live stat cards and a built-in timer</li>
+        <li>Disposable rooms — share a link, no accounts for guests</li>
+      </ul>
+    </div>
+    <figure class="shot">
+      <div class="chrome"><i></i><i></i><i></i><span class="url">sprintretro.uk</span></div>
+      <img src="/img/shot-retro.png" width="1200" height="517" loading="lazy" decoding="async"
+        alt="Sprintretro Start Stop Continue board with stat cards and timer">
+    </figure>
+  </div>
+
+  <div class="frow" data-app="poker">
+    <div class="ftext">
+      <p class="frow-eyebrow">Sprintpoker</p>
+      <h3>Estimate together with scrum poker.</h3>
+      <p>Sprintpoker runs planning poker for your backlog — everyone votes face-down, then reveals together, so estimates stay honest and the discussion stays focused.</p>
+      <ul class="flist">
+        <li>Face-down voting, reveal together</li>
+        <li>Guests join with a link, no account needed</li>
+        <li>Bring your own backlog items</li>
+      </ul>
+    </div>
+    <figure class="shot">
+      <div class="chrome"><i></i><i></i><i></i><span class="url">sprintpoker.uk</span></div>
+      <img src="/img/shot-poker.png" width="738" height="220" loading="lazy" decoding="async"
+        alt="Sprintpoker estimation room with face-up and face-down cards">
+    </figure>
+  </div>
+</section>
+
 </main>
 
 </body>
