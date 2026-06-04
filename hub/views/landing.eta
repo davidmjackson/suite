@@ -164,11 +164,11 @@
 
 <section class="faq" id="faq">
   <h2 class="sec-h">Questions</h2>
-  <div class="qa"><h4>Is it really free?</h4><p>Sprint Suite is free to try as a showcase. Some apps cap usage or AI calls, so it's not unlimited — but you can sign in and use all four tools without paying.</p></div>
-  <div class="qa"><h4>Do I need a password?</h4><p>No. Sign-in is a passwordless magic link sent to your email. The same link both signs you up and signs you in.</p></div>
-  <div class="qa"><h4>Do my guests need accounts?</h4><p>No. Retrospectives and planning poker rooms can be shared with a link, so guests join without creating an account.</p></div>
-  <div class="qa"><h4>Where does my data go?</h4><p>Your data stays in Sprint Suite. There's no third-party tracking, and health-check submissions are anonymous.</p></div>
-  <div class="qa"><h4>Can I export?</h4><p>Yes. RAID logs export to Jira, CSV and Markdown so your work doesn't get stuck in another tool.</p></div>
+  <div class="qa"><h3>Is it really free?</h3><p>Sprint Suite is free to try as a showcase. Some apps cap usage or AI calls, so it's not unlimited — but you can sign in and use all four tools without paying.</p></div>
+  <div class="qa"><h3>Do I need a password?</h3><p>No. Sign-in is a passwordless magic link sent to your email. The same link both signs you up and signs you in.</p></div>
+  <div class="qa"><h3>Do my guests need accounts?</h3><p>No. Retrospectives and planning poker rooms can be shared with a link, so guests join without creating an account.</p></div>
+  <div class="qa"><h3>Where does my data go?</h3><p>Your data stays in Sprint Suite. There's no third-party tracking, and health-check submissions are anonymous.</p></div>
+  <div class="qa"><h3>Can I export?</h3><p>Yes. RAID logs export to Jira, CSV and Markdown so your work doesn't get stuck in another tool.</p></div>
 </section>
 
 <section class="close">
