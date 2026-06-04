@@ -10,9 +10,10 @@
       .then(function (r) { return r.ok ? r.json() : { authed: false }; })
       .then(function (d) {
         if (!d || !d.authed) return;
+        if (!d.dashboardUrl) return;
         var els = document.querySelectorAll("[data-suite-return]");
         for (var i = 0; i < els.length; i++) {
-          if (d.dashboardUrl) els[i].setAttribute("href", d.dashboardUrl);
+          els[i].setAttribute("href", d.dashboardUrl);
           els[i].hidden = false;
         }
       })
