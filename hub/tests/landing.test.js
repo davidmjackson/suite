@@ -61,3 +61,12 @@ test("landing has exactly one h1 and a sign-in CTA to /login", async () => {
   assert.match(res.text, /Agile tools for teams that ship/);
   assert.match(res.text, /href="\/login"[^>]*>\s*Sign in to get started/);
 });
+
+test("landing wires the hero trace module and respects reduced motion", async () => {
+  const { app } = await buildTestApp();
+  const res = await request(app).get("/");
+  assert.match(res.text, /<script type="module" src="\/js\/landing-hero\.js">/);
+  assert.match(res.text, /<g class="waves-drift" id="scope">/);
+  const css = await request(app).get("/css/instrument-core.css");
+  assert.match(css.text, /prefers-reduced-motion/);
+});
