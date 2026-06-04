@@ -1,14 +1,14 @@
 // routes/legal.js
-// Placeholder legal pages so footer links resolve. Real copy lands with the
-// licence/consent work (blocked on lawyer-reviewed text).
-const PAGES = {
+// /license renders the Free Use Licence (views/license.eta). /privacy and /terms
+// remain "coming soon" stubs until their copy is finalised (lawyer review).
+const STUBS = {
   "/privacy": "Privacy",
   "/terms": "Terms",
-  "/license": "License",
 };
 
 export function mountLegal(app) {
-  for (const [path, title] of Object.entries(PAGES)) {
+  for (const [path, title] of Object.entries(STUBS)) {
     app.get(path, (req, res) => res.render("legal", { title }));
   }
+  app.get("/license", (req, res) => res.render("license"));
 }

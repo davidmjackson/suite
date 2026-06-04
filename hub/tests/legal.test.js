@@ -11,8 +11,8 @@ async function buildWithLegal() {
   return { app, db, config };
 }
 
-for (const p of ["/privacy", "/terms", "/license"]) {
-  test(`GET ${p} returns 200`, async () => {
+for (const p of ["/privacy", "/terms"]) {
+  test(`GET ${p} returns a coming-soon stub`, async () => {
     const { app } = await buildWithLegal();
     const res = await request(app).get(p);
     assert.equal(res.status, 200);
@@ -20,3 +20,17 @@ for (const p of ["/privacy", "/terms", "/license"]) {
     assert.match(res.text, /being finalised/);
   });
 }
+
+test("GET /license renders the Free Use Licence (Version 1.0)", async () => {
+  const { app } = await buildWithLegal();
+  const res = await request(app).get("/license");
+  assert.equal(res.status, 200);
+  assert.match(res.text, /Free Use Licence/);
+  assert.match(res.text, /Version 1\.0/);
+  assert.match(res.text, /Grant of licence/);
+  assert.match(res.text, /Limitation of liability/);
+  assert.match(res.text, /England and Wales/);
+  assert.match(res.text, /href="\/privacy"/);          // links to the privacy note
+  assert.doesNotMatch(res.text, /being finalised/);     // not the stub
+  assert.doesNotMatch(res.text, /\[[A-Z][^\]]*\]/);     // no leftover [BRACKET] placeholders
+});
