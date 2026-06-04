@@ -70,3 +70,12 @@ test("landing wires the hero trace module and respects reduced motion", async ()
   const css = await request(app).get("/css/instrument-core.css");
   assert.match(css.text, /prefers-reduced-motion/);
 });
+
+test("landing shows the four trust items", async () => {
+  const { app } = await buildTestApp();
+  const res = await request(app).get("/");
+  assert.match(res.text, /Passwordless sign-in/);
+  assert.match(res.text, /Anonymous health checks/);
+  assert.match(res.text, /Exports to Jira, CSV &amp; Markdown/);
+  assert.match(res.text, /No tracking, no clutter/);
+});

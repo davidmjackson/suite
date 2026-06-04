@@ -43,6 +43,15 @@
   </div>
 </section>
 
+<div class="trust">
+  <div class="trust-in">
+    <span class="trust-item"><span class="dot"></span> Passwordless sign-in</span>
+    <span class="trust-item"><span class="dot"></span> Anonymous health checks</span>
+    <span class="trust-item"><span class="dot"></span> Exports to Jira, CSV &amp; Markdown</span>
+    <span class="trust-item"><span class="dot"></span> No tracking, no clutter</span>
+  </div>
+</div>
+
 <main class="wrap">
 </main>
 
