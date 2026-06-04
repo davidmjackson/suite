@@ -25,7 +25,7 @@
 
 - **Resend** — sends sign-in (magic-link) and notification emails (processes email addresses).
 - **Anthropic** — AI processing of text submitted to Sprintraid (Messages API).
-- **IONOS** — hosts the application and stores service data (the Sprint Suite database). [Confirm the exact IONOS legal entity and hosting region — see "International transfers".]
+- **IONOS** (United Kingdom) — hosts the application and stores service data (the Sprint Suite database). [Confirm the exact IONOS legal entity name for the contract.]
 
 This list may change as the service evolves; the current version of this note applies.
 
@@ -34,7 +34,7 @@ This list may change as the service evolves; the current version of this note ap
 ## 3. ADD A NEW BLOCK: "International transfers"
 *Place after "Sub-processors".*
 
-**International transfers.** Some sub-processors may process data outside the UK. Where they do, we rely on an appropriate safeguard recognised under UK data-protection law (such as the UK [International Data Transfer Agreement / Addendum to the EU Standard Contractual Clauses], or an adequacy decision). **Anthropic and Resend both process data in the United States**, so a UK transfer safeguard is required for those. [Confirm the exact mechanism each provider offers — IDTA vs SCCs+Addendum. **IONOS hosting region: confirm** (run `curl -s https://ipinfo.io/json` on the production server, or check the IONOS control panel) — if the VM is in the UK/EU, no transfer safeguard is needed for hosting itself.]
+**International transfers.** Some sub-processors may process data outside the UK. Where they do, we rely on an appropriate safeguard recognised under UK data-protection law (such as the UK [International Data Transfer Agreement / Addendum to the EU Standard Contractual Clauses], or an adequacy decision). **Application hosting (IONOS) is in the United Kingdom**, so no UK international-transfer safeguard is needed for hosting itself. (Confirmed 2026-06-04 via the production server's public IP geolocating to the UK with IONOS as the network operator; verify against the IONOS control panel/contract for the final published version, as IP geolocation is indicative rather than authoritative for data residency.) **Anthropic and Resend both process data in the United States**, so a UK transfer safeguard *is* required for those two. [Confirm the exact mechanism each US provider offers — UK IDTA vs EU SCCs + UK Addendum.]
 
 ---
 
