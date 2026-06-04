@@ -1,9 +1,50 @@
-<%~ include("partials/header", { title: "Sprint Suite", user: it.user, band: { eyebrow: "Sprint Suite", title: "Agile tools for teams that ship.", sub: "One sign-in, four focused apps." } }) %>
-<% if (!it.user) { %><p><a class="btn btn-pri" href="/login">Sign in</a></p><% } %>
-<section class="applist">
-<a class="card apptile" href="https://sprintraid.uk"><h3><svg class="glyph" width="26" height="26" aria-hidden="true"><use href="/illos/glyphs.svg#glyph-raid"/></svg> Sprintraid</h3><p>Risks, Assumptions, Issues, Dependencies — pipe in email/Teams text, get a structured RAID log.</p></a>
-<a class="card apptile" href="https://sprintsignal.uk"><h3><svg class="glyph" width="26" height="26" aria-hidden="true"><use href="/illos/glyphs.svg#glyph-signal"/></svg> Sprintsignal</h3><p>Team health signals — surface what's working and what isn't.</p></a>
-<a class="card apptile" href="https://sprintretro.uk"><h3><svg class="glyph" width="26" height="26" aria-hidden="true"><use href="/illos/glyphs.svg#glyph-retro"/></svg> Sprintretro</h3><p>Retrospectives that don't drag.</p></a>
-<a class="card apptile" href="https://sprintpoker.uk"><h3><svg class="glyph" width="26" height="26" aria-hidden="true"><use href="/illos/glyphs.svg#glyph-poker"/></svg> Sprintpoker</h3><p>Planning poker with your Jira tickets.</p></a>
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Sprint Suite — Agile tools for teams that ship</title>
+<meta name="description" content="One sign-in, four focused apps for scrum masters and delivery leads. RAID logs, team health checks, retrospectives and planning poker.">
+<link rel="canonical" href="https://sprintsuite.uk/">
+<meta property="og:title" content="Sprint Suite — Agile tools for teams that ship">
+<meta property="og:description" content="One sign-in, four focused apps for scrum masters and delivery leads.">
+<meta property="og:type" content="website">
+<meta property="og:url" content="https://sprintsuite.uk/">
+<meta property="og:image" content="https://sprintsuite.uk/img/og.png">
+<meta name="twitter:card" content="summary_large_image">
+<link rel="icon" href="/favicon.svg" type="image/svg+xml">
+<link rel="icon" href="/favicon-32.png" sizes="32x32">
+<link rel="apple-touch-icon" href="/apple-touch-icon.png">
+<link rel="stylesheet" href="/css/instrument-core.css">
+<link rel="stylesheet" href="/css/landing.css">
+<script type="application/ld+json">
+{"@context":"https://schema.org","@type":"SoftwareApplication","name":"Sprint Suite","applicationCategory":"BusinessApplication","operatingSystem":"Web","description":"One sign-in, four focused apps for scrum masters and delivery leads.","url":"https://sprintsuite.uk/","offers":{"@type":"Offer","price":"0","priceCurrency":"GBP"},"featureList":["RAID log","Team health check","Sprint retrospective","Scrum planning poker"]}
+</script>
+<script type="module" src="/js/landing-hero.js"></script>
+</head>
+<body class="ins">
+
+<header class="topbar lp-topbar">
+  <a class="brand" href="/"><svg class="mk" width="22" height="22" aria-hidden="true"><use href="/illos/glyphs.svg#glyph-suite"/></svg> <span>Sprint<span class="brand-suite">Suite</span></span></a>
+  <a class="btn btn-pri" href="<%= it.signinUrl %>">Sign in to get started</a>
+</header>
+
+<section class="band lp-band">
+  <div class="waves" aria-hidden="true"><svg viewBox="0 0 2400 200" preserveAspectRatio="none" width="100%" height="100%"><g class="waves-drift" id="scope"></g></svg></div>
+  <div class="band-scrim" aria-hidden="true"></div>
+  <div class="band-in lp-hero">
+    <p class="eyebrow">One sign-in · four focused apps</p>
+    <h1>Agile tools for teams that ship.</h1>
+    <p class="lede lp-lede">RAID logs, health checks, retros and planning poker. Four sharp tools for scrum masters and delivery leads, behind a single passwordless login. No setup, no sprawl.</p>
+    <div class="cta-row">
+      <a class="btn btn-pri btn-lg" href="<%= it.signinUrl %>">Sign in to get started</a>
+      <span class="cta-note">Passwordless magic-link · free to try</span>
+    </div>
+  </div>
 </section>
-<%~ include("partials/footer") %>
+
+<main class="wrap">
+</main>
+
+</body>
+</html>

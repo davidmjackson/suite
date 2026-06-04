@@ -43,3 +43,21 @@ test("GET / renders landing (not redirect) for a disabled user's session", async
   const res = await request(app).get("/").set("Cookie", `hub_session=${sid}`);
   assert.equal(res.status, 200);
 });
+
+test("landing head carries SEO essentials", async () => {
+  const { app } = await buildTestApp();
+  const res = await request(app).get("/");
+  assert.match(res.text, /<link rel="canonical" href="https:\/\/sprintsuite\.uk\/">/);
+  assert.match(res.text, /property="og:title"/);
+  assert.match(res.text, /"@type"\s*:\s*"SoftwareApplication"/);
+  assert.match(res.text, /<link rel="stylesheet" href="\/css\/landing\.css">/);
+});
+
+test("landing has exactly one h1 and a sign-in CTA to /login", async () => {
+  const { app } = await buildTestApp();
+  const res = await request(app).get("/");
+  const h1s = res.text.match(/<h1[\s>]/g) || [];
+  assert.equal(h1s.length, 1, "exactly one <h1>");
+  assert.match(res.text, /Agile tools for teams that ship/);
+  assert.match(res.text, /href="\/login"[^>]*>\s*Sign in to get started/);
+});

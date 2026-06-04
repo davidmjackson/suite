@@ -1,0 +1,37 @@
+/* landing.css — page-specific layout for sprintsuite.uk front door.
+   Tokens/components come from instrument-core.css; introduce NO colour tokens here. */
+
+.wrap{max-width:1120px;margin:0 auto;padding:0 40px}
+
+/* topbar: the standalone landing reuses .topbar but pins the brand wordmark */
+.lp-topbar{position:sticky;top:0;z-index:10}
+.brand-suite{color:var(--green)}
+
+/* hero band: tall editorial hero with a readability scrim over the trace */
+.lp-band .waves{opacity:0.55}
+.band-scrim{position:absolute;inset:0;pointer-events:none;
+  background:linear-gradient(90deg,
+    var(--panel) 0%,
+    var(--panel) 30%,
+    oklch(0.996 0.002 240 / 0.82) 48%,
+    oklch(0.996 0.002 240 / 0) 72%);}
+.lp-hero{padding:64px 40px 58px}
+.lp-hero h1{font-size:52px;line-height:1.02;margin:10px 0 14px;max-width:18ch}
+.lp-lede{font-size:17px;max-width:60ch}
+.cta-row{display:flex;align-items:center;gap:16px;margin-top:26px;flex-wrap:wrap}
+.cta-note{font-family:'IBM Plex Mono',monospace;font-size:11px;letter-spacing:0.12em;
+  text-transform:uppercase;color:var(--faint);font-weight:600}
+
+/* page-local button extras (not in the synced foundation) */
+.ins .btn-lg{padding:13px 22px;font-size:15px}
+.ins .btn-pri:hover{background:color-mix(in oklab,var(--green) 88%,black)}
+
+/* focus visibility (foundation has no global focus ring on links) */
+.ins a:focus-visible,.ins .btn:focus-visible{outline:none;box-shadow:0 0 0 3px var(--greenwash)}
+
+@media (max-width:720px){
+  .wrap{padding:0 18px}
+  .lp-hero{padding:44px 18px 40px}
+  .lp-hero h1{font-size:34px}
+  .lp-lede{font-size:15px}
+}
