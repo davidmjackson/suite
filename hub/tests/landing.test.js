@@ -59,7 +59,7 @@ test("landing has exactly one h1 and a sign-in CTA to /login", async () => {
   const h1s = res.text.match(/<h1[\s>]/g) || [];
   assert.equal(h1s.length, 1, "exactly one <h1>");
   assert.match(res.text, /Agile tools for teams that ship/);
-  assert.match(res.text, /href="\/login"[^>]*>\s*Sign in to get started/);
+  assert.match(res.text, /href="\/login"[^>]*>\s*Sign in\s*</);
 });
 
 test("landing wires the hero trace module and respects reduced motion", async () => {

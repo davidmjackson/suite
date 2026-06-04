@@ -26,7 +26,7 @@
 
 <header class="topbar lp-topbar">
   <a class="brand" href="/" aria-label="Sprint Suite"><svg class="mk" width="22" height="22" aria-hidden="true"><use href="/illos/glyphs.svg#glyph-suite"/></svg> <span>Sprint<span class="brand-suite">Suite</span></span></a>
-  <a class="btn btn-pri" href="<%= it.signinUrl %>">Sign in to get started</a>
+  <a class="btn btn-pri" href="<%= it.signinUrl %>">Sign in</a>
 </header>
 
 <section class="band lp-band">
@@ -37,7 +37,7 @@
     <h1>Agile tools for teams that ship.</h1>
     <p class="lede lp-lede">RAID logs, health checks, retros and planning poker. Four sharp tools for scrum masters and delivery leads, behind a single passwordless login. No setup, no sprawl.</p>
     <div class="cta-row">
-      <a class="btn btn-pri btn-lg" href="<%= it.signinUrl %>">Sign in to get started</a>
+      <a class="btn btn-pri btn-lg" href="<%= it.signinUrl %>">Sign in</a>
       <a class="btn btn-ghost btn-lg" href="<%= it.requestUrl %>">Request free access</a>
       <span class="cta-note">New here? Request access · returning? Sign in · passwordless</span>
     </div>
@@ -186,9 +186,9 @@
 
 <section class="close">
   <h2>Four sharp tools, one passwordless login.</h2>
-  <p>Sign in to get started, or request free access for your team — no setup, no sprawl.</p>
+  <p>Sign in, or request free access for your team — no setup, no sprawl.</p>
   <div class="cta-row">
-    <a class="btn btn-pri btn-lg" href="<%= it.signinUrl %>">Sign in to get started</a>
+    <a class="btn btn-pri btn-lg" href="<%= it.signinUrl %>">Sign in</a>
     <a class="btn btn-ghost btn-lg" href="<%= it.requestUrl %>">Request free access</a>
   </div>
 </section>
