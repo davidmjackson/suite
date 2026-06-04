@@ -1,7 +1,7 @@
 // handlers/whoami.js
 // GET /auth/whoami — reports whether the caller holds a valid app session and,
 // if so, the hub dashboard URL. NEVER redirects (unlike requireAuth) and makes
-// NO hub round-trip — a cheap local store lookup safe to call on every page load.
+// NO hub round-trip — a cheap, synchronous local store lookup (intentionally not async) safe to call on every page load.
 const { parseCookies } = require("../lib/cookies.js");
 
 function createWhoamiHandler(ctx) {

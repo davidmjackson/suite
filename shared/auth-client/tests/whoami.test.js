@@ -1,7 +1,7 @@
 // tests/whoami.test.js
 const { test } = require("node:test");
 const assert = require("node:assert/strict");
-const { createAuthClient } = require("../lib/factory.js");
+const { createAuthClient } = require("../index.js");
 
 function mk(cookieHeader) {
   const client = createAuthClient({
@@ -41,4 +41,17 @@ test("whoami: valid session -> 200 {authed:true, dashboardUrl} (trailing slash s
   assert.equal(captured.status, 200);
   assert.deepEqual(captured.body, { authed: true, dashboardUrl: "https://hub.example/dashboard" });
   assert.equal(captured.redirected, false);
+});
+
+test("whoami: hubBaseUrl with NO trailing slash -> exactly one slash before /dashboard", () => {
+  const client = createAuthClient({
+    appName: "raid", hubBaseUrl: "https://hub.example", hubApiKey: "k",
+    cookieName: "raid_session", dbPath: ":memory:",
+  });
+  client._ctx.store.get = () => ({ id: "s1", central_session_id: "cs1", user_id: "u1" });
+  const req = { headers: { cookie: "raid_session=abc" } };
+  let body;
+  const res = { status() { return res; }, json(b) { body = b; return res; }, redirect() { return res; } };
+  client.handleWhoami(req, res);
+  assert.deepEqual(body, { authed: true, dashboardUrl: "https://hub.example/dashboard" });
 });
