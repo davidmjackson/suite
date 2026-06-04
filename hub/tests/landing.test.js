@@ -127,3 +127,13 @@ test("footer Apps links point to /login and legal links resolve", async () => {
   assert.match(footer, /href="#features"/);
   assert.match(footer, /href="#faq"/);
 });
+
+test("landing offers a Request free access path to /request for new businesses", async () => {
+  const { app } = await buildTestApp();
+  const res = await request(app).get("/");
+  // visible primary-journey CTA for cold prospects, in hero + closing card
+  assert.match(res.text, /href="\/request"[^>]*>\s*Request free access\s*</);
+  // present at the hero, the closing CTA, and the footer
+  const reqLinks = (res.text.match(/href="\/request"/g) || []);
+  assert.ok(reqLinks.length >= 3, `expected /request in hero, closing CTA and footer; saw ${reqLinks.length}`);
+});

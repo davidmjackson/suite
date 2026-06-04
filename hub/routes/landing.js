@@ -17,6 +17,6 @@ export function mountLanding(app) {
       `).get(sid, t, idleCutoff);
       if (row && !row.disabled_at) return res.redirect("/dashboard");
     }
-    res.render("landing", { signinUrl: "/login" });
+    res.render("landing", { signinUrl: "/login", requestUrl: "/request" });
   });
 }
