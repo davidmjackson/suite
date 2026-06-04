@@ -179,5 +179,37 @@
 
 </main>
 
+<footer class="lp-footer">
+  <div class="lp-footer-in">
+    <div class="lp-foot-lead">
+      <a class="brand" href="/" aria-label="Sprint Suite"><svg class="mk" width="20" height="20" aria-hidden="true"><use href="/illos/glyphs.svg#glyph-suite"/></svg> <span>Sprint<span class="brand-suite">Suite</span></span></a>
+      <p>Four focused agile tools for scrum masters and delivery leads, behind one passwordless login.</p>
+    </div>
+    <nav class="lp-foot-col" aria-label="Apps">
+      <h2>Apps</h2>
+      <a href="<%= it.signinUrl %>">Sprintraid</a>
+      <a href="<%= it.signinUrl %>">Sprintsignal</a>
+      <a href="<%= it.signinUrl %>">Sprintretro</a>
+      <a href="<%= it.signinUrl %>">Sprintpoker</a>
+    </nav>
+    <nav class="lp-foot-col" aria-label="Product">
+      <h2>Product</h2>
+      <a href="#features">Features</a>
+      <a href="#faq">FAQ</a>
+      <a href="<%= it.signinUrl %>">Sign in</a>
+    </nav>
+    <nav class="lp-foot-col" aria-label="Legal">
+      <h2>Legal</h2>
+      <a href="/privacy">Privacy</a>
+      <a href="/terms">Terms</a>
+      <a href="/license">License</a>
+    </nav>
+  </div>
+  <div class="lp-foot-bar">
+    <span>© 2026 Sprint Suite</span>
+    <span class="mono">sprintsuite.uk</span>
+  </div>
+</footer>
+
 </body>
 </html>

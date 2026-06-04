@@ -114,3 +114,16 @@ test("feature rows carry the SEO payload terms and real alt text", async () => {
   }
   assert.doesNotMatch(res.text, /data:image\//, "no base64 images in production template");
 });
+
+test("footer Apps links point to /login and legal links resolve", async () => {
+  const { app } = await buildTestApp();
+  const res = await request(app).get("/");
+  const footer = res.text.slice(res.text.indexOf('class="lp-footer"'));
+  const appLinks = (footer.match(/href="\/login"/g) || []);
+  assert.ok(appLinks.length >= 4, "four Apps links to /login in footer");
+  assert.match(footer, /href="\/privacy"/);
+  assert.match(footer, /href="\/terms"/);
+  assert.match(footer, /href="\/license"/);
+  assert.match(footer, /href="#features"/);
+  assert.match(footer, /href="#faq"/);
+});
