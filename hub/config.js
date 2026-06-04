@@ -12,6 +12,9 @@ const config = {
   dbPath: required("DB_PATH"),
   resendApiKey: required("RESEND_API_KEY"),
   fromEmail: required("FROM_EMAIL"),
+  // Optional: where new access-request notifications are sent. If unset, no
+  // operator notification is sent (the request is still recorded as normal).
+  adminEmail: process.env.ADMIN_EMAIL || null,
   cookieSecret: required("COOKIE_SECRET"),
   allowedAppDomains: required("ALLOWED_APP_DOMAINS").split(",").map(s => s.trim()),
   apiKeys: {

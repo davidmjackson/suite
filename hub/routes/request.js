@@ -10,6 +10,7 @@ const ipLimiter = createLimiter({ max: 5, windowMs: 60 * 60 * 1000 });
 
 export function mountRequest(app, { emailSender } = {}) {
   const db = app.locals.db;
+  const config = app.locals.config;
   const reqs = createAccessRequests(db);
   const audit = createAuditLogger(db);
 
@@ -17,7 +18,7 @@ export function mountRequest(app, { emailSender } = {}) {
     res.render("request", { error: null, values: {} });
   });
 
-  app.post("/request", (req, res) => {
+  app.post("/request", async (req, res) => {
     // Honeypot: a hidden field bots tend to fill. Real users leave it empty.
     if ((req.body.website || "").trim() !== "") {
       return res.render("request-received", {});
@@ -46,6 +47,20 @@ export function mountRequest(app, { emailSender } = {}) {
 
     reqs.createRequest({ companyName, contactName, email, jobTitle, teamSize, appsInterest: apps, message });
     audit.log({ userId: null, eventType: "access_requested", metadata: { company: companyName, email }, ip: req.ip });
+
+    // Best-effort operator notification — never block or fail the request on it.
+    if (config && config.adminEmail && emailSender) {
+      try {
+        await emailSender.sendAccessRequestNotification({
+          to: config.adminEmail,
+          request: { companyName, contactName, email, jobTitle, teamSize, apps, message },
+          reviewUrl: `${config.baseUrl}/admin/companies`,
+        });
+      } catch (err) {
+        console.error("access request notification failed", err);
+      }
+    }
+
     res.render("request-received", {});
   });
 }

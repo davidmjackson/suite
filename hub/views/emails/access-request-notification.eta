@@ -1,0 +1,16 @@
+<!-- views/emails/access-request-notification.eta -->
+<!doctype html>
+<html><body style="font-family: -apple-system, system-ui, sans-serif; max-width: 520px; margin: 32px auto; color: #222;">
+<h2 style="margin-bottom: 8px;">New access request</h2>
+<p><strong><%= it.request.companyName %></strong> would like to try Sprint Suite.</p>
+<table style="border-collapse: collapse; font-size: 14px; margin: 16px 0;">
+  <tr><td style="padding: 4px 16px 4px 0; color: #666;">Contact</td><td style="padding: 4px 0;"><%= it.request.contactName %></td></tr>
+  <tr><td style="padding: 4px 16px 4px 0; color: #666;">Email</td><td style="padding: 4px 0;"><%= it.request.email %></td></tr>
+  <tr><td style="padding: 4px 16px 4px 0; color: #666;">Job title</td><td style="padding: 4px 0;"><%= it.request.jobTitle || "—" %></td></tr>
+  <tr><td style="padding: 4px 16px 4px 0; color: #666;">Team size</td><td style="padding: 4px 0;"><%= it.request.teamSize || "—" %></td></tr>
+  <tr><td style="padding: 4px 16px 4px 0; color: #666;">Apps</td><td style="padding: 4px 0;"><%= (it.request.apps && it.request.apps.length) ? it.request.apps.join(", ") : "—" %></td></tr>
+  <tr><td style="padding: 4px 16px 4px 0; color: #666; vertical-align: top;">Message</td><td style="padding: 4px 0;"><%= it.request.message || "—" %></td></tr>
+</table>
+<p><a href="<%= it.reviewUrl %>" style="display: inline-block; background: #2563eb; color: white; padding: 12px 24px; border-radius: 6px; text-decoration: none;">Review &amp; approve</a></p>
+<p style="color: #999; font-size: 12px; margin-top: 32px;">Sprint Suite · sprintsuite.uk</p>
+</body></html>
