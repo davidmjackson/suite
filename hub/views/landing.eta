@@ -25,7 +25,7 @@
 <body class="ins">
 
 <header class="topbar lp-topbar">
-  <a class="brand" href="/"><svg class="mk" width="22" height="22" aria-hidden="true"><use href="/illos/glyphs.svg#glyph-suite"/></svg> <span>Sprint<span class="brand-suite">Suite</span></span></a>
+  <a class="brand" href="/" aria-label="Sprint Suite"><svg class="mk" width="22" height="22" aria-hidden="true"><use href="/illos/glyphs.svg#glyph-suite"/></svg> <span>Sprint<span class="brand-suite">Suite</span></span></a>
   <a class="btn btn-pri" href="<%= it.signinUrl %>">Sign in to get started</a>
 </header>
 

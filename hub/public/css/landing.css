@@ -10,6 +10,8 @@
 /* hero band: tall editorial hero with a readability scrim over the trace */
 .lp-band .waves{opacity:0.55}
 .band-scrim{position:absolute;inset:0;pointer-events:none;
+  /* the two oklch literals below == var(--panel) at 82% / 0% alpha
+     (CSS can't yet apply alpha to a colour token); keep in sync if --panel changes */
   background:linear-gradient(90deg,
     var(--panel) 0%,
     var(--panel) 30%,
