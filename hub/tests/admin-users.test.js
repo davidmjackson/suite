@@ -56,3 +56,91 @@ test("POST /admin/users/:id/disable kills all their sessions", async () => {
   const u = db.prepare("SELECT disabled_at FROM users WHERE id = ?").get("u2");
   assert.ok(u.disabled_at);
 });
+
+// Helper: create a victim user u2.
+function makeVictim(db) {
+  db.prepare("INSERT INTO users (id,email,created_at) VALUES (?,?,?)").run("u2", "victim@test", now());
+}
+
+test("delete: company_members reference does not block delete (prod FK repro)", async () => {
+  const { app, db, sid } = await setup();
+  makeVictim(db);
+  db.prepare("INSERT INTO companies (id,name,slug,status,created_at) VALUES (?,?,?,?,?)")
+    .run("c1", "Acme", "acme", "active", now());
+  db.prepare("INSERT INTO company_members (user_id,company_id,role,created_at) VALUES (?,?,?,?)")
+    .run("u2", "c1", "member", now());
+  const res = await request(app).post("/admin/users/u2/delete").set("Cookie", `hub_session=${sid}`);
+  assert.equal(res.status, 302);
+  assert.equal(db.prepare("SELECT * FROM users WHERE id = ?").get("u2"), undefined);
+  assert.equal(db.prepare("SELECT * FROM company_members WHERE user_id = ?").get("u2"), undefined);
+});
+
+test("delete: team_members reference is cleared and does not block", async () => {
+  const { app, db, sid } = await setup();
+  makeVictim(db);
+  db.prepare("INSERT INTO companies (id,name,slug,status,created_at) VALUES (?,?,?,?,?)")
+    .run("c1", "Acme", "acme", "active", now());
+  db.prepare("INSERT INTO teams (id,company_id,name,created_at) VALUES (?,?,?,?)")
+    .run("t1", "c1", "Team A", now());
+  db.prepare("INSERT INTO team_members (user_id,team_id,role,created_at) VALUES (?,?,?,?)")
+    .run("u2", "t1", "member", now());
+  const res = await request(app).post("/admin/users/u2/delete").set("Cookie", `hub_session=${sid}`);
+  assert.equal(res.status, 302);
+  assert.equal(db.prepare("SELECT * FROM users WHERE id = ?").get("u2"), undefined);
+  assert.equal(db.prepare("SELECT * FROM team_members WHERE user_id = ?").get("u2"), undefined);
+});
+
+test("delete: app_entitlements.granted_by is SET NULL and grant preserved", async () => {
+  const { app, db, sid } = await setup();
+  makeVictim(db);
+  db.prepare("INSERT INTO companies (id,name,slug,status,created_at) VALUES (?,?,?,?,?)")
+    .run("c1", "Acme", "acme", "active", now());
+  db.prepare("INSERT INTO app_entitlements (id,app,principal_type,principal_id,status,granted_by,granted_at) VALUES (?,?,?,?,?,?,?)")
+    .run("e1", "raid", "company", "c1", "active", "u2", now());
+  const res = await request(app).post("/admin/users/u2/delete").set("Cookie", `hub_session=${sid}`);
+  assert.equal(res.status, 302);
+  const ent = db.prepare("SELECT * FROM app_entitlements WHERE id = ?").get("e1");
+  assert.ok(ent, "entitlement should still exist");
+  assert.equal(ent.granted_by, null);
+});
+
+test("delete: access_requests.reviewed_by is SET NULL and request preserved", async () => {
+  const { app, db, sid } = await setup();
+  makeVictim(db);
+  db.prepare("INSERT INTO access_requests (id,company_name,contact_name,email,status,created_at,reviewed_by) VALUES (?,?,?,?,?,?,?)")
+    .run("r1", "Acme", "Jane", "jane@test", "approved", now(), "u2");
+  const res = await request(app).post("/admin/users/u2/delete").set("Cookie", `hub_session=${sid}`);
+  assert.equal(res.status, 302);
+  const r = db.prepare("SELECT * FROM access_requests WHERE id = ?").get("r1");
+  assert.ok(r, "access_request should still exist");
+  assert.equal(r.reviewed_by, null);
+});
+
+test("delete: user-principal entitlement + usage rows are fully cleaned up", async () => {
+  const { app, db, sid } = await setup();
+  makeVictim(db);
+  db.prepare("INSERT INTO app_entitlements (id,app,principal_type,principal_id,status,granted_at) VALUES (?,?,?,?,?,?)")
+    .run("e2", "raid", "user", "u2", "active", now());
+  db.prepare("INSERT INTO app_usage (app,principal_type,principal_id,period_key,count) VALUES (?,?,?,?,?)")
+    .run("raid", "user", "u2", "2026-06", 3);
+  const res = await request(app).post("/admin/users/u2/delete").set("Cookie", `hub_session=${sid}`);
+  assert.equal(res.status, 302);
+  assert.equal(db.prepare("SELECT * FROM app_entitlements WHERE principal_type='user' AND principal_id=?").get("u2"), undefined);
+  assert.equal(db.prepare("SELECT * FROM app_usage WHERE principal_type='user' AND principal_id=?").get("u2"), undefined);
+});
+
+test("delete: audit trail is preserved (user_deleted event logged)", async () => {
+  const { app, db, sid } = await setup();
+  makeVictim(db);
+  const res = await request(app).post("/admin/users/u2/delete").set("Cookie", `hub_session=${sid}`);
+  assert.equal(res.status, 302);
+  const ev = db.prepare("SELECT * FROM audit_events WHERE event_type = ?").get("user_deleted");
+  assert.ok(ev, "user_deleted audit event should exist");
+});
+
+test("delete: self-delete is refused (400) and user remains", async () => {
+  const { app, db, sid } = await setup();
+  const res = await request(app).post("/admin/users/admin1/delete").set("Cookie", `hub_session=${sid}`);
+  assert.equal(res.status, 400);
+  assert.ok(db.prepare("SELECT * FROM users WHERE id = ?").get("admin1"), "admin should remain");
+});
