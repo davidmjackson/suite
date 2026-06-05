@@ -8,6 +8,7 @@ import { createEntitlements } from "../lib/entitlements.js";
 import { createAccessRequests } from "../lib/access-requests.js";
 import { createProvisioner } from "../lib/provisioning.js";
 import { deleteCentralSession, deleteCentralSessionsForUser } from "../lib/sessions.js";
+import { deleteUser } from "../lib/users.js";
 
 function safeAppsLabel(json) {
   try {
@@ -74,8 +75,7 @@ export function mountAdmin(app, { emailSender } = {}) {
   app.post("/admin/users/:id/delete", requireSession, requireAdmin, (req, res) => {
     const id = req.params.id;
     if (id === req.user.id) return res.status(400).render("error", { title: "Can't delete self", message: "Use another admin account." });
-    deleteCentralSessionsForUser(db, id);
-    db.prepare("DELETE FROM users WHERE id = ?").run(id);
+    deleteUser(db, id);
     audit.log({ userId: req.user.id, eventType: "user_deleted", metadata: { target: id }, ip: req.ip });
     res.redirect("/admin");
   });
