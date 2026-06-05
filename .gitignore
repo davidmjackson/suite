@@ -18,3 +18,6 @@ build/
 # large assets/screenshots. Kept out of the repo; shippable CSS/tokens get
 # integrated into each app's source tree during the redesign build.
 project-design-docs/
+
+# Architecture docs: keep the markdown, exclude the binary bundle
+docs/architecture/apps.zip
