@@ -46,7 +46,7 @@
 <td><span class="pill <%= m.hasLoggedIn ? 'pill-ok' : 'pill-closed' %>"><%= m.hasLoggedIn ? "Active" : "Invited" %></span></td>
 <td>
 <% if (canEditRow) { %>
-<form method="POST" action="/company/<%= it.company.slug %>/members/<%= m.userId %>/remove" onsubmit="return confirm('Remove this member?')"><button class="btn btn-danger btn-sm">Remove</button></form>
+<form method="POST" action="/company/<%= it.company.slug %>/members/<%= m.userId %>/remove" data-confirm="Remove this member from <%= it.company.name %>?" data-confirm-title="Remove member" data-confirm-ok="Remove"><button class="btn btn-danger btn-sm">Remove</button></form>
 <% } %>
 </td>
 </tr>

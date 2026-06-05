@@ -14,7 +14,7 @@
 <td><%= r.appsLabel || "—" %></td>
 <td><div class="tbacts">
 <form method="POST" action="/admin/requests/<%= r.id %>/approve"><button class="btn btn-pri btn-sm" type="submit">Approve</button></form>
-<form method="POST" action="/admin/requests/<%= r.id %>/reject" onsubmit="return confirm('Reject this request?')"><button class="btn btn-danger btn-sm" type="submit">Reject</button></form>
+<form method="POST" action="/admin/requests/<%= r.id %>/reject" data-confirm="Reject this access request?" data-confirm-title="Reject request" data-confirm-ok="Reject"><button class="btn btn-danger btn-sm" type="submit">Reject</button></form>
 </div></td>
 </tr>
 <% } %>
