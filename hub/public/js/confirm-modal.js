@@ -22,9 +22,9 @@ function build() {
   backdrop.className = "confirm-backdrop";
   backdrop.hidden = true;
   backdrop.innerHTML =
-    `<div class="confirm-dialog" role="dialog" aria-modal="true" aria-labelledby="confirm-title">` +
+    `<div class="confirm-dialog" role="dialog" aria-modal="true" aria-labelledby="confirm-title" aria-describedby="confirm-msg">` +
     `<h2 class="confirm-title" id="confirm-title"></h2>` +
-    `<p class="confirm-msg"></p>` +
+    `<p class="confirm-msg" id="confirm-msg"></p>` +
     `<div class="confirm-actions">` +
     `<button type="button" class="btn btn-ghost confirm-cancel"></button>` +
     `<button type="button" class="btn btn-danger confirm-ok"></button>` +
@@ -72,8 +72,10 @@ function open(form) {
   els.ok.textContent = form.getAttribute("data-confirm-ok") || DEFAULT_OK;
   els.cancel.textContent = "Cancel";
 
+  els.ok.disabled = false;
   els.backdrop.hidden = false;
   els.backdrop.classList.add("is-open");
+  document.body.style.overflow = "hidden";
   document.addEventListener("keydown", onKeydown, true);
   // Default focus to Cancel (safer default for destructive actions).
   els.cancel.focus();
@@ -83,6 +85,7 @@ function close() {
   if (!els) return;
   els.backdrop.classList.remove("is-open");
   els.backdrop.hidden = true;
+  document.body.style.overflow = "";
   document.removeEventListener("keydown", onKeydown, true);
   pendingForm = null;
   if (lastFocused && typeof lastFocused.focus === "function") lastFocused.focus();
@@ -91,6 +94,8 @@ function close() {
 
 function accept() {
   const form = pendingForm;
+  // Guard against double-activation in the pre-navigation window.
+  if (els) els.ok.disabled = true;
   close();
   // form.submit() does NOT fire the submit event, so it won't be re-intercepted.
   if (form) form.submit();
