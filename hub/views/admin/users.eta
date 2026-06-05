@@ -27,7 +27,7 @@
 <% } else { %>
 <form method="POST" action="/admin/users/<%= u.id %>/enable"><button class="btn btn-ghost btn-sm">Enable</button></form>
 <% } %>
-<form method="POST" action="/admin/users/<%= u.id %>/delete" onsubmit="return confirm('Delete <%= u.email %>?')"><button class="btn btn-danger btn-sm">Delete</button></form>
+<form method="POST" action="/admin/users/<%= u.id %>/delete" data-confirm="Delete <%= u.email %>? This permanently removes the user and all their memberships." data-confirm-title="Delete user" data-confirm-ok="Delete"><button class="btn btn-danger btn-sm">Delete</button></form>
 </div></td>
 </tr>
 <% } %>

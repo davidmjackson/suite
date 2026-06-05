@@ -7,6 +7,7 @@
 <link rel="stylesheet" href="/css/instrument-core.css">
 <link rel="stylesheet" href="/hub.css">
 <script type="module" src="/js/oscilloscope.js"></script>
+<script type="module" src="/js/confirm-modal.js"></script>
 </head>
 <body class="ins">
 <% if (!it.bare) { %>
