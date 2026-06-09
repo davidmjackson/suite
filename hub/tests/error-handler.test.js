@@ -82,6 +82,23 @@ test("dev mode HTML error exposes the stack", async () => {
   assert.ok(res.text.includes("kaboom-secret-detail"));
 });
 
+test("error handler surfaces err.fields in the JSON body for /api routes", async () => {
+  const cap = capture();
+  const logger = createLogger({ level: "info", stream: cap.stream });
+  const { app } = await buildTestApp();
+  app.use(makeRequestLogger(logger));
+  app.post("/api/echo", (req, res, next) => {
+    const err = new Error("validation_failed");
+    err.status = 400;
+    err.fields = { email: ["A valid email is required"] };
+    next(err);
+  });
+  app.use(makeErrorHandler({ logger, nodeEnv: "production" }));
+  const res = await request(app).post("/api/echo").send({});
+  assert.equal(res.status, 400);
+  assert.deepEqual(res.body.fields, { email: ["A valid email is required"] });
+});
+
 test("falls back to plain text when the error view fails to render", async () => {
   const cap = capture();
   const logger = createLogger({ level: "info", stream: cap.stream });

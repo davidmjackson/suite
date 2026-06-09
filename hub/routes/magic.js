@@ -2,6 +2,8 @@
 import { randomToken, now } from "../lib/tokens.js";
 import { setSessionCookie } from "../lib/cookies.js";
 import { createAuditLogger } from "../lib/audit.js";
+import { validate } from "../lib/validate.js";
+import { magicPostSchema } from "../schemas/magic.js";
 
 const APP_BY_DOMAIN = {
   "sprintraid.uk": "raid",
@@ -24,6 +26,7 @@ export function mountMagic(app) {
   // dead before the human clicked. Instead we render a confirm page whose button
   // POSTs back — scanners issue GETs but don't submit forms.
   app.get("/auth/magic", (req, res) => {
+    // Inline token check (not validate()): Express 5 makes req.query getter-only, and validate() targets req.body.
     const token = req.query.token;
     if (!token || typeof token !== "string") {
       return res.status(400).render("error", { title: "Invalid link", message: "This sign-in link is malformed." });
@@ -35,12 +38,13 @@ export function mountMagic(app) {
     res.render("confirm", { token });
   });
 
+  function magicInvalid(req, res) {
+    return res.status(400).render("error", { title: "Invalid link", message: "This sign-in link is malformed." });
+  }
+
   // POST performs the actual login: atomically consume the token, then create the session.
-  app.post("/auth/magic", (req, res) => {
+  app.post("/auth/magic", validate(magicPostSchema, { onInvalid: magicInvalid }), (req, res) => {
     const token = req.body.token;
-    if (!token || typeof token !== "string") {
-      return res.status(400).render("error", { title: "Invalid link", message: "This sign-in link is malformed." });
-    }
     const t = now();
     const consumed = db.prepare(`
       UPDATE magic_link_tokens SET consumed_at = ?

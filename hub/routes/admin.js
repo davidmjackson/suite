@@ -10,6 +10,8 @@ import { createProvisioner } from "../lib/provisioning.js";
 import { deleteCentralSession, deleteCentralSessionsForUser } from "../lib/sessions.js";
 import { deleteUser } from "../lib/users.js";
 import logger from "../lib/logger.js";
+import { validate } from "../lib/validate.js";
+import { createUserSchema, rejectRequestSchema } from "../schemas/admin.js";
 
 function safeAppsLabel(json) {
   try {
@@ -39,13 +41,8 @@ export function mountAdmin(app, { emailSender } = {}) {
     res.render("admin/users", { user: req.user, users });
   });
 
-  app.post("/admin/users", requireSession, requireAdmin, (req, res) => {
-    const email = (req.body.email || "").trim().toLowerCase();
-    const displayName = (req.body.display_name || "").trim() || null;
-    const isAdmin = req.body.is_admin === "1" ? 1 : 0;
-    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
-      return res.status(400).render("error", { title: "Bad request", message: "Invalid email." });
-    }
+  app.post("/admin/users", requireSession, requireAdmin, validate(createUserSchema, { onInvalid: (req, res) => res.status(400).render("error", { title: "Bad request", message: "Invalid email." }) }), (req, res) => {
+    const { email, display_name: displayName, is_admin: isAdmin } = req.body;
     try {
       const id = randomId();
       db.prepare("INSERT INTO users (id,email,display_name,is_admin,created_at) VALUES (?,?,?,?,?)")
@@ -147,8 +144,8 @@ export function mountAdmin(app, { emailSender } = {}) {
     res.redirect("/admin/companies");
   });
 
-  app.post("/admin/requests/:id/reject", requireSession, requireAdmin, (req, res) => {
-    const note = (req.body.review_note || "").trim() || null;
+  app.post("/admin/requests/:id/reject", requireSession, requireAdmin, validate(rejectRequestSchema), (req, res) => {
+    const note = req.body.review_note;
     const r = reqs.getRequest(req.params.id);
     if (!r || r.status !== "pending") {
       return res.status(400).render("error", { title: "Can't reject", message: "That request has already been handled." });

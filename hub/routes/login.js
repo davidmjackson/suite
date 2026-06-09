@@ -3,6 +3,8 @@ import { randomToken, now } from "../lib/tokens.js";
 import { createAuditLogger } from "../lib/audit.js";
 import { createLimiter } from "../lib/rate-limit.js";
 import logger from "../lib/logger.js";
+import { validate } from "../lib/validate.js";
+import { loginSchema } from "../schemas/login.js";
 
 const ipLimiter = createLimiter({ max: 5, windowMs: 60 * 1000 });
 const emailLimiter = createLimiter({ max: 10, windowMs: 60 * 60 * 1000 });
@@ -16,6 +18,10 @@ function validateReturnTo(url, allowed) {
   } catch { return null; }
 }
 
+function loginInvalid(req, res) {
+  return res.status(400).render("error", { title: "Bad request", message: "Invalid email." });
+}
+
 export function mountLogin(app, { emailSender } = {}) {
   const db = app.locals.db;
   const config = app.locals.config;
@@ -26,14 +32,11 @@ export function mountLogin(app, { emailSender } = {}) {
     res.render("login", { returnTo });
   });
 
-  app.post("/login", async (req, res) => {
-    const email = (req.body.email || "").trim().toLowerCase();
+  app.post("/login", validate(loginSchema, { onInvalid: loginInvalid }), async (req, res) => {
+    const email = req.body.email;
     const returnTo = validateReturnTo(req.body.return_to, config.allowedAppDomains);
     const ip = req.ip;
 
-    if (!email || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
-      return res.status(400).render("error", { title: "Bad request", message: "Invalid email." });
-    }
     if (!ipLimiter.check(ip) || !emailLimiter.check(email)) {
       return res.status(429).render("error", { title: "Too many requests", message: "Please wait a minute and try again." });
     }

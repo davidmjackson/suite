@@ -4,8 +4,14 @@ import { createRequireCompanyRole } from "../middleware/requireCompanyRole.js";
 import { createOrg } from "../lib/org.js";
 import { createAuditLogger } from "../lib/audit.js";
 import { createEntitlements } from "../lib/entitlements.js";
+import { validate } from "../lib/validate.js";
+import {
+  inviteMemberSchema,
+  memberRoleSchema,
+  teamNameSchema,
+  teamMemberSchema,
+} from "../schemas/company.js";
 
-const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 const TOGGLABLE_APPS = {
   signal: { quotaLimit: null, quotaPeriod: null },
   raid: { quotaLimit: 25, quotaPeriod: "month" },
@@ -19,6 +25,14 @@ export function mountCompany(app) {
   const audit = createAuditLogger(db);
   const ent = createEntitlements(db);
   const manage = [requireSession, companyRole(["owner"])];
+
+  const badReq = (title, message) => (_req, res) => res.status(400).render("error", { title, message });
+
+  function inviteInvalid(req, res, error) {
+    const fields = error.flatten().fieldErrors;
+    const message = fields.email ? "Invalid email." : "Invalid role.";
+    return res.status(400).render("error", { title: "Bad request", message });
+  }
 
   // Resolve a team that must belong to req.company; render 404 otherwise.
   function loadTeam(req, res) {
@@ -62,15 +76,8 @@ export function mountCompany(app) {
     });
   });
 
-  app.post("/company/:slug/members", ...manage, (req, res) => {
-    const email = (req.body.email || "").trim().toLowerCase();
-    const role = req.body.role || "member";
-    if (!EMAIL_RE.test(email)) {
-      return res.status(400).render("error", { title: "Bad request", message: "Invalid email." });
-    }
-    if (!["owner", "member"].includes(role)) {
-      return res.status(400).render("error", { title: "Bad request", message: "Invalid role." });
-    }
+  app.post("/company/:slug/members", ...manage, validate(inviteMemberSchema, { onInvalid: inviteInvalid }), (req, res) => {
+    const { email, role } = req.body;
     const r = org.inviteCompanyMember({ email, companyId: req.company.id, role });
     if (!r.alreadyMember) {
       audit.log({ userId: req.user.id, eventType: "company_member_invited", metadata: { company: req.company.slug, email, role }, ip: req.ip });
@@ -78,12 +85,9 @@ export function mountCompany(app) {
     res.redirect("/company/" + req.company.slug);
   });
 
-  app.post("/company/:slug/members/:userId/role", ...manage, (req, res) => {
-    const role = req.body.role;
+  app.post("/company/:slug/members/:userId/role", ...manage, validate(memberRoleSchema, { onInvalid: badReq("Bad request", "Invalid role.") }), (req, res) => {
+    const { role } = req.body;
     const targetId = req.params.userId;
-    if (!["owner", "member"].includes(role)) {
-      return res.status(400).render("error", { title: "Bad request", message: "Invalid role." });
-    }
     const target = db.prepare("SELECT role FROM company_members WHERE user_id=? AND company_id=?")
       .get(targetId, req.company.id);
     if (!target) {
@@ -101,11 +105,8 @@ export function mountCompany(app) {
     res.redirect("/company/" + req.company.slug);
   });
 
-  app.post("/company/:slug/teams", ...manage, (req, res) => {
-    const name = (req.body.name || "").trim();
-    if (!name) {
-      return res.status(400).render("error", { title: "Bad request", message: "Team name is required." });
-    }
+  app.post("/company/:slug/teams", ...manage, validate(teamNameSchema, { onInvalid: badReq("Bad request", "Team name is required.") }), (req, res) => {
+    const { name } = req.body;
     let team;
     try {
       team = org.createTeam({ companyId: req.company.id, name });
@@ -119,13 +120,10 @@ export function mountCompany(app) {
     res.redirect("/company/" + req.company.slug);
   });
 
-  app.post("/company/:slug/teams/:teamId/rename", ...manage, (req, res) => {
+  app.post("/company/:slug/teams/:teamId/rename", ...manage, validate(teamNameSchema, { onInvalid: badReq("Bad request", "Team name is required.") }), (req, res) => {
     const team = loadTeam(req, res);
     if (!team) return;
-    const name = (req.body.name || "").trim();
-    if (!name) {
-      return res.status(400).render("error", { title: "Bad request", message: "Team name is required." });
-    }
+    const { name } = req.body;
     try {
       org.renameTeam(team.id, name);
     } catch (e) {
@@ -138,10 +136,10 @@ export function mountCompany(app) {
     res.redirect(`/company/${req.company.slug}/teams/${team.id}`);
   });
 
-  app.post("/company/:slug/teams/:teamId/members", ...manage, (req, res) => {
+  app.post("/company/:slug/teams/:teamId/members", ...manage, validate(teamMemberSchema, { onInvalid: badReq("Can't add", "That person is not a member of this company.") }), (req, res) => {
     const team = loadTeam(req, res);
     if (!team) return;
-    const userId = req.body.userId;
+    const { userId } = req.body;
     try {
       org.addTeamMember({ userId, teamId: team.id, role: "member" });
     } catch (e) {
