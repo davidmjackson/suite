@@ -153,6 +153,17 @@ test("POST /request still succeeds if the notification email throws", async () =
   assert.equal(db.prepare("SELECT COUNT(*) AS n FROM access_requests WHERE email=?").get("jo@acme.co").n, 1);
 });
 
+test("POST /request normalizes email case + whitespace and stores cleaned values", async () => {
+  const { app, db } = await setup();
+  await request(app).post("/request").type("form").send({
+    company_name: "  Acme  ", contact_name: " Jo ", email: "  JO@ACME.COM ", apps: "poker",
+  });
+  const row = db.prepare("SELECT * FROM access_requests WHERE email=?").get("jo@acme.com");
+  assert.equal(row.company_name, "Acme");
+  assert.equal(row.contact_name, "Jo");
+  assert.equal(JSON.parse(row.apps_interest).length, 1);
+});
+
 test("request notification email renders and escapes user input", async () => {
   const { renderAccessRequestNotificationEmail } = await import("../lib/email.js?t=" + Date.now());
   const html = await renderAccessRequestNotificationEmail({
