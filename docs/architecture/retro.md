@@ -9,6 +9,7 @@
 - **Real-time:** `ws` `^8.17.1` (a `WebSocketServer` in `noServer` mode wired to the HTTP server's `upgrade` event; `maxPayload` 256 KB).
 - **Database:** SQLite via `better-sqlite3` `^12.6.2` (synchronous, prepared statements; the app wraps calls in node-style `(err)` callbacks anyway).
 - **Auth:** `@suite/auth-client` (local file dependency `file:../suite/shared/auth-client`, Express `^5` internally). Provides launch-token exchange, per-app session store, `requireAuth`, `verifySession`, whoami, heartbeat, logout.
+- **Input validation:** `zod` — HTTP body schemas (`schemas/api.js`) + WS message schemas (`schemas/ws.js`), invoked via inline `safeParse` guards (HTTP routes) and a `validateMessage` helper (WS boundary). Added 2026-06-09 as Tier-1 #2 of the suite tech-stack upgrade; CJS port of the hub reference implementation (`lib/validate.js`).
 - **Config:** `dotenv` `^17.2.4` (loads `<repo>/.env`).
 - **Client libs:** `dragula` (vendored in `public/vendor/dragula`) for card drag-and-drop; `public/js/oscilloscope.js` drives the animated header band.
 - **Tests:** Node's built-in `node:test` runner (unit) + Playwright `@playwright/test` `^1.59.1` (e2e).
@@ -38,7 +39,11 @@ Hardening in the unit: `NoNewPrivileges=true`, `PrivateTmp=true`, `ProtectSystem
 ├── lib/
 │   ├── companyAccess.js # boardCompanyAllowed(retro, company) tenancy check (pure)
 │   ├── upgradeAuth.js   # decideUpgrade(): dual-path WS auth (session OR open-board share token)
-│   └── contrast.js      # WCAG contrast helpers used only by theme tests
+│   ├── contrast.js      # WCAG contrast helpers used only by theme tests
+│   └── validate.js      # zod middleware helper: validate(schema) → Express middleware (coerce + strip unknown keys; JSON routes call next(err) with err.status=400 + err.fields)
+├── schemas/
+│   ├── api.js           # HTTP body schemas: createRetroSchema (POST /api/retros) + updateActionSchema (PUT /api/actions)
+│   └── ws.js            # Per-message-type WS schemas + validateMessage(type, payload)
 ├── public/              # Static client (NOT served as raw .html — pages are route-gated)
 │   ├── lobby.html / lobby.js          # Company-scoped retro list + create/close + name/role picker
 │   ├── retrospective.html / client.js # Live board (cards, votes, drag, timer, actions, share link)
@@ -127,6 +132,41 @@ Hardening in the unit: `NoNewPrivileges=true`, `PrivateTmp=true`, `ProtectSystem
 
 > The stale README also lists `/admin`, `/api/login`, `/api/session`, `/api/admin/teams*`, `RETRO_AUTH_SECRET`, team keys, and login rate limiting. **None of those exist in the current code** — they describe the pre-auth-hub standalone version and should be ignored.
 
+## Input validation (zod)
+Added 2026-06-09 (Tier-1 #2 of the suite tech-stack upgrade). CJS port of the hub reference; Retro is Express 4 but the helper works identically. See also `hub.md` (reference) and `poker.md` (same WS treatment); suite-wide rollout documented in `README.md`.
+
+### HTTP — inline `safeParse` structural guards
+Two JSON routes use inline `safeParse` before their existing business-logic validators:
+
+- **`POST /api/retros`** — `createRetroSchema` (coerce + trim `title`; `string min(1) max(140)`). On parse success `req.body` is replaced with the cleaned output; the existing `validateText` call and bespoke 400 response are preserved.
+- **`PUT /api/actions`** — `updateActionSchema` (coerce + trim `retroId`, `actionId`, optional `status` / `notes` / `owner` / `dueDate`). Same pattern: `safeParse` runs first; on success `req.body` is replaced; existing field-level validators + bespoke 400 bodies continue unchanged.
+
+**`dueDate` partial-update nuance.** `updateActionSchema.dueDate` is declared `.optional()` — an absent `dueDate` key parses to `undefined`. Because the route handler only calls `validateDueDate` when `dueDate !== undefined`, an absent field leaves the existing stored due date untouched. An explicit `""` (empty string) still passes validation (the `z.literal("")` union arm) and propagates to the handler, clearing the stored date. This preserves partial-update semantics: omit the field to keep the current value; send `""` to wipe it.
+
+The `lib/validate.js` middleware helper (used by hub/signal/poker/raid) is available but these two routes use inline `safeParse` directly, keeping their pre-existing bespoke 400 response bodies (asserted by existing tests).
+
+### WebSocket — per-message-type boundary check
+At the `.on("message")` boundary in `server.js`, every inbound message is checked via `validateMessage(type, payload)` from `schemas/ws.js` before any handler logic runs:
+
+1. Bad JSON → `JSON.parse` throws → `logger.warn` + `return` (drop; socket stays open; board state unchanged).
+2. Invalid payload (unknown type or schema mismatch) → `validateMessage` returns `{ ok: false }` → `logger.warn` + `return` (same: drop without disconnect or board mutation).
+3. Valid → `data` is replaced with the parsed (coerced, cleaned) output and handling continues.
+
+All schemas use `.passthrough()`, so the `type` field and any other fields read by downstream handlers survive validation intact.
+
+**Validated message types and what each enforces:**
+
+| Type | Enforced fields |
+|---|---|
+| `hello` | No payload fields required; passes through (presence broadcast only). |
+| `timer` | `action` required: enum `set\|start\|stop\|reset`; `minutes` optional finite number (business-logic sub-rules applied downstream). |
+| `addCard` | `column` required: enum `well\|improve\|continue\|action`; `text` trimmed string min(1) max(500); `details` optional trimmed string max(2000). |
+| `voteCard` | `cardId` required: alphanumeric/`./_:-` id string min(1) max(160). |
+| `moveCard` | `cardId` + `targetColumn` (same COLUMN enum) required; `beforeCardId` optional: same id format or `null` (defaults to `null`). |
+| `createAction` | `cardId` required (id format); `title` (max 500), `owner` (max 80), `dueDate` (`""` or `YYYY-MM-DD`), `notes` (max 4000) all optional with empty-string defaults. |
+
+This closes the latent gap where a malformed WS message could throw inside a handler and leave the in-memory board state inconsistent.
+
 ## Suite-auth integration
 Retro is a **satellite app** of the central hub (`sprintsuite.uk`); identity lives in the hub, never locally.
 
@@ -158,7 +198,7 @@ From `.env.example` (the live `.env` on this dev box only contains legacy `RETRO
 A strict Content-Security-Policy and standard hardening headers (`X-Content-Type-Options`, `Referrer-Policy`, `X-Frame-Options: DENY`, `Permissions-Policy`, `frame-ancestors 'none'`) are set on every response. `x-powered-by` disabled. `.html` paths are explicitly 404'd from static serving so pages can only be reached through the route guards.
 
 ## Testing
-- **Unit:** Node's built-in `node --test`. `npm test` runs six suites: `theme-drift`, `theme-contrast`, `db-schema`, `upgrade-auth`, `company-access`, `return-to-suite` — **~18 unit test cases total** (db-schema 5, upgrade-auth 6, company-access 2, return-to-suite 2, theme-contrast 2, theme-drift 1). These cover schema/migration shape, the dual-path WS upgrade decision, company tenancy, the Return-to-Suite hidden-by-default contract, and theme/contrast/drift guards.
+- **Unit:** Node's built-in `node --test`. `npm test` runs **12 suites** (explicit file list in `package.json` — new suites must be added to that list): `theme-drift`, `theme-contrast`, `db-schema`, `upgrade-auth`, `company-access`, `return-to-suite`, `pino-logger`, `pino-request-logger`, `pino-error-handler`, `validate`, `ws-validation`, `api-schemas` — **75 unit test cases total**. Suites cover schema/migration shape, dual-path WS upgrade decision, company tenancy, Return-to-Suite contract, pino logging/error-handler behaviour, zod HTTP-body validation, WS message validation, and theme/contrast/drift guards.
 - **e2e:** Playwright (`npm run test:e2e`, `playwright.config.js`). Specs in `tests/e2e`: `retro-smoke` (3), `retro-sharing` (4), `header-waves` (2) — **~9 e2e cases** (memory cites "8"; the extra is the header-waves visual band check). Helpers `tests/e2e/helpers/_auth.js` and `seed.js` set up auth/seed; e2e uses a separate `.playwright-retros.db`.
 - **Other checks (per AGENTS.md):** `node --check` on touched files, `git diff --check`, `npm audit --omit=dev`, plus migration/vacuum checks for DB changes.
 

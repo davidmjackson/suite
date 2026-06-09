@@ -6,6 +6,7 @@
 - **Framework:** Express `^5.2.1`.
 - **Template engine:** None. The UI is static HTML files in `public/` plus vanilla JS; the server only `sendFile`s them. There is no server-side view engine and no build step.
 - **DB + driver:** SQLite via `better-sqlite3` `^12.10.0` (synchronous, WAL journalling, `foreign_keys = ON`). Raw SQL, no ORM.
+- **Input validation:** `zod` — `lib/validate.js` middleware helper + `schemas/` directory. Added 2026-06-09 (Tier-1 #2 of the suite tech-stack upgrade); a CJS port of the hub reference implementation.
 - **Auth:** `@suite/auth-client` (local file dependency `file:../suite/shared/auth-client`, i.e. `/var/www/suite/shared/auth-client`) — delegates sign-in to the hub. Signal itself owns no password/session/login code.
 - **Key in-house libs:** `lib/scoring.js` (pure scoring/normalisation), `lib/insights.js` (rules-based insight classifier), `lib/quality.js` (anonymous response quality checks), `lib/accessKeys.js` (salted SHA-256 team keys), `lib/adminActivity.js` (append-only JSONL audit log), `lib/templateLoader.js` (file-based question templates).
 - **Test framework:** `node --test` for unit tests; `@playwright/test` `^1.60.0` for e2e.
@@ -32,11 +33,16 @@
   - `responseRoutes.js` — **public, anonymous** respondent fetch + submit.
   - `reportRoutes.js` — admin reporting (radar+insights, per-question breakdown, CSV export); enforces the `MIN_RESPONSES = 3` anonymity floor.
   - `companyAccess.js` — `teamCompanyAllowed(team, company)` cross-tenant guard.
+  - `validate.js` — `validate(schema, { source, onInvalid })` zod middleware factory (see Input validation below).
   - `scoring.js` / `insights.js` / `quality.js` — pure scoring, insight classification, anonymous quality flags.
   - `accessKeys.js` — salted SHA-256 team access keys + survey access codes.
   - `adminActivity.js` — append-only JSONL audit log (fingerprints, never raw secrets).
   - `templateLoader.js` — import-once `templates/*.json` question templates on boot.
   - `securityHeaders.js`, `contrast.js`, `buildInfo.js` — edge headers, contrast helper, build/version info.
+- `middleware/` — `errorHandler.js` (pino central error handler; JSON branch includes `fields` for zod validation errors).
+- `schemas/` — zod schema definitions:
+  - `respond.js` — `respondSchema` / `answerSchema` for the anonymous submit surface.
+  - `survey.js` — `teamSchema` + `surveySchema` for the facilitator API.
 - `public/` — static frontend: `dashboard.html`, `admin.html`, `survey.html` (authed shells, carry the Return-to-Suite button), `respond.html`, `license.html` (public), plus `css/` (`instrument-core.css`, `signal.css`), `js/` (`radar.js`, `oscilloscope.js`, `respond.js`, `survey.js`, `admin.js`, `dashboard.js`, `api.js`), `fonts/`, `illos/`.
 - `templates/` — `scrum-health-survey-v1.json` (file-based question template).
 - `scripts/` — `db-maintenance.js` (migrate / retention / vacuum), `sync-theme.sh` + `theme-manifest.txt` (theme-core sync).
@@ -80,7 +86,7 @@ Public / health:
 
 Anonymous submit (public, mounted before the guard, `lib/responseRoutes.js`, under `/api/respond`):
 - `GET /api/respond/:code` — questions for an open survey (reverse flags deliberately withheld), or `{open:false}`.
-- `POST /api/respond/:code` — submit a complete answer set (validated: every question once, integer 1..5); runs quality checks invisibly; never reveals flagging.
+- `POST /api/respond/:code` — submit a complete answer set; `validate(respondSchema)` enforces the body shape first (answers array, integer scores in `[1,5]`, optional durationSeconds), then the handler checks every template question is answered exactly once; runs quality checks invisibly; never reveals flagging.
 
 Facilitator admin API (`/api`, behind `auth.requireAuth`, company-scoped — `lib/surveyRoutes.js`):
 - `GET /api/templates` · `GET /api/teams` · `POST /api/teams` (returns plaintext key once) · `POST /api/teams/:id/rotate-key` · `DELETE /api/teams/:id`.
@@ -94,6 +100,34 @@ Reporting API (`/api`, behind `requireAuth`, company-scoped — `lib/reportRoute
 
 Authenticated pages (guarded, bounce to hub login when no session):
 - `GET /dashboard`, `GET /admin`, `GET /survey`.
+
+## Input validation (zod)
+
+Added 2026-06-09 (Tier-1 #2 of the suite tech-stack upgrade). See also hub.md and the suite README for the rollout context; Signal's implementation is a CJS port of the hub reference.
+
+### Middleware contract (`lib/validate.js`)
+
+`validate(schema, { source = "body", onInvalid })` returns an Express middleware:
+- **Success:** `req[source]` is replaced with zod's parsed output (unknown keys stripped, values coerced); `next()` is called.
+- **Failure (JSON routes):** a `400` error is forwarded to the central error handler via `next(err)` with `err.status = 400` and `err.fields = result.error.flatten().fieldErrors`. The central handler (`middleware/errorHandler.js`) includes `fields` in the JSON response body alongside `error` and `reqId`.
+- **Failure (form routes):** if `onInvalid(req, res, zodError)` is provided it is called instead (not used in Signal's current JSON-only API surface).
+
+### Anonymous submit — `POST /api/respond/:code` (`schemas/respond.js`)
+
+This is the primary untrusted surface: any anonymous user on the internet can POST to it. It gets the tightest schema — `validate(respondSchema)` is the first middleware on the route.
+
+`respondSchema` enforces:
+- **`answers`** — non-empty array of `answerSchema` objects. Each answer must have:
+  - `questionId` — non-empty string.
+  - `score` — numeric, coerced to a number, must be an integer in `[SCALE_MIN, SCALE_MAX]` = `[1, 5]`. These bounds are imported from `lib/scoring.js` constants (`SCALE_MIN = 1`, `SCALE_MAX = 5`) so the schema and the scoring engine are guaranteed in sync.
+- **`durationSeconds`** — optional. Coerced to a finite non-negative number; anything null/missing/non-finite collapses to `null`. Used only for quality-flag heuristics; the respondent is never told their response was flagged.
+
+Unknown keys are stripped. After `validate` passes, the route still applies additional semantic checks that zod cannot express: every template question must be answered exactly once (unknown `questionId` → 400, duplicate → 400, wrong count → 400). Zod handles type/shape; the route handler handles domain correctness.
+
+### Facilitator API schemas (`schemas/survey.js`)
+
+- **`POST /api/teams`** — `validate(teamSchema)`. `teamSchema` requires `name` to be a non-empty string after trimming whitespace. Missing or whitespace-only name → 400 via the central handler.
+- **`POST /api/surveys`** — inline `safeParse` (not `validate` middleware). `surveySchema` accepts optional `teamId`, `templateId`, `parentSurveyId`, coercing empty/null values to `null`. Survey creation has complex cross-field DB logic (follow-up inherits team+template from parent; company-scoping checks) that cannot be expressed in zod; the route keeps its own bespoke 400 error bodies asserted by existing tests. Inline `safeParse` gives type-coercion and unknown-key stripping without overriding those error responses: if `safeParse` fails the raw `req.body` is used as the fallback, preserving existing behaviour.
 
 ## Suite-auth integration
 Signal is a pure relying party of the hub via `@suite/auth-client` (`createAuthClient` in `server.js`, configured with `appName=signal`, `hubBaseUrl`, `hubApiKey`, `cookieName="signal_session"`, `cookieDomain`, and the app-session DB path). `createAuthClient` throws at boot if `HUB_BASE_URL`/`HUB_API_KEY` are missing, so a misconfigured deploy fails fast.
@@ -132,7 +166,7 @@ From `.env` / `.env.example` and the systemd unit:
 - `RETENTION_DAYS` — consumed by `scripts/db-maintenance.js retention` when no day count is passed.
 
 ## Testing
-- **Unit:** `npm test` → `node --test tests/*.test.js`. ~83 assertions across: `db.test.js` (schema/migrations/data access), `scoring.test.js`, `insights.test.js`, `quality.test.js`, `templateLoader.test.js`, `server.test.js` (HTTP routes incl. company scoping), `companyAccess.test.js`, `return-to-suite.test.js`, `contrast.test.js`, `theme-contrast.test.js`, `theme-drift.test.js`. (Memory cites ~86 — same order of magnitude.)
+- **Unit:** `npm test` → `node --test tests/*.test.js`. **143 tests** (confirmed 2026-06-09): `db.test.js` (schema/migrations/data access), `scoring.test.js`, `insights.test.js`, `quality.test.js`, `templateLoader.test.js`, `server.test.js` (HTTP routes incl. company scoping), `companyAccess.test.js`, `return-to-suite.test.js`, `contrast.test.js`, `theme-contrast.test.js`, `theme-drift.test.js`, `pino-logger.test.js`, `pino-request-logger.test.js`, `pino-error-handler.test.js`, `validate.test.js` (middleware contract), `zod-schemas.test.js` (respondSchema / teamSchema / surveySchema).
 - **E2E:** `npm run test:e2e` → Playwright (`playwright.config.js`), single-worker, on port 3010 against a throwaway `data/e2e.db` + `data/e2e-sessions.db`. `tests/e2e/seed.js` resets the DB and injects a fresh app-session so specs authenticate by setting the `signal_session` cookie; `HUB_BASE_URL` points at `http://hub.invalid` on purpose (fresh session is served from cache, hub is never contacted). ~11 specs across `smoke.spec.js`, `survey.spec.js`, `grouping.spec.js`, `company-scoping.spec.js` (cross-tenant isolation), `header-waves.spec.js`. (Memory cites ~10.)
 - **DB maintenance scripts** (`npm run db:migrate|db:retention|db:vacuum`) wrap `scripts/db-maintenance.js`.
 

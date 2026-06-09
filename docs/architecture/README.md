@@ -62,3 +62,13 @@ surface, **start with [hub.md](hub.md)** — it is the source of truth the other
   over the in-repo READMEs.
 - **Destructive migrations shipped:** Signal (v2 tenant wipe) and Retro (schema v7 board
   wipe) both clean-cut on deploy. Backups noted in the per-app docs.
+- **Input validation (zod) — suite-wide as of 2026-06-09 (Tier-1 #2).** Every service
+  validates inbound input with **zod**. Each repo has its own `lib/validate.js` Express
+  middleware (coerces + strips the request body, then re-renders with the prior friendly
+  message on a form route, or returns `400 {error, fields}` via the central error handler
+  on a JSON/API route) and a `schemas/` dir of per-route schemas. **Poker & Retro also
+  validate WebSocket messages** at the socket boundary — a malformed payload is dropped
+  and logged, the socket stays open. Copied per-repo (no shared runtime package → no
+  deploy ordering), mirroring the **pino** structured-logging rollout (Tier-1 #1) that
+  added each app's `lib/logger.js` + central `middleware/errorHandler.js`. Both layers
+  postdate the 2026-06-05 grounding date of these docs.

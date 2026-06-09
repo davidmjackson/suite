@@ -15,10 +15,11 @@
 | Model | `claude-sonnet-4-5` (default; overridable via `RAID_MODEL`) |
 | Structured output | Anthropic native structured outputs — `output_config.format = { type: 'json_schema', schema: RAID_SCHEMA }` |
 | Auth integration | `@suite/auth-client` (local file dep: `file:../suite/shared/auth-client`) |
+| Input validation | **zod** (`lib/validate.js` + `schemas/`) — added 2026-06-09 (Tier-1 #2). CommonJS port of the hub's reference helper |
 | Unit tests | Node's built-in test runner (`node --test`) |
 | E2E tests | Playwright `^1.59.1` (`@playwright/test`) |
 
-Direct production dependencies are deliberately minimal: just `express` and `@suite/auth-client`.
+Direct production dependencies are deliberately minimal: just `express`, `zod`, and `@suite/auth-client`.
 
 ## Production deployment / services
 
@@ -50,9 +51,12 @@ The Apache `<VirtualHost *:443>` block in `deploy/apache/raid.conf` is committed
 ├── lib/
 │   ├── extract.js         # ONLY network code — Anthropic Messages API call + 1 retry, returns parsed+reconciled RAID JSON
 │   ├── raid.js            # Pure logic: RAID_SCHEMA (JSON schema), SYSTEM_PROMPT, ragFromSeverity, reconcile (severity/RAG safeguard)
-│   ├── extractHandler.js  # POST /extract lifecycle: validate → auth.consume() gate → extract() → respond (fail-closed)
+│   ├── extractHandler.js  # POST /extract lifecycle: inline zod safeParse → auth.consume() gate → extract() → respond (fail-closed)
+│   ├── validate.js        # zod middleware helper — validate(schema, {source, onInvalid}) → Express middleware
 │   ├── buildInfo.js       # version + git commit for /build + cache-busting
 │   └── contrast.js        # WCAG contrast-ratio helper (used by theme-contrast tests)
+├── schemas/
+│   └── extract.js         # extractSchema — zod schema for POST /extract body
 ├── public/
 │   ├── index.html         # Authed single-page UI (textarea → Generate RAID → result grid)
 │   ├── license.html       # Public license page (Instrument-reskinned oscilloscope band)
@@ -72,7 +76,7 @@ The Apache `<VirtualHost *:443>` block in `deploy/apache/raid.conf` is committed
 │   ├── raid-test.mjs      # legacy harness artifact
 │   ├── forestbuild-spec.md / handover.md / README.md
 │   └── superpowers/       # spec + plan (RAID UX design, MVP plan)
-├── tests/                 # *.unit.test.js, harness.test.js, e2e/license-band.spec.js
+├── tests/                 # *.unit.test.js (incl. validate.unit.test.js, extract-schema.unit.test.js), harness.test.js, e2e/license-band.spec.js
 ├── README.md              # ⚠ STALE — describes the retired standalone access-key/login model
 └── claude.md              # project context
 ```
@@ -85,7 +89,7 @@ How pasted text becomes a RAID log:
 
 1. **Client (`public/js/app.js`, `extractUi.js`)** — single-page state machine (`idle | loading | result | error`). The textarea is validated (min 10 chars, max 1,000,000); pressing **Generate RAID** `POST`s `{ text }` as JSON to `/extract`.
 2. **Route (`server.js` → `lib/extractHandler.js`)** — `app.post('/extract', auth.requireAuth, createExtractHandler({ auth, extract, apiKey, model }))`. The handler:
-   - Rejects non-string or `< 10` trimmed chars → `400`.
+   - Runs **inline `extractSchema.safeParse(req.body)`** (zod) — `text` must be a string, trimmed, min 10 chars. Failure → `400 { error: "Provide 'text' (at least 10 chars) of project notes." }` (bespoke body preserved for existing tests; see Input validation section).
    - Rejects missing `ANTHROPIC_API_KEY` → `500`.
    - Calls `auth.consume(req.centralSessionId)` **before** the paid LLM call (quota gate — see below). On `quota_exceeded` → `402`; `not_entitled` → `403`; any other failure (hub unreachable/error) → **fail closed `503`**. The paid Anthropic call never runs without a successful consume.
 3. **LLM call (`lib/extract.js`)** — the only place network code lives. `extractOnce()` does a raw `fetch` to `https://api.anthropic.com/v1/messages` with headers `x-api-key`, `anthropic-version: 2023-06-01`, body:
@@ -147,6 +151,22 @@ INDEX idx_app_sessions_central ON (central_session_id)
 
 There is **no app-owned admin surface** in the suite build. (The stale README references `/admin.html` + `manageKeys.js` — that belonged to the retired standalone access-key model and is not present in `server.js`.)
 
+## Input validation (zod)
+
+Added 2026-06-09 as part of the suite-wide Tier-1 #2 rollout, copied from the hub pilot. See also `docs/architecture/hub.md` and the repo README.
+
+**`lib/validate.js` — middleware factory.** `validate(schema, { source = 'body', onInvalid })` returns an Express middleware:
+- On **success**: replaces `req[source]` with zod's parsed output (coerced, unknown keys stripped) and calls `next()`.
+- On **failure** with `onInvalid`: calls `onInvalid(req, res, error)` — intended for form routes that need to re-render with field errors.
+- On **failure** without `onInvalid`: calls `next(err)` with `err.status = 400` and `err.fields = result.error.flatten().fieldErrors` — the central error handler (`middleware/errorHandler.js`) picks this up and adds `fields` to the JSON error body when present.
+
+**`schemas/extract.js` — `extractSchema`.** The only schema defined: validates the `POST /extract` body. Enforces:
+- `text`: must be a string, trimmed, minimum 10 characters.
+
+**`POST /extract` uses inline `safeParse`, not the middleware.** The `/extract` handler (`lib/extractHandler.js`) calls `extractSchema.safeParse(req.body || {})` directly rather than routing through `validate()`. This preserves the bespoke 400 response body — `{ error: "Provide 'text' (at least 10 chars) of project notes." }` — which is asserted by the existing test suite. The `validate()` middleware is available for future routes but `/extract` does not use it. The parsed, trimmed `text` is extracted from `parsed.data.text` on success.
+
+**Central error handler.** `middleware/errorHandler.js` `makeErrorHandler()` already handles `err.fields`: on the JSON branch it includes `body.fields = err.fields` when the property is present, so future routes using `validate()` without `onInvalid` will get field-level errors surfaced automatically.
+
 ## Suite-auth integration & quota
 
 **Auth model.** RAID owns no login/session/password/key code. Users authenticate at the central hub (`HUB_BASE_URL=https://sprintsuite.uk`) and launch RAID with a one-time launch token.
@@ -185,7 +205,7 @@ There is **no app-owned admin surface** in the suite build. (The stale README re
 ## Testing
 
 - **Framework:** Node's built-in test runner for unit tests (`npm test` → `node --test tests/*.unit.test.js`); Playwright for E2E (`npm run test:e2e`).
-- **Counts (verified by running `npm test`):** **47 unit subtests, all passing** (~54 ms, no network). Files: `extract.unit.test.js`, `extractHandler.unit.test.js`, `extractUi.unit.test.js`, `exports.unit.test.js`, `samples.unit.test.js`, `return-to-suite.unit.test.js`, `theme-contrast.unit.test.js`, `theme-drift.unit.test.js`. (Memory's "~46" rounds to this.)
+- **Counts (verified by running `npm test`):** **82 unit subtests, all passing** (~187 ms, no network). Files: `extract.unit.test.js`, `extractHandler.unit.test.js`, `extractUi.unit.test.js`, `exports.unit.test.js`, `samples.unit.test.js`, `return-to-suite.unit.test.js`, `theme-contrast.unit.test.js`, `theme-drift.unit.test.js`, `pino-logger.unit.test.js`, `pino-request-logger.unit.test.js`, `pino-error-handler.unit.test.js` (pino rollout, 2026-06-09 Tier-1 #1), `validate.unit.test.js`, `extract-schema.unit.test.js` (zod rollout, 2026-06-09 Tier-1 #2).
 - **E2E:** **1 spec** — `tests/e2e/license-band.spec.js` — asserts the public `/license.html` renders the Instrument oscilloscope band with no console errors. The authed `/` is intentionally **not** e2e-tested (it bounces to the hub, which isn't running in CI); it's covered by manual visual pass. Playwright's `webServer` boots `server.js` with a dummy `ANTHROPIC_API_KEY` and an unreachable hub (`HUB_BASE_URL=http://127.0.0.1:9`), readiness-probed via `/health`.
 - **Live harness:** `npm run test:harness` (`tests/harness.test.js`) hits the real Anthropic API (~$0.05/run) — a manual, money-spending gate, not part of `npm test`.
 - The `theme-drift` test guards that raid's synced Instrument foundation CSS matches the source of truth; `theme-contrast` + `lib/contrast.js` assert RAG/accent colours meet WCAG AA.

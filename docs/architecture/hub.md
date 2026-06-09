@@ -13,6 +13,8 @@
 - **Rate limiting:** Hand-rolled in-memory sliding-window limiter (`lib/rate-limit.js`) — no external dependency, **per-process** (state lost on restart, not shared across workers).
 - **Auth tokens / IDs:** `node:crypto` `randomBytes` (`lib/tokens.js`) — `randomToken()` = 32 bytes hex (sessions, magic-link, launch), `randomId()` = 16 bytes hex (row IDs).
 - **Test framework:** Node's built-in test runner (`node --test`) + `supertest` `^7.0.0` (devDependency) for HTTP-level route tests.
+- **Input validation:** **zod** `^4.4.x` (`lib/validate.js` + `schemas/*.js`), added 2026-06-09 (Tier-1 #2). See *Input validation* below.
+- **Logging / observability:** **pino** `^10.x` + **pino-http** `^11.x` (`lib/logger.js`, `middleware/requestLogger.js`) — structured JSON logs (dev-pretty off in prod), per-request id, plus a central content-negotiated error handler (`middleware/errorHandler.js`). Custom pino-http serializers log only `req:{id,method,url}` / `res:{statusCode}` (no headers) so `Set-Cookie`/auth never leak into logs.
 - Notable: **no cookie-parser, no helmet, no csurf, no express-session** — cookies are parsed/written by hand (`lib/cookies.js`), there is no CSRF protection layer, and sessions are a bespoke DB-backed scheme.
 
 ## Production deployment / services
@@ -53,12 +55,20 @@
     │   ├── org.js                  # companies/teams/members CRUD + role rules (last-owner guard)
     │   ├── entitlements.js         # grant/revoke/resolve/consume + quota period accounting
     │   ├── access-requests.js      # onboarding request CRUD
-    │   └── provisioning.js         # approve(): tx that creates company+owner+entitlements+invite token
+    │   ├── provisioning.js         # approve(): tx that creates company+owner+entitlements+invite token
+    │   ├── validate.js             # zod request-body validation middleware (coerce+strip / onInvalid / next(err))
+    │   └── logger.js               # pino logger (header-free serializers, prod JSON / dev pretty)
+    ├── schemas/                    # zod schemas, one file per route group + _patterns.js (shared EMAIL_RE)
+    │   ├── request.js login.js magic.js   # form-route bodies
+    │   ├── company.js admin.js     # form-route bodies (console)
+    │   └── api.js                  # JSON API bodies (inline safeParse, bespoke error bodies kept)
     ├── middleware/
     │   ├── requireSession.js       # cookie→central session lookup, idle/expiry check, req.user
     │   ├── requireAdmin.js         # req.user.isAdmin gate
     │   ├── requireCompanyRole.js   # slug→company membership/role gate (sets req.company)
-    │   └── requireApiKey.js        # Bearer per-app API key → req.callingApp
+    │   ├── requireApiKey.js        # Bearer per-app API key → req.callingApp
+    │   ├── requestLogger.js        # pino-http per-request logger (mounted after static, before routes)
+    │   └── errorHandler.js         # central error handler (mounted LAST; JSON gets {error, fields, reqId})
     ├── routes/                     # one mount* fn per file, called from server.js
     │   ├── landing.js  legal.js    # public marketing + legal pages
     │   ├── request.js              # onboarding form (honeypot + rate limit)
@@ -126,6 +136,16 @@ Key relationships: a **user** belongs to ≥0 **companies** (company_members) an
 - `DELETE /api/sessions/:id` — app-initiated logout (destroys central session).
 - `POST /api/apps/:app/consume` — decrement quota for the session's user; `200 {ok,remaining}`, `402 quota_exceeded`, `403 not_entitled`.
 
+## Input validation (zod)
+
+Added 2026-06-09 (Tier-1 #2 of the tech-stack upgrade). The manual `.trim()`/regex/`if (!x) return 400` checks that used to live inline in routes are now declarative **zod** schemas, one file per route group under `schemas/` (the messy normalization — trim, lowercase, empty→null, `apps`-array filtering — moved *into* the schemas as transforms; `EMAIL_RE` is shared in `schemas/_patterns.js`).
+
+- **`lib/validate.js`** exports `validate(schema, { source = "body", onInvalid })` Express middleware. On success it **replaces `req.body`** with zod's parsed (coerced, unknown-key-stripped) output, so handlers read already-clean values. On failure: form routes pass an `onInvalid` callback that **re-renders the same view with the original friendly message + the user's values** (behavior parity — no per-field inline errors); JSON routes omit `onInvalid`, so `validate` calls `next(err)` with `err.status = 400` and `err.fields = error.flatten().fieldErrors`, which the central `errorHandler` surfaces as `400 { error, fields, reqId }`.
+- **Form routes** (`/request`, `/login`, `/auth/magic`, `/company/*`, `/admin/*`) use `validate(schema, { onInvalid })`. Pre-steps that must precede validation stay ahead of it — notably `/request`'s honeypot (hidden `website` → fake-success) and rate-limit (429).
+- **JSON API routes** (`/api/sessions/exchange`, `/api/apps/:app/consume`) deliberately use **inline `schema.safeParse`** rather than the middleware, to preserve their existing bespoke error bodies (`{error:"missing_launch_token"}`, `{ok:false,reason:"missing_central_session_id"}`) that existing tests assert — zod here tightens types without changing the wire contract.
+- **Express 5 caveat:** `validate` only reassigns `req.body` (`req.query`/`req.params` are getter-only in Express 5); the `/auth/magic` **GET** keeps an inline `req.query.token` check for that reason.
+- This is the hub *pilot* of a suite-wide rollout; the same `lib/validate.js` + `schemas/` pattern was copied into all four apps (Poker & Retro additionally validate WebSocket payloads). See the per-app docs.
+
 ## Auth & identity model
 
 **Sign-in is passwordless magic-link.** Flow: user enters email at `/login` → if a matching, enabled `users` row exists, a `magic_link_tokens` row (15-min TTL) is created and a Resend email is sent (silent otherwise). The email link is `GET /auth/magic?token=…`, which only *shows* a confirm page; the human clicks a button that `POST`s, which **atomically consumes** the token (`UPDATE … WHERE consumed_at IS NULL AND expires_at > now`) and creates a **central session**. There is **no public self-signup** — accounts come into existence only via admin user-creation, company-member invites, or onboarding approval. This is the core abuse defense (links only ever go to existing users).
@@ -175,7 +195,7 @@ Hardcoded TTLs/limits in `config.js`: `sessionIdleMs` 30 min, `sessionMaxMs` 30 
 ## Testing
 
 - **Framework:** `node --test` (built-in), with `supertest` for HTTP route assertions. Run with `npm test` (`node --test tests/`). Tests build an in-memory app via `tests/helpers.js` (`DB_PATH=:memory:`, dummy secrets, `trust proxy` mirrored from server.js).
-- **Size:** ~**204 `test()` calls across 36 `*.test.js` files** (memory's "~207 tests" is the right ballpark; node may report a higher number counting subtests/suites).
+- **Size:** **node reports 247 tests** (as of 2026-06-09) across ~39 `*.test.js` files — the 2026-06-09 zod work added `validate.test.js`, `api-validate-fields.test.js`, plus schema/coercion + 400-path cases folded into the existing route suites. Each migrated route's pre-existing test file is the regression guard that proves behavior parity held.
 - **Coverage areas:** every route group (landing, login, magic, launch, dashboard, logout, request, legal, admin-users/sessions/companies, company console, api-sessions exchange/heartbeat, api-apps consume); every lib module (entitlements — 17, org — 24, provisioning, access-requests, audit, cookies, rate-limit, tokens, email, prune, sessions); middleware (requireSession, requireCompanyRole); the migrations (`db`, `db-002`, `db-004`); config validation; the **trust-proxy** fix; and visual/CSS guards (`theme-drift`, `instrument-chrome`, `landing-assets`). Largest suites: `company` (33), `org` (24), `entitlements` (17), `landing`/`request` (13).
 
 ## Operational notes & gotchas
@@ -185,6 +205,7 @@ Hardcoded TTLs/limits in `config.js`: `sessionIdleMs` 30 min, `sessionMaxMs` 30 
 - **Always delete central sessions via `lib/sessions.js`.** `launch_tokens.central_session_id` FKs `central_sessions` with **no ON DELETE CASCADE** and FKs are enforced, so a bare `DELETE FROM central_sessions` throws once the user has launched an app. The helpers (and `prune.js`) delete child `launch_tokens` first. (A past Sign-Out 500 came from this exact trap.)
 - **Rate limiting is in-memory and per-process.** Counters reset on restart and are not shared if ever run multi-instance. Login: 5/min per IP + 10/hr per email. Request: 5/hr per IP. The hub is single-instance today, so this is acceptable.
 - **No CSRF protection.** State-changing endpoints are plain form POSTs with no token; mitigations are `SameSite=Lax` cookies and Apache's 256KB body cap. A maintainer adding sensitive POSTs should weigh this.
+- **zod validation has parity constraints (see *Input validation*).** When adding/altering a route: keep request-specific pre-steps (honeypot, rate-limit) *ahead* of `validate`; on a form route supply an `onInvalid` that re-renders with the route's existing message (don't let it fall through to the generic error page); for a JSON route whose error body is asserted by tests, use inline `safeParse` not the middleware. `validate` strips unknown keys — a handler must only read fields its schema declares, or they'll be silently `undefined`.
 - **No account enumeration on `/login`** (always shows "check your email"); `/request` uses a honeypot + rate limit. The magic-link GET is deliberately side-effect-free to survive mailbox link-scanners — keep it that way.
 - **Unbounded retention is an open risk.** `scripts/prune.js` (run via `npm run prune` / cron, **not** scheduled in-app) removes expired sessions/tokens and audit events older than 90 days, but `access_requests` and `audit_events` (within window) and app-side data grow unbounded. A prune job/policy is a prerequisite before any privacy-note retention promise.
 - **Multi-tenancy assumption.** Several places (api-sessions exchange company resolution, company-console app toggles) assume **every user belongs to exactly one company**. Per-user Signal/RAID grants carry no company scope, so company context is derived from an arbitrary membership. Marked `TODO(multi-tenancy)` in code — correct only while users are single-company.

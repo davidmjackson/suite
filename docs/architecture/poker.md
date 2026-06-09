@@ -7,6 +7,7 @@
 - **Runtime:** Node.js (CI pins Node 24; auth-client `engines` requires `>=20`). Pure JavaScript (CommonJS, no TypeScript, no build step).
 - **HTTP framework:** Express `^5.1.0` (used only for static serving, auth-client routes, `/health`, `/api/me`, `/license`).
 - **Real-time:** the [`ws`](https://github.com/websockets/ws) library `^8.18.2`, run in `noServer` mode and wired into the Node HTTP server's `upgrade` event. This is the core of the app — see [Real-time architecture](#real-time-architecture). `perMessageDeflate: false`, `maxPayload: 64 KiB`.
+- **Validation:** `zod` — added 2026-06-09 (Tier-1 #2 of the tech-stack upgrade). `lib/validate.js` provides an Express middleware helper (`validate(schema)`) for HTTP body validation (CJS port of the hub reference pattern); `schemas/ws.js` provides the per-message-type schema registry and `validateMessage(type, payload)` used at the WS message boundary. Poker has no HTTP body routes at present so `validate()` is present for future use; the active validation is entirely on the WebSocket layer — see [Input validation (zod)](#input-validation-zod) below.
 - **IDs:** `uuid` `^11.1.0` (`v4`) for per-connection participant IDs; `node:crypto` `randomBytes` for room share tokens.
 - **Database / driver:** SQLite via `better-sqlite3` `^12.10.0`, used **only** for the app-side suite-auth session cache (`app_sessions` table). It comes transitively through the shared `@suite/auth-client` package (`file:../suite/shared/auth-client`, i.e. `/var/www/suite/shared/auth-client`). Poker has **no domain/business database of its own** — estimation rooms are entirely in-memory.
 - **Test frameworks:** Node's built-in test runner (`node --test`) for unit tests; Playwright `@playwright/test` `^1.59.1` for e2e; `supertest` `^7.2.2` for HTTP-level assertions.
@@ -46,8 +47,13 @@ Inferred items above are explicitly flagged; treat the env-file location and the
 │   ├── roomState.js          # In-memory room model: create/join/leave/expire/touch, share-token lookup, facilitator assignment
 │   ├── roles.js              # Role enum (Voter/Observer/Facilitator) + permission predicates
 │   ├── upgradeAuth.js        # Pure decision: is this WS upgrade allowed for an authed session?
+│   ├── validate.js           # zod HTTP body validation middleware helper (present for future use — no HTTP body routes yet)
 │   ├── buildInfo.js          # version+commit for /health (from env, package.json, or `git rev-parse`)
 │   └── contrast.js           # WCAG contrast helper (used by theme-contrast test)
+├── schemas/
+│   └── ws.js                 # zod per-message-type schema registry + validateMessage(type, payload) for inbound WS messages
+├── middleware/
+│   └── errorHandler.js       # Central error handler (JSON branch adds err.fields for validation errors)
 ├── public/
 │   ├── index.html            # Main app shell (authed suite users) — login + poker-room sections, Instrument bands
 │   ├── join.html             # Anonymous share-link join shell (token-based, no suite auth)
@@ -61,7 +67,7 @@ Inferred items above are explicitly flagged; treat the env-file location and the
 │   ├── css/                  # poker.css, instrument-core.css (synced theme)
 │   ├── fonts/, illos/, images/ (cardback.jpg), robots.txt, sitemap.xml
 ├── tests/
-│   ├── *.test.js             # 12 node:test unit files (~70 tests)
+│   ├── *.test.js             # 18 node:test unit files (~120 tests)
 │   └── e2e/                  # Playwright specs + helpers (seed.js, _auth.js) + .data/ (gitignored test DB)
 ├── scripts/
 │   ├── sync-theme.sh         # Pull theme-core CSS/illos/fonts from /var/www/signal
@@ -108,6 +114,52 @@ The decision is stamped onto the socket (`ws.authed`, `ws.hubUserId`, `ws.compan
 **Facilitator assignment.** `assignFacilitator` always picks an **authenticated** member; anonymous players are never eligible. If the facilitator leaves, `reassignFacilitatorIfLeaving` promotes another authed member (or leaves `facilitatorId = null` if none).
 
 **Reconnection.** Client-side only. `app.js` persists the room/name/role in `sessionStorage` and, after a transient disconnect (`onclose` with `everOpened`), sets a reconnect-intent flag and auto-retries every 5 s, replaying the stored `login` to rejoin the same room. If the socket never opened (e.g. session expired) it shows "session expired — re-launch from the hub" and reloads. (There is no server-side session resumption — a reconnect is a brand-new participant with a new `userId`.)
+
+## Input validation (zod)
+
+Added 2026-06-09 as Tier-1 #2 of the suite tech-stack upgrade. The meaningful validation for poker is entirely on the WebSocket layer (poker has no HTTP body routes). See also `hub.md` and `retro.md` — Retro received the same WS-message validation treatment in the same rollout.
+
+### WebSocket message boundary
+
+In `lib/wsServer.js`, the `message` handler first `JSON.parse`s the raw frame inside a `try/catch`. A bad JSON frame is immediately dropped with `logger.warn` and the socket stays open — no crash, no disconnect, no room-state mutation. For a parseable frame, `validateMessage(type, payload)` is called against the schema registry in `schemas/ws.js` before the `switch` dispatches to any handler:
+
+```js
+const validation = validateMessage(type, payload);
+if (!validation.ok && validation.error?.message !== 'unknown_message_type') {
+  logger.warn({ err: validation.error, type }, 'invalid ws payload');
+  return;
+}
+```
+
+Behaviour on each outcome:
+
+| Outcome | Action |
+|---|---|
+| Bad JSON | `logger.warn` + drop; socket stays open |
+| Known type, invalid payload | `logger.warn` + drop; socket stays open |
+| Unknown type | falls through to `default:` case, which replies with `{type:'error', payload:{message:'Unknown type: …'}}` |
+| Valid payload | dispatched to the existing handler unchanged |
+
+**This is a pure gate.** Valid messages reach their handlers with the original `parsed.payload` object — zod's unknown-key stripping is not applied downstream, so no gameplay field is ever dropped. The change closes the latent "malformed WS message throws inside a handler" gap without touching any handler logic.
+
+### Validated message types (from `schemas/ws.js`)
+
+| Type | Schema enforced |
+|---|---|
+| `login` | `name`: non-empty string, max 80 chars. `role`: optional enum (`Voter`/`Observer`/`Facilitator`). `room`: optional string, max 200 chars. (Anonymous users omit role/room; business rules are enforced in the handler.) |
+| `vote` | `vote`: enum of the eight deck values (`"0"`, `"1"`, `"2"`, `"3"`, `"5"`, `"8"`, `"13"`, `"?"`) |
+| `revealVotes` | no payload fields required (passthrough) |
+| `resetVotes` | no payload fields required (passthrough) |
+| `startNextRound` | no payload fields required (passthrough) |
+| `endSession` | no payload fields required (passthrough) |
+| `changeRole` | `targetUserId`: optional string (defaults to self in handler). `newRole`: required enum (`Voter`/`Observer`/`Facilitator`) |
+| `logout` | no payload fields required (passthrough) |
+
+`VOTE_VALUES` and `ROLE_VALUES` are exported from `schemas/ws.js` and kept in sync with `lib/wsHandlers.js` and `lib/roles.js`.
+
+### HTTP body validation (`lib/validate.js`)
+
+The `validate(schema, options)` Express middleware is present for completeness (CJS port of the hub pattern). On a valid parse it replaces `req.body` with zod's coerced, unknown-key-stripped output and calls `next()`. On failure it calls `next(err)` with `err.status = 400` and `err.fields` (flattened field errors), which the central error handler in `middleware/errorHandler.js` surfaces in the JSON response body as `{ error, reqId, fields }`. Poker has no HTTP body routes today, so `validate()` is currently unused.
 
 ## Data model
 
@@ -185,9 +237,9 @@ The hub cookie name is hard-coded `poker_session`. Auth-client tunables (`cacheT
 
 ## Testing
 
-- **Unit:** `npm test` → `node --test tests/*.test.js`. **12 files, ~70 tests:** `ws-handlers` (20), `room-state` (14), `roles` (7), `ws-operations` (6), `upgrade-auth` (5), `http-app` (4), `ws-server-upgrade` (4), `build-info` (3), `carddeck` (2), `theme-contrast` (2), `return-to-suite` (2), `theme-drift` (1). Covers the room state machine, role/permission predicates, WS upgrade auth (authed + anon token + reject), HTTP routes/headers, and the Return-to-Suite reveal.
+- **Unit:** `npm test` → `node --test tests/*.test.js`. **18 files, ~120 tests:** `ws-handlers` (20), `room-state` (14), `roles` (7), `ws-operations` (6), `upgrade-auth` (5), `http-app` (4), `ws-server-upgrade` (4), `build-info` (3), `pino-error-handler` (varies), `pino-logger` (varies), `pino-request-logger` (varies), `carddeck` (2), `theme-contrast` (2), `return-to-suite` (2), `theme-drift` (1), `ws-schema` (zod schema registry), `ws-validation` (WS gate integration). The two new zod files added 2026-06-09: `tests/ws-schema.test.js` (schema registry + validateMessage contract) and `tests/ws-validation.test.js` (gate integration: bad JSON dropped, invalid payload dropped, valid message still dispatched). Covers the room state machine, role/permission predicates, WS upgrade auth (authed + anon token + reject), HTTP routes/headers, the Return-to-Suite reveal, and the new WS validation gate. (There is a known pre-existing flaky health-check race in the WS integration tests under full-suite load; a single failure that passes on re-run is that harness flake, not the validation.)
 - **e2e:** `npm run test:e2e` → Playwright, **4 spec files, 9 tests**, server on `:3066` against a *stub* hub (`HUB_BASE_URL=http://127.0.0.1:9`) with sessions seeded directly into the test DB via `tests/e2e/helpers/seed.js` (`injectSession` sets the `poker_session` cookie). Scenarios: authed company room (vote/reveal), anonymous share-link join (votes, cannot facilitate, closed-link error), multi-user sync + transient-disconnect rejoin, no-session bounce, and Instrument header-band presence on the right shells.
-  - (Project memory cites "~72 unit + 8 e2e"; the current tree measures 70 unit + 9 e2e — close, treat counts as approximate.)
+  - (Project memory cites "~72 unit + 8 e2e"; the current tree measures ~120 unit + 9 e2e after the zod/pino additions — treat counts as approximate.)
 - **CI:** `.github/workflows/ci.yml` (Node 24): `npm ci`, install Chromium, `node --check` on all JS, `npm test`, `npm run test:e2e`, `npm audit --omit=dev`. Note: CI/deploy docs still `node --check manageKeys.js`, a file that **no longer exists** — that step is stale.
 
 ## Operational notes & gotchas
