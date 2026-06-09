@@ -1,5 +1,5 @@
 // lib/validate.js — zod request-body validation middleware.
-// validate(schema, { onInvalid }) -> Express middleware.
+// validate(schema, { source, onInvalid }) -> Express middleware.
 // On success: req.body is replaced with zod's parsed (coerced, unknown-key-stripped) output.
 // On failure: if onInvalid(req, res, error) is given it is called (form routes re-render);
 //   otherwise next(err) with err.status=400 and err.fields = flattened field errors (JSON routes).
