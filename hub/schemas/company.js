@@ -18,7 +18,3 @@ export const teamNameSchema = z.object({
 export const teamMemberSchema = z.object({
   userId: z.string().min(1),
 });
-
-export const memberAppActionSchema = z.object({
-  action: z.enum(["grant", "revoke"]),
-});
