@@ -21,3 +21,6 @@ project-design-docs/
 
 # Architecture docs: keep the markdown, exclude the binary bundle
 docs/architecture/apps.zip
+
+# graphify knowledge-graph output (regenerable tool artifact + cache)
+graphify-out/
