@@ -1,0 +1,27 @@
+// middleware/requestLogger.js — per-request structured logging via pino-http.
+import { pinoHttp } from "pino-http";
+import { randomUUID } from "node:crypto";
+import { safeUrl } from "../lib/logger.js";
+
+export function makeRequestLogger(logger) {
+  return pinoHttp({
+    logger,
+    genReqId(req, res) {
+      const incoming = req.headers["x-request-id"];
+      const id = typeof incoming === "string" && incoming.trim() ? incoming.trim() : randomUUID();
+      res.setHeader("X-Request-Id", id);
+      return id;
+    },
+    customLogLevel(req, res, err) {
+      if (err || res.statusCode >= 500) return "error";
+      if (res.statusCode >= 400) return "warn";
+      return "info";
+    },
+    serializers: {
+      // Log only id/method/url — never headers — so cookies/authorization can't leak.
+      req(req) {
+        return { id: req.id, method: req.method, url: safeUrl(req.url) };
+      },
+    },
+  });
+}
