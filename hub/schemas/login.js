@@ -8,5 +8,5 @@ export const loginSchema = z.object({
     (v) => (typeof v === "string" ? v.trim().toLowerCase() : v),
     z.string().regex(EMAIL_RE)
   ),
-  return_to: z.string().optional().default(""),
+  return_to: z.preprocess((v) => (typeof v === "string" ? v : ""), z.string()).default(""),
 });
