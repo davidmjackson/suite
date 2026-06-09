@@ -27,7 +27,7 @@ test("emits JSON with base service field", () => {
   assert.equal(cap.records()[0].service, "hub");
 });
 
-test("redacts token and password fields, including one level deep", () => {
+test("redacts token and password at top level and one nesting level", () => {
   const cap = capture();
   const log = createLogger({ level: "info", stream: cap.stream });
   log.info({ token: "abc", password: "pw", nested: { token: "zzz" } }, "m");
@@ -42,6 +42,8 @@ test("safeUrl masks sensitive query params but keeps the path", () => {
   assert.ok(!out.includes("topsecretvalue"));
   assert.ok(out.startsWith("/auth/magic"));
   assert.ok(out.includes("x=1"));
+  assert.ok(out.includes("token=[redacted]")); // key kept, sentinel readable (not %5B…%5D)
   assert.equal(safeUrl("/plain"), "/plain");
   assert.ok(!safeUrl("/x?password=topsecretpw").includes("topsecretpw"));
+  assert.equal(safeUrl("/p?token=abc#frag"), "/p?token=[redacted]#frag");
 });
