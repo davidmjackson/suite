@@ -18,6 +18,9 @@ import { mountCompany } from "./routes/company.js";
 import { mountRequest } from "./routes/request.js";
 import { mountLegal } from "./routes/legal.js";
 import { createEmailSender } from "./lib/email.js";
+import logger from "./lib/logger.js";
+import { makeRequestLogger } from "./middleware/requestLogger.js";
+import { makeErrorHandler } from "./middleware/errorHandler.js";
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const app = express();
@@ -39,6 +42,9 @@ app.set("views", viewsDir);
 
 // Static
 app.use(express.static(path.join(__dirname, "public")));
+
+// Request logging (skips static assets above; wraps all dynamic routes)
+app.use(makeRequestLogger(logger));
 
 // Body parsing
 app.use(express.urlencoded({ extended: false }));
@@ -65,4 +71,7 @@ mountRequest(app, { emailSender });
 mountLegal(app);
 app.get("/healthz", (_req, res) => res.json({ ok: true }));
 
-app.listen(config.port, () => console.log(`hub listening on ${config.port}`));
+// Central error handler — must be last.
+app.use(makeErrorHandler({ logger, nodeEnv: config.nodeEnv }));
+
+app.listen(config.port, () => logger.info({ port: config.port }, "hub listening"));
