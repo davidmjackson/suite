@@ -8,7 +8,8 @@ export function makeRequestLogger(logger) {
     logger,
     genReqId(req, res) {
       const incoming = req.headers["x-request-id"];
-      const id = typeof incoming === "string" && incoming.trim() ? incoming.trim() : randomUUID();
+      const trimmed = typeof incoming === "string" ? incoming.trim() : "";
+      const id = trimmed && trimmed.length <= 128 ? trimmed : randomUUID();
       res.setHeader("X-Request-Id", id);
       return id;
     },

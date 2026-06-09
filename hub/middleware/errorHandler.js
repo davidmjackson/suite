@@ -21,11 +21,26 @@ export function makeErrorHandler({ logger, nodeEnv }) {
     if (wantsJson) {
       return res.json({ error: isProd ? STATUS_CODES[status] || "Error" : err.message || "Error", reqId });
     }
-    return res.render("error", {
-      title: "Something went wrong",
-      message: isProd ? "An unexpected error occurred." : err.stack || err.message || "Error",
-      reqId,
-      backHref: "/",
-    });
+    try {
+      return res.render(
+        "error",
+        {
+          title: "Something went wrong",
+          message: isProd ? "An unexpected error occurred." : err.stack || err.message || "Error",
+          reqId,
+          backHref: "/",
+        },
+        (renderErr, html) => {
+          if (renderErr) {
+            log.warn({ err: renderErr, reqId }, "error view render failed");
+            return res.type("text/plain").send(`An unexpected error occurred. (ref: ${reqId})`);
+          }
+          res.send(html);
+        }
+      );
+    } catch (renderErr) {
+      log.warn({ err: renderErr, reqId }, "error view render failed");
+      return res.type("text/plain").send(`An unexpected error occurred. (ref: ${reqId})`);
+    }
   };
 }

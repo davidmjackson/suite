@@ -67,6 +67,14 @@ test("masks sensitive query params in the logged url", async () => {
   assert.ok(cap.records().some((r) => r.req && r.req.url.startsWith("/ok")));
 });
 
+test("ignores an over-long inbound X-Request-Id (generates its own)", async () => {
+  const { app } = buildApp();
+  const huge = "a".repeat(5000);
+  const res = await request(app).get("/ok").set("X-Request-Id", huge);
+  assert.notEqual(res.headers["x-request-id"], huge);
+  assert.equal(res.headers["x-request-id"].length, 36); // generated uuid v4
+});
+
 test("never logs response headers (Set-Cookie stays private)", async () => {
   const cap = capture();
   const logger = createLogger({ level: "info", stream: cap.stream });

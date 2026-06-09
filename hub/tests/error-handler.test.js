@@ -1,5 +1,6 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
+import express from "express";
 import request from "supertest";
 import { Writable } from "node:stream";
 import { buildTestApp } from "./helpers.js";
@@ -79,4 +80,18 @@ test("dev mode HTML error exposes the stack", async () => {
   assert.equal(res.status, 500);
   assert.match(res.headers["content-type"], /html/);
   assert.ok(res.text.includes("kaboom-secret-detail"));
+});
+
+test("falls back to plain text when the error view fails to render", async () => {
+  const cap = capture();
+  const logger = createLogger({ level: "info", stream: cap.stream });
+  const app = express(); // no view engine configured → render("error") fails
+  app.use(makeRequestLogger(logger));
+  app.get("/boom", () => { throw new Error("render-secret"); });
+  app.use(makeErrorHandler({ logger, nodeEnv: "production" }));
+  const res = await request(app).get("/boom");
+  assert.equal(res.status, 500);
+  assert.match(res.headers["content-type"], /text\/plain/);
+  assert.ok(res.text.includes("An unexpected error occurred"));
+  assert.ok(!res.text.includes("render-secret"));
 });
