@@ -2,6 +2,7 @@
 import { createRequireApiKey } from "../middleware/requireApiKey.js";
 import { createEntitlements } from "../lib/entitlements.js";
 import { createAuditLogger } from "../lib/audit.js";
+import { consumeSchema } from "../schemas/api.js";
 
 export function mountApiApps(app) {
   const db = app.locals.db;
@@ -13,8 +14,9 @@ export function mountApiApps(app) {
   app.post("/api/apps/:app/consume", requireApiKey, (req, res) => {
     const appName = req.params.app;
     if (appName !== req.callingApp) return res.status(403).json({ ok: false, reason: "wrong_app" });
-    const { central_session_id } = req.body || {};
-    if (!central_session_id) return res.status(400).json({ ok: false, reason: "missing_central_session_id" });
+    const parsed = consumeSchema.safeParse(req.body || {});
+    if (!parsed.success) return res.status(400).json({ ok: false, reason: "missing_central_session_id" });
+    const { central_session_id } = parsed.data;
     const sess = db.prepare("SELECT user_id FROM central_sessions WHERE id = ?").get(central_session_id);
     if (!sess) return res.status(404).json({ ok: false, reason: "session_not_found" });
 

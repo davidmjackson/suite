@@ -5,6 +5,7 @@ import { createAuditLogger } from "../lib/audit.js";
 import { createEntitlements } from "../lib/entitlements.js";
 import { createOrg } from "../lib/org.js";
 import { deleteCentralSession } from "../lib/sessions.js";
+import { exchangeSchema } from "../schemas/api.js";
 
 export function mountApiSessions(app) {
   const db = app.locals.db;
@@ -15,8 +16,9 @@ export function mountApiSessions(app) {
   const org = createOrg(db);
 
   app.post("/api/sessions/exchange", requireApiKey, (req, res) => {
-    const { launch_token } = req.body || {};
-    if (!launch_token) return res.status(400).json({ error: "missing_launch_token" });
+    const parsed = exchangeSchema.safeParse(req.body || {});
+    if (!parsed.success) return res.status(400).json({ error: "missing_launch_token" });
+    const { launch_token } = parsed.data;
     const t = now();
     const consumed = db.prepare(`
       UPDATE launch_tokens SET consumed_at = ?
