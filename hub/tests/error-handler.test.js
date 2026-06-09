@@ -24,6 +24,7 @@ async function appWithBoom({ nodeEnv = "production" } = {}) {
   const { app } = await buildTestApp();
   app.use(makeRequestLogger(logger));
   app.get("/boom", () => { throw new Error("kaboom-secret-detail"); });
+  app.get("/api/boom", () => { throw new Error("kaboom-secret-detail"); });
   app.use(makeErrorHandler({ logger, nodeEnv }));
   return { app, cap };
 }
@@ -53,10 +54,29 @@ test("HTML error renders the error page in prod without the stack", async () => 
   assert.match(res.headers["content-type"], /html/);
   assert.ok(res.text.includes("Something went wrong"));
   assert.ok(!res.text.includes("kaboom-secret-detail"));
+  assert.ok(res.headers["x-request-id"]);
+  assert.ok(res.text.includes(res.headers["x-request-id"]));
+  assert.ok(res.text.includes("Reference:"));
 });
 
 test("dev mode exposes the error message", async () => {
   const { app } = await appWithBoom({ nodeEnv: "development" });
   const res = await request(app).get("/boom").set("Accept", "application/json");
   assert.ok(JSON.stringify(res.body).includes("kaboom-secret-detail"));
+});
+
+test("/api/* errors return JSON even when the client asks for HTML", async () => {
+  const { app } = await appWithBoom();
+  const res = await request(app).get("/api/boom").set("Accept", "text/html");
+  assert.equal(res.status, 500);
+  assert.match(res.headers["content-type"], /json/);
+  assert.ok(!res.text.includes("kaboom-secret-detail"));
+});
+
+test("dev mode HTML error exposes the stack", async () => {
+  const { app } = await appWithBoom({ nodeEnv: "development" });
+  const res = await request(app).get("/boom");
+  assert.equal(res.status, 500);
+  assert.match(res.headers["content-type"], /html/);
+  assert.ok(res.text.includes("kaboom-secret-detail"));
 });
