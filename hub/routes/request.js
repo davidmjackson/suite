@@ -8,7 +8,8 @@ import logger from "../lib/logger.js";
 
 const ipLimiter = createLimiter({ max: 5, windowMs: 60 * 60 * 1000 });
 
-function requestInvalid(req, res) {
+// Third arg is the ZodError from validate(); unused here — the form shows a fixed message rather than per-field errors.
+function requestInvalid(req, res, _zodError) {
   const b = req.body || {};
   let apps = b.apps;
   if (typeof apps === "string") apps = [apps];
