@@ -9,6 +9,7 @@ import { createAccessRequests } from "../lib/access-requests.js";
 import { createProvisioner } from "../lib/provisioning.js";
 import { deleteCentralSession, deleteCentralSessionsForUser } from "../lib/sessions.js";
 import { deleteUser } from "../lib/users.js";
+import logger from "../lib/logger.js";
 
 function safeAppsLabel(json) {
   try {
@@ -141,7 +142,7 @@ export function mountAdmin(app, { emailSender } = {}) {
     try {
       if (emailSender) await emailSender.sendAccessApproved({ to: result.user.email, url });
     } catch (err) {
-      console.error("access-approved email send failed", err);
+      (req.log || logger).error({ err }, "access-approved email send failed");
     }
     res.redirect("/admin/companies");
   });

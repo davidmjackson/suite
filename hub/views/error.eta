@@ -2,6 +2,7 @@
 <section class="card" style="max-width:520px;margin:0 auto;">
 <h1 style="font-size:26px;"><%= it.title || "Something went wrong" %></h1>
 <p class="lede"><%= it.message %></p>
+<% if (it.reqId) { %><p class="muted" style="font-size:13px;opacity:.7;">Reference: <%= it.reqId %></p><% } %>
 <% if (it.backHref) { %><p><a class="lnk" href="<%= it.backHref %>">Back</a></p><% } %>
 </section>
 <%~ include("partials/footer") %>

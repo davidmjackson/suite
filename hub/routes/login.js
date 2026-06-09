@@ -2,6 +2,7 @@
 import { randomToken, now } from "../lib/tokens.js";
 import { createAuditLogger } from "../lib/audit.js";
 import { createLimiter } from "../lib/rate-limit.js";
+import logger from "../lib/logger.js";
 
 const ipLimiter = createLimiter({ max: 5, windowMs: 60 * 1000 });
 const emailLimiter = createLimiter({ max: 10, windowMs: 60 * 60 * 1000 });
@@ -50,7 +51,7 @@ export function mountLogin(app, { emailSender } = {}) {
       try {
         if (emailSender) await emailSender.sendMagicLink({ to: email, url });
       } catch (err) {
-        console.error("magic link send failed", err);
+        (req.log || logger).error({ err }, "magic link send failed");
       }
       audit.log({ userId: user.id, eventType: "magic_link_sent", metadata: { email }, ip });
     }
