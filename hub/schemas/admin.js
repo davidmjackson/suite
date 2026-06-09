@@ -1,6 +1,6 @@
 // schemas/admin.js — admin console form bodies.
 import { z } from "zod";
-const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+import { EMAIL_RE } from "./_patterns.js";
 const trim = (v) => (typeof v === "string" ? v.trim() : v);
 
 export const createUserSchema = z.object({

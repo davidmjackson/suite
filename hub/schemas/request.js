@@ -1,8 +1,8 @@
 // schemas/request.js — POST /request access-request body.
 import { z } from "zod";
+import { EMAIL_RE } from "./_patterns.js";
 
 export const APP_KEYS = ["poker", "retro", "signal", "raid"];
-const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
 const trim = (v) => (typeof v === "string" ? v.trim() : v);
 const optionalText = z.preprocess(

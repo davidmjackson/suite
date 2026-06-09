@@ -1,7 +1,7 @@
 // schemas/login.js — POST /login body. return_to is host-validated in the route
 // (needs config.allowedAppDomains), so the schema only normalizes email + passes return_to through.
 import { z } from "zod";
-const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+import { EMAIL_RE } from "./_patterns.js";
 
 export const loginSchema = z.object({
   email: z.preprocess(

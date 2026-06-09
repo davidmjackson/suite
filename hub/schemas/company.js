@@ -1,6 +1,6 @@
 // schemas/company.js — company console form bodies.
 import { z } from "zod";
-const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+import { EMAIL_RE } from "./_patterns.js";
 
 export const inviteMemberSchema = z.object({
   email: z.preprocess((v) => (typeof v === "string" ? v.trim().toLowerCase() : v), z.string().regex(EMAIL_RE)),
