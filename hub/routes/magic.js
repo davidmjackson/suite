@@ -26,6 +26,7 @@ export function mountMagic(app) {
   // dead before the human clicked. Instead we render a confirm page whose button
   // POSTs back — scanners issue GETs but don't submit forms.
   app.get("/auth/magic", (req, res) => {
+    // Inline token check (not validate()): Express 5 makes req.query getter-only, and validate() targets req.body.
     const token = req.query.token;
     if (!token || typeof token !== "string") {
       return res.status(400).render("error", { title: "Invalid link", message: "This sign-in link is malformed." });
