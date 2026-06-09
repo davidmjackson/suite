@@ -66,3 +66,21 @@ test("masks sensitive query params in the logged url", async () => {
   assert.ok(!cap.text().includes("topsecretquery"));
   assert.ok(cap.records().some((r) => r.req && r.req.url.startsWith("/ok")));
 });
+
+test("never logs response headers (Set-Cookie stays private)", async () => {
+  const cap = capture();
+  const logger = createLogger({ level: "info", stream: cap.stream });
+  const app = express();
+  app.use(makeRequestLogger(logger));
+  app.get("/setcookie", (req, res) => {
+    res.setHeader("Set-Cookie", "hub_session=supersecretsession; HttpOnly");
+    res.json({ ok: true });
+  });
+  await request(app).get("/setcookie");
+  await tick();
+  assert.ok(!cap.text().includes("supersecretsession"));
+  // statusCode is still useful and should remain in the log record:
+  const rec = cap.records().find((r) => r.req && r.req.url === "/setcookie");
+  assert.ok(rec);
+  assert.equal(rec.res.statusCode, 200);
+});

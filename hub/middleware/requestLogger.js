@@ -18,9 +18,13 @@ export function makeRequestLogger(logger) {
       return "info";
     },
     serializers: {
-      // Log only id/method/url — never headers — so cookies/authorization can't leak.
+      // Log only id/method/url — never request headers — so cookies/authorization can't leak.
       req(req) {
         return { id: req.id, method: req.method, url: safeUrl(req.url) };
+      },
+      // Log only the status — never response headers — so Set-Cookie (session id) can't leak.
+      res(res) {
+        return { statusCode: res.statusCode };
       },
     },
   });
