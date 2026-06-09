@@ -2,6 +2,8 @@
 import { randomToken, now } from "../lib/tokens.js";
 import { setSessionCookie } from "../lib/cookies.js";
 import { createAuditLogger } from "../lib/audit.js";
+import { validate } from "../lib/validate.js";
+import { magicPostSchema } from "../schemas/magic.js";
 
 const APP_BY_DOMAIN = {
   "sprintraid.uk": "raid",
@@ -35,12 +37,13 @@ export function mountMagic(app) {
     res.render("confirm", { token });
   });
 
+  function magicInvalid(req, res) {
+    return res.status(400).render("error", { title: "Invalid link", message: "This sign-in link is malformed." });
+  }
+
   // POST performs the actual login: atomically consume the token, then create the session.
-  app.post("/auth/magic", (req, res) => {
+  app.post("/auth/magic", validate(magicPostSchema, { onInvalid: magicInvalid }), (req, res) => {
     const token = req.body.token;
-    if (!token || typeof token !== "string") {
-      return res.status(400).render("error", { title: "Invalid link", message: "This sign-in link is malformed." });
-    }
     const t = now();
     const consumed = db.prepare(`
       UPDATE magic_link_tokens SET consumed_at = ?
