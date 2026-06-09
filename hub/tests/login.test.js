@@ -37,6 +37,15 @@ test("POST /login with unknown email still renders check-email (no leak)", async
   assert.equal(tokens.c, 0, "no token should be created for unknown email");
 });
 
+test("POST /login with invalid email returns 400 Invalid email", async () => {
+  const { app, db } = await buildWithLogin();
+  const res = await request(app).post("/login").type("form").send({ email: "notanemail" });
+  assert.equal(res.status, 400);
+  assert.match(res.text, /Invalid email/);
+  const tokens = db.prepare("SELECT COUNT(*) AS c FROM magic_link_tokens").get();
+  assert.equal(tokens.c, 0, "no token should be created for invalid email");
+});
+
 test("POST /login with known email creates a token", async () => {
   const { app, db } = await buildWithLogin();
   db.prepare("INSERT INTO users (id, email, created_at) VALUES (?,?,?)").run("u1", "known@test.com", Date.now());
