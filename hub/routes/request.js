@@ -2,6 +2,7 @@
 import { createAccessRequests } from "../lib/access-requests.js";
 import { createLimiter } from "../lib/rate-limit.js";
 import { createAuditLogger } from "../lib/audit.js";
+import logger from "../lib/logger.js";
 
 const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 const APP_KEYS = ["poker", "retro", "signal", "raid"];
@@ -57,7 +58,7 @@ export function mountRequest(app, { emailSender } = {}) {
           reviewUrl: `${config.baseUrl}/admin/companies`,
         });
       } catch (err) {
-        console.error("access request notification failed", err);
+        (req.log || logger).error({ err }, "access request notification failed");
       }
     }
 
