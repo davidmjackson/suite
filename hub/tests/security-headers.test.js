@@ -56,6 +56,17 @@ test("headers are present on a real route response (landing /)", async () => {
   assert.match(res.headers["permissions-policy"], /camera=\(\)/);
 });
 
+test("form-action allows the app origins (launch + magic-link cross-origin redirects)", async () => {
+  const { app } = await buildTestApp();
+  const res = await request(app).get("/");
+  const csp = res.headers["content-security-policy"];
+  // POST /launch/:app and POST /auth/magic 302-redirect into the app origins;
+  // CSP form-action is enforced against redirect targets, so the app origins
+  // must be allow-listed or the launch / magic-link sign-in is blocked.
+  assert.match(csp, /form-action 'self'[^;]*https:\/\/sprintraid\.uk/);
+  assert.match(csp, /form-action 'self'[^;]*https:\/\/sprintpoker\.uk/);
+});
+
 test("headers are present on a 404 (covers error responses)", async () => {
   const { app } = await buildTestApp();
   const res = await request(app).get("/no-such-path-xyz");
