@@ -1,7 +1,9 @@
 // tests/security-headers.test.js
 import { test } from "node:test";
 import assert from "node:assert/strict";
+import request from "supertest";
 import { makeSecurityHeaders, DEFAULT_CSP } from "../middleware/securityHeaders.js";
+import { buildTestApp } from "./helpers.js";
 
 // Minimal res double that records setHeader calls.
 function fakeRes() {
@@ -41,9 +43,6 @@ test("contentSecurityPolicy override replaces the CSP value only", () => {
   // Other headers unchanged by the override.
   assert.equal(res.headers["X-Frame-Options"], "DENY");
 });
-
-import request from "supertest";
-import { buildTestApp } from "./helpers.js";
 
 test("headers are present on a real route response (landing /)", async () => {
   const { app } = await buildTestApp();
