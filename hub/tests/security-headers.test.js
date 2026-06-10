@@ -41,3 +41,29 @@ test("contentSecurityPolicy override replaces the CSP value only", () => {
   // Other headers unchanged by the override.
   assert.equal(res.headers["X-Frame-Options"], "DENY");
 });
+
+import request from "supertest";
+import { buildTestApp } from "./helpers.js";
+
+test("headers are present on a real route response (landing /)", async () => {
+  const { app } = await buildTestApp();
+  const res = await request(app).get("/");
+  assert.equal(res.status, 200);
+  assert.equal(res.headers["x-frame-options"], "DENY");
+  assert.equal(res.headers["x-content-type-options"], "nosniff");
+  assert.equal(res.headers["referrer-policy"], "strict-origin-when-cross-origin");
+  assert.match(res.headers["content-security-policy"], /script-src 'self'/);
+  assert.equal(res.headers["strict-transport-security"], "max-age=31536000; includeSubDomains");
+  assert.match(res.headers["permissions-policy"], /camera=\(\)/);
+});
+
+test("headers are present on a 404 (covers error responses)", async () => {
+  const { app } = await buildTestApp();
+  const res = await request(app).get("/no-such-path-xyz");
+  assert.equal(res.status, 404);
+  // Express's finalhandler sets its own CSP on unhandled 404s, but our other
+  // headers (set before finalhandler runs) should still be present.
+  assert.equal(res.headers["x-frame-options"], "DENY");
+  assert.equal(res.headers["referrer-policy"], "strict-origin-when-cross-origin");
+  assert.match(res.headers["permissions-policy"], /camera=\(\)/);
+});

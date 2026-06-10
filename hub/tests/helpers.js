@@ -4,6 +4,7 @@ import { Eta } from "eta";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 import { openDb } from "../db/index.js";
+import { makeSecurityHeaders } from "../middleware/securityHeaders.js";
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 
@@ -23,6 +24,7 @@ export async function buildTestApp({ env = {} } = {}) {
   const { default: config } = await import("../config.js?t=" + Date.now());
   const app = express();
   app.set("trust proxy", "loopback"); // mirror server.js (real client IP via X-Forwarded-For)
+  app.use(makeSecurityHeaders());
   const viewsDir = path.join(__dirname, "../views");
   const eta = new Eta({ views: viewsDir, cache: false });
   app.engine("eta", (fp, opts, cb) => {

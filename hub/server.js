@@ -21,6 +21,7 @@ import { createEmailSender } from "./lib/email.js";
 import logger from "./lib/logger.js";
 import { makeRequestLogger } from "./middleware/requestLogger.js";
 import { makeErrorHandler } from "./middleware/errorHandler.js";
+import { makeSecurityHeaders } from "./middleware/securityHeaders.js";
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const app = express();
@@ -29,6 +30,9 @@ const app = express();
 // real client via X-Forwarded-For (per-IP rate limiting + accurate audit IPs).
 // Mirrored in tests/helpers.js — keep both in sync.
 app.set("trust proxy", "loopback");
+
+// Security headers — mounted early so they cover static assets and error responses.
+app.use(makeSecurityHeaders());
 
 // Views
 const viewsDir = path.join(__dirname, "views");
