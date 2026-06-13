@@ -19,7 +19,7 @@ test("logged-out user is redirected to /login", async () => {
   assert.match(res.headers.location, /\/login/);
 });
 
-test("logged-in user sees four tiles", async () => {
+test("logged-in user sees the four gated tiles plus the free Sprintplan tile", async () => {
   const { app, db } = await buildWithDashboard();
   db.prepare("INSERT INTO users (id,email,created_at) VALUES (?,?,?)").run("u1", "a@b.c", now());
   const sid = randomToken();
@@ -31,6 +31,22 @@ test("logged-in user sees four tiles", async () => {
   assert.match(res.text, /Sprintsignal/);
   assert.match(res.text, /Sprintretro/);
   assert.match(res.text, /Sprintpoker/);
+  assert.match(res.text, /Sprintplan/);
+});
+
+test("the Sprintplan tile is a free direct link out — no SSO launch, no entitlement gate", async () => {
+  const { app, db } = await buildWithDashboard();
+  db.prepare("INSERT INTO users (id,email,created_at) VALUES (?,?,?)").run("u1", "a@b.c", now());
+  const sid = randomToken();
+  db.prepare("INSERT INTO central_sessions (id,user_id,created_at,last_heartbeat_at,expires_at) VALUES (?,?,?,?,?)")
+    .run(sid, "u1", now(), now(), now() + 60_000);
+  const res = await request(app).get("/dashboard").set("Cookie", `hub_session=${sid}`);
+  assert.equal(res.status, 200);
+  // direct link out to the account-free app...
+  assert.match(res.text, /href="https:\/\/sprintplan\.uk"/);
+  assert.match(res.text, /Free . no sign-in/);
+  // ...never an SSO launch form, even though the user has no plan entitlement
+  assert.doesNotMatch(res.text, /action="\/launch\/plan"/);
 });
 
 test("dashboard shows a Manage link for companies the user owns/admins", async () => {
