@@ -86,13 +86,13 @@
         <p>Planning poker for estimating your backlog together — no accounts needed for guests.</p>
       </div>
     </a>
-    <a class="appcard" data-app="plan" href="https://sprintplan.uk">
+    <div class="appcard" data-app="plan">
       <span class="tile"><svg width="26" height="26" aria-hidden="true"><use href="/illos/glyphs.svg#glyph-plan"/></svg></span>
       <div class="appcard-body">
-        <h3>Sprintplan <span class="tag tag-free">Free · no sign-in</span></h3>
+        <h3>Sprintplan <span class="tag tag-plan">PLAN</span></h3>
         <p>Map a delivery roadmap sprint by sprint — drag stories into sprints, watch capacity and flag dependencies. Runs in your browser, no account.</p>
       </div>
-    </a>
+    </div>
   </div>
 </section>
 
@@ -191,7 +191,6 @@
         <li>Flag and track cross-sprint dependencies</li>
         <li>Export a plan summary to Markdown, HTML or CSV</li>
       </ul>
-      <a class="btn btn-ghost btn-lg" href="https://sprintplan.uk">Open Sprintplan →</a>
     </div>
     <figure class="shot">
       <div class="chrome" aria-hidden="true"><i></i><i></i><i></i><span class="url">sprintplan.uk</span></div>
