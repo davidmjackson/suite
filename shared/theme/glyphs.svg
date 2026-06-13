@@ -27,4 +27,12 @@
     <rect x="6.5" y="4" width="11" height="15" rx="2.4" transform="rotate(-9 12 11.5)" stroke="currentColor" stroke-width="2" opacity="0.5"/>
     <rect x="7.5" y="6" width="11" height="15" rx="2.4" transform="rotate(7 12 13)" fill="currentColor"/>
   </symbol>
+  <symbol id="glyph-plan" viewBox="0 0 24 24" fill="none">
+    <g fill="currentColor">
+      <rect x="3" y="4" width="3" height="16" rx="1.5" opacity="0.5"/>
+      <rect x="8.5" y="5" width="12.5" height="4.2" rx="1.4"/>
+      <rect x="8.5" y="10.9" width="12.5" height="4.2" rx="1.4" opacity="0.62"/>
+      <rect x="8.5" y="16.8" width="9" height="4.2" rx="1.4"/>
+    </g>
+  </symbol>
 </svg>

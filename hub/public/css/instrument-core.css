@@ -24,6 +24,16 @@
   .ins[data-app="signal"]{ --accent: var(--green); }
   .ins[data-app="retro"] { --accent: var(--teal); }
   .ins[data-app="poker"] { --accent: var(--ink); }
+  .ins[data-app="plan"]  { --plum:oklch(0.5 0.1 290); --plumwash:oklch(0.95 0.03 290); --dep-line:oklch(0.72 0.03 290); --accent:var(--plum); }
+  /* plan epic-colour palette (promoted from plan.css; values unchanged). */
+  .ins[data-app="plan"] [data-epic-colour="plum"]    { --epic:oklch(0.5 0.1 290); }
+  .ins[data-app="plan"] [data-epic-colour="violet"]  { --epic:oklch(0.5 0.1 265); }
+  .ins[data-app="plan"] [data-epic-colour="indigo"]  { --epic:oklch(0.52 0.1 240); }
+  .ins[data-app="plan"] [data-epic-colour="teal"]    { --epic:oklch(0.55 0.09 206); }
+  .ins[data-app="plan"] [data-epic-colour="cyan"]    { --epic:oklch(0.58 0.09 190); }
+  .ins[data-app="plan"] [data-epic-colour="green"]   { --epic:oklch(0.52 0.09 162); }
+  .ins[data-app="plan"] [data-epic-colour="moss"]    { --epic:oklch(0.55 0.09 140); }
+  .ins[data-app="plan"] [data-epic-colour="magenta"] { --epic:oklch(0.52 0.11 320); }
   .ins *{box-sizing:border-box; margin:0;}
   .ins h1,.ins h2,.ins h3,.ins .disp{font-family:'Bricolage Grotesque',sans-serif; font-weight:700; letter-spacing:-0.02em;}
   .ins .mono{font-family:'IBM Plex Mono',monospace;}

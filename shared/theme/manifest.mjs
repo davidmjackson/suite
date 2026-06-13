@@ -33,4 +33,5 @@ export const SURFACES = [
   { name: "retro", publicRoot: "/var/www/retrospective/public" },
   { name: "poker", publicRoot: "/var/www/scrumpoker/public" },
   { name: "raid", publicRoot: "/var/www/raid/public" },
+  { name: "plan", publicRoot: "/var/www/plan/public" },
 ];
