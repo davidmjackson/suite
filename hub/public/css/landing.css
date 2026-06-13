@@ -70,8 +70,10 @@
 .tag-signal{background:var(--greenwash);color:var(--green)}
 .tag-retro{background:var(--tealwash);color:var(--teal)}
 .tag-poker{background:oklch(0.93 0.006 250);color:var(--faint)}
-/* plan's differentiator: free + ungated, vs the four sign-in-gated apps. */
-.tag-free{background:var(--greenwash);color:var(--green)}
+/* plan badge — light purple (plum), distinct from the green tags. The hub body
+   is plain .ins so the shared --plum token isn't in scope; mirror its value as
+   the .appcard[data-app="plan"] accent does. */
+.tag-plan{background:oklch(0.95 0.03 290);color:oklch(0.5 0.1 290)}
 @media (max-width:720px){.appgrid{grid-template-columns:1fr}}
 
 .features{padding-bottom:20px}
