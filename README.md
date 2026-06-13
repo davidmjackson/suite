@@ -10,6 +10,7 @@ Umbrella project for the Sprint agile toolkit. Coordinates shared concerns (auth
 | Sprintretro | `/var/www/retrospective` | sprintretro.uk | Retrospectives |
 | Sprintsignal | `/var/www/signal` | sprintsignal.uk | Team signals |
 | Sprintraid | `/var/www/raid` | sprintraid.uk | Risks, Assumptions, Issues, Dependencies |
+| Sprintplan | `/var/www/plan` | sprintplan.uk | Delivery planning board |
 
 Note: two apps have directory names that don't match their brand names (`scrumpoker` is Sprintpoker; `retrospective` is Sprintretro).
 

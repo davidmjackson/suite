@@ -59,6 +59,9 @@
 .appcard[data-app="signal"]{--accent:var(--green)}
 .appcard[data-app="retro"]{--accent:var(--teal)}
 .appcard[data-app="poker"]{--accent:var(--ink)}
+/* plan is plum; the hub body is plain .ins (no data-app), so the shared
+   --plum token isn't in scope here — mirror its value (Brief 10). */
+.appcard[data-app="plan"]{--accent:oklch(0.5 0.1 290)}
 .appcard h3{font-size:21px;display:flex;align-items:center;gap:9px}
 .appcard p{color:var(--soft);font-size:14px;margin-top:7px}
 .tag{font-family:'IBM Plex Mono',monospace;font-size:10px;font-weight:600;letter-spacing:0.06em;
@@ -67,6 +70,8 @@
 .tag-signal{background:var(--greenwash);color:var(--green)}
 .tag-retro{background:var(--tealwash);color:var(--teal)}
 .tag-poker{background:oklch(0.93 0.006 250);color:var(--faint)}
+/* plan's differentiator: free + ungated, vs the four sign-in-gated apps. */
+.tag-free{background:var(--greenwash);color:var(--green)}
 @media (max-width:720px){.appgrid{grid-template-columns:1fr}}
 
 .features{padding-bottom:20px}
@@ -79,6 +84,8 @@
 .frow[data-app="signal"]{--accent:var(--green)}
 .frow[data-app="retro"]{--accent:var(--teal)}
 .frow[data-app="poker"]{--accent:var(--ink)}
+.frow[data-app="plan"]{--accent:oklch(0.5 0.1 290)}
+.frow-eyebrow .frow-mk{vertical-align:-2px;margin-right:6px}
 .ftext h3{font-size:26px;line-height:1.1;margin:8px 0 12px}
 .ftext>p{color:var(--soft);font-size:15px}
 .flist{list-style:none;margin-top:16px;display:flex;flex-direction:column;gap:9px}

@@ -86,6 +86,13 @@
         <p>Planning poker for estimating your backlog together — no accounts needed for guests.</p>
       </div>
     </a>
+    <a class="appcard" data-app="plan" href="https://sprintplan.uk">
+      <span class="tile"><svg width="26" height="26" aria-hidden="true"><use href="/illos/glyphs.svg#glyph-plan"/></svg></span>
+      <div class="appcard-body">
+        <h3>Sprintplan <span class="tag tag-free">Free · no sign-in</span></h3>
+        <p>Map a delivery roadmap sprint by sprint — drag stories into sprints, watch capacity and flag dependencies. Runs in your browser, no account.</p>
+      </div>
+    </a>
   </div>
 </section>
 
@@ -170,6 +177,28 @@
         <source type="image/webp" srcset="/img/shot-poker.webp 1x, /img/shot-poker@2x.webp 2x">
         <img src="/img/shot-poker.png" width="738" height="220" loading="lazy" decoding="async"
           alt="Sprintpoker estimation room with face-up and face-down cards">
+      </picture>
+    </figure>
+  </div>
+
+  <div class="frow" data-app="plan">
+    <div class="ftext">
+      <p class="frow-eyebrow"><svg class="frow-mk" width="14" height="14" aria-hidden="true"><use href="/illos/glyphs.svg#glyph-plan"/></svg>Sprintplan · Free, no sign-in</p>
+      <h3>Plan the whole roadmap, sprint by sprint.</h3>
+      <p>Sprintplan is a lightweight delivery board: set your cadence, drag stories into sprints, and see capacity and cross-sprint dependencies as you go. It runs entirely in your browser — no account, no backend, your plan saves locally.</p>
+      <ul class="flist">
+        <li>Drag stories into sprints with live capacity</li>
+        <li>Flag and track cross-sprint dependencies</li>
+        <li>Export a plan summary to Markdown, HTML or CSV</li>
+      </ul>
+      <a class="btn btn-ghost btn-lg" href="https://sprintplan.uk">Open Sprintplan →</a>
+    </div>
+    <figure class="shot">
+      <div class="chrome" aria-hidden="true"><i></i><i></i><i></i><span class="url">sprintplan.uk</span></div>
+      <picture>
+        <source type="image/webp" srcset="/img/shot-plan.webp 1x, /img/shot-plan@2x.webp 2x">
+        <img src="/img/shot-plan.png" width="1240" height="947" loading="lazy" decoding="async"
+          alt="Sprintplan delivery board with stories placed across sprints, a capacity nudge and a dependency badge">
       </picture>
     </figure>
   </div>
