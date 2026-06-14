@@ -33,13 +33,13 @@
   <div class="waves" aria-hidden="true"><svg viewBox="0 0 2400 200" preserveAspectRatio="none" width="100%" height="100%"><g class="waves-drift" id="scope"></g></svg></div>
   <div class="band-scrim" aria-hidden="true"></div>
   <div class="band-in lp-hero">
-    <p class="eyebrow">One sign-in · four focused apps</p>
-    <h1>Agile tools for teams that ship.</h1>
-    <p class="lede lp-lede">RAID logs, health checks, retros and planning poker. Four sharp tools for scrum masters and delivery leads, behind a single passwordless login. No setup, no sprawl.</p>
+    <p class="eyebrow">One login · four tools · plus Sprintplan, free</p>
+    <h1>RAID logs, retros, health checks and poker. One login, no setup.</h1>
+    <p class="lede lp-lede">For scrum masters and delivery leads who would rather run the sprint than manage another tool. One passwordless sign-in covers all of it. No setup, no sprawl.</p>
     <div class="cta-row">
-      <a class="btn btn-pri btn-lg" href="<%= it.signinUrl %>">Sign in</a>
-      <a class="btn btn-ghost btn-lg" href="<%= it.requestUrl %>">Request free access</a>
-      <span class="cta-note">New here? Request access · returning? Sign in · passwordless</span>
+      <a class="btn btn-pri btn-lg" href="<%= it.requestUrl %>">Get free access</a>
+      <a class="btn btn-ghost btn-lg" href="<%= it.signinUrl %>">Sign in</a>
+      <span class="cta-note">New here? Start free, no card. Returning? Sign in. Passwordless.</span>
     </div>
   </div>
 </section>
@@ -56,20 +56,20 @@
 <main class="wrap">
 
 <section class="section appgrid-section">
-  <h2 class="sec-h">Four tools, one workflow.</h2>
+  <h2 class="sec-h">Four tools behind one login. Plus Sprintplan, free.</h2>
   <div class="appgrid">
     <a class="appcard" data-app="raid" href="<%= it.signinUrl %>">
       <span class="tile"><svg width="26" height="26" aria-hidden="true"><use href="/illos/glyphs.svg#glyph-raid"/></svg></span>
       <div class="appcard-body">
         <h3>Sprintraid <span class="tag tag-raid">RAID</span></h3>
-        <p>Risks, assumptions, issues and dependencies — paste in email or Teams text, get a structured RAID log.</p>
+        <p>Risks, assumptions, issues and dependencies. Paste in email or Teams text, get a structured RAID log.</p>
       </div>
     </a>
     <a class="appcard" data-app="signal" href="<%= it.signinUrl %>">
       <span class="tile"><svg width="26" height="26" aria-hidden="true"><use href="/illos/glyphs.svg#glyph-signal"/></svg></span>
       <div class="appcard-body">
         <h3>Sprintsignal <span class="tag tag-signal">Health</span></h3>
-        <p>Run a team health check and surface what's working and what isn't — anonymously.</p>
+        <p>Run a team health check and surface what's working and what isn't, anonymously.</p>
       </div>
     </a>
     <a class="appcard" data-app="retro" href="<%= it.signinUrl %>">
@@ -83,14 +83,14 @@
       <span class="tile"><svg width="26" height="26" aria-hidden="true"><use href="/illos/glyphs.svg#glyph-poker"/></svg></span>
       <div class="appcard-body">
         <h3>Sprintpoker <span class="tag tag-poker">Estimate</span></h3>
-        <p>Planning poker for estimating your backlog together — no accounts needed for guests.</p>
+        <p>Planning poker for estimating your backlog together, no accounts needed for guests.</p>
       </div>
     </a>
     <div class="appcard" data-app="plan">
       <span class="tile"><svg width="26" height="26" aria-hidden="true"><use href="/illos/glyphs.svg#glyph-plan"/></svg></span>
       <div class="appcard-body">
-        <h3>Sprintplan <span class="tag tag-plan">PLAN</span></h3>
-        <p>Map a delivery roadmap sprint by sprint — drag stories into sprints, watch capacity and flag dependencies. Runs in your browser, no account.</p>
+        <h3>Sprintplan <span class="tag tag-plan">Free</span></h3>
+        <p>Map a delivery roadmap sprint by sprint. Drag stories into sprints, watch capacity, flag dependencies. Runs in your browser, no account needed.</p>
       </div>
     </div>
   </div>
@@ -101,7 +101,7 @@
     <div class="ftext">
       <p class="frow-eyebrow">Sprintraid</p>
       <h3>Turn meeting noise into a clean RAID log.</h3>
-      <p>Paste an email or Teams thread and Sprintraid extracts a structured RAID log — risks, assumptions, issues and dependencies — so nothing slips between sprints.</p>
+      <p>Paste an email or Teams thread and Sprintraid extracts a structured RAID log (risks, assumptions, issues and dependencies) so nothing slips between sprints.</p>
       <ul class="flist">
         <li>Auto-classify risks, assumptions, issues &amp; dependencies</li>
         <li>Flags dependency conflicts across workstreams</li>
@@ -122,7 +122,7 @@
     <div class="ftext">
       <p class="frow-eyebrow">Sprintsignal</p>
       <h3>Run a team health check in minutes.</h3>
-      <p>Sprintsignal turns an anonymous team health check into a radar of focus areas, so you can see where the team is thriving and where it needs support.</p>
+      <p>See where the team actually stands. An anonymous health check plots focus areas on a radar over time, so you can spot what is thriving and what needs support before it bites.</p>
       <ul class="flist">
         <li>Anonymous submissions, honest signal</li>
         <li>Radar chart of focus areas over time</li>
@@ -143,11 +143,11 @@
     <div class="ftext">
       <p class="frow-eyebrow">Sprintretro</p>
       <h3>Retrospectives that don't drag.</h3>
-      <p>Sprintretro runs a focused retrospective with a Start / Stop / Continue board, live stat cards and a timer to keep the conversation moving and end with clear actions.</p>
+      <p>Keep the retro moving and end with clear actions. A Start / Stop / Continue board, live stat cards and a built-in timer do the steering, so the conversation lands instead of drifting.</p>
       <ul class="flist">
         <li>Start / Stop / Continue board</li>
         <li>Live stat cards and a built-in timer</li>
-        <li>Disposable rooms — share a link, no accounts for guests</li>
+        <li>Disposable rooms, share a link, no accounts for guests</li>
       </ul>
     </div>
     <figure class="shot">
@@ -164,7 +164,7 @@
     <div class="ftext">
       <p class="frow-eyebrow">Sprintpoker</p>
       <h3>Estimate together with scrum poker.</h3>
-      <p>Sprintpoker runs planning poker for your backlog — everyone votes face-down, then reveals together, so estimates stay honest and the discussion stays focused.</p>
+      <p>Estimate as a team without anchoring. Everyone votes face-down, then reveals together, so the numbers stay honest and the discussion stays on the story, not the loudest voice.</p>
       <ul class="flist">
         <li>Face-down voting, reveal together</li>
         <li>Guests join with a link, no account needed</li>
@@ -185,7 +185,7 @@
     <div class="ftext">
       <p class="frow-eyebrow"><svg class="frow-mk" width="14" height="14" aria-hidden="true"><use href="/illos/glyphs.svg#glyph-plan"/></svg>Sprintplan · Free, no sign-in</p>
       <h3>Plan the whole roadmap, sprint by sprint.</h3>
-      <p>Sprintplan is a lightweight delivery board: set your cadence, drag stories into sprints, and see capacity and cross-sprint dependencies as you go. It runs entirely in your browser — no account, no backend, your plan saves locally.</p>
+      <p>Sprintplan is a lightweight delivery board: set your cadence, drag stories into sprints, and see capacity and cross-sprint dependencies as you go. It runs entirely in your browser, with no account and no backend, and your plan saves locally.</p>
       <ul class="flist">
         <li>Drag stories into sprints with live capacity</li>
         <li>Flag and track cross-sprint dependencies</li>
@@ -205,7 +205,7 @@
 
 <section class="faq" id="faq">
   <h2 class="sec-h">Questions</h2>
-  <div class="qa"><h3>Is it really free?</h3><p>Sprint Suite is free to try as a showcase. Some apps cap usage or AI calls, so it's not unlimited — but you can sign in and use all four tools without paying.</p></div>
+  <div class="qa"><h3>Is it really free?</h3><p>Yes. Sign in and use all four tools without paying, no card and no trial clock. A few apps cap heavy usage or AI calls, so it is not unlimited, but everyday team use is covered.</p></div>
   <div class="qa"><h3>Do I need a password?</h3><p>No. Sign-in is a passwordless magic link sent to your email. The same link both signs you up and signs you in.</p></div>
   <div class="qa"><h3>Do my guests need accounts?</h3><p>No. Retrospectives and planning poker rooms can be shared with a link, so guests join without creating an account.</p></div>
   <div class="qa"><h3>Where does my data go?</h3><p>Your data stays in Sprint Suite. There's no third-party tracking, and health-check submissions are anonymous.</p></div>
@@ -213,11 +213,11 @@
 </section>
 
 <section class="close">
-  <h2>Four sharp tools, one passwordless login.</h2>
-  <p>Sign in, or request free access for your team — no setup, no sprawl.</p>
+  <h2>Run your next sprint from one login.</h2>
+  <p>Get free access for your team in a couple of clicks. Passwordless, no card, no setup, no sprawl.</p>
   <div class="cta-row">
-    <a class="btn btn-pri btn-lg" href="<%= it.signinUrl %>">Sign in</a>
-    <a class="btn btn-ghost btn-lg" href="<%= it.requestUrl %>">Request free access</a>
+    <a class="btn btn-pri btn-lg" href="<%= it.requestUrl %>">Get free access</a>
+    <a class="btn btn-ghost btn-lg" href="<%= it.signinUrl %>">Sign in</a>
   </div>
 </section>
 
