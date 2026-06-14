@@ -33,8 +33,8 @@
   <div class="waves" aria-hidden="true"><svg viewBox="0 0 2400 200" preserveAspectRatio="none" width="100%" height="100%"><g class="waves-drift" id="scope"></g></svg></div>
   <div class="band-scrim" aria-hidden="true"></div>
   <div class="band-in lp-hero">
-    <p class="eyebrow">One login · four tools · plus Sprintplan, free</p>
-    <h1>RAID logs, retros, health checks and poker. One login, no setup.</h1>
+    <p class="eyebrow">Five tools · one passwordless login</p>
+    <h1>Your agile toolkit, one login.</h1>
     <p class="lede lp-lede">For scrum masters and delivery leads who would rather run the sprint than manage another tool. One passwordless sign-in covers all of it. No setup, no sprawl.</p>
     <div class="cta-row">
       <a class="btn btn-pri btn-lg" href="<%= it.requestUrl %>">Get free access</a>
@@ -56,7 +56,7 @@
 <main class="wrap">
 
 <section class="section appgrid-section">
-  <h2 class="sec-h">Four tools behind one login. Plus Sprintplan, free.</h2>
+  <h2 class="sec-h">Five tools behind one login.</h2>
   <div class="appgrid">
     <a class="appcard" data-app="raid" href="<%= it.signinUrl %>">
       <span class="tile"><svg width="26" height="26" aria-hidden="true"><use href="/illos/glyphs.svg#glyph-raid"/></svg></span>
@@ -205,7 +205,7 @@
 
 <section class="faq" id="faq">
   <h2 class="sec-h">Questions</h2>
-  <div class="qa"><h3>Is it really free?</h3><p>Yes. Sign in and use all four tools without paying, no card and no trial clock. A few apps cap heavy usage or AI calls, so it is not unlimited, but everyday team use is covered.</p></div>
+  <div class="qa"><h3>Is it really free?</h3><p>Yes. Sign in and use all five tools without paying, no card and no trial clock. A few apps cap heavy usage or AI calls, so it is not unlimited, but everyday team use is covered.</p></div>
   <div class="qa"><h3>Do I need a password?</h3><p>No. Sign-in is a passwordless magic link sent to your email. The same link both signs you up and signs you in.</p></div>
   <div class="qa"><h3>Do my guests need accounts?</h3><p>No. Retrospectives and planning poker rooms can be shared with a link, so guests join without creating an account.</p></div>
   <div class="qa"><h3>Where does my data go?</h3><p>Your data stays in Sprint Suite. There's no third-party tracking, and health-check submissions are anonymous.</p></div>
@@ -227,7 +227,7 @@
   <div class="lp-footer-in">
     <div class="lp-foot-lead">
       <a class="brand" href="/" aria-label="Sprint Suite"><svg class="mk" width="20" height="20" aria-hidden="true"><use href="/illos/glyphs.svg#glyph-suite"/></svg> <span>Sprint<span class="brand-suite">Suite</span></span></a>
-      <p>Four focused agile tools for scrum masters and delivery leads, behind one passwordless login.</p>
+      <p>Five focused agile tools for scrum masters and delivery leads, behind one passwordless login.</p>
     </div>
     <nav class="lp-foot-col" aria-label="Apps">
       <p class="lp-foot-h">Apps</p>

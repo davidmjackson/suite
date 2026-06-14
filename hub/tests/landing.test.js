@@ -58,7 +58,7 @@ test("landing has exactly one h1 and a sign-in CTA to /login", async () => {
   const res = await request(app).get("/");
   const h1s = res.text.match(/<h1[\s>]/g) || [];
   assert.equal(h1s.length, 1, "exactly one <h1>");
-  assert.match(res.text, /<h1>RAID logs, retros, health checks and poker\. One login, no setup\.<\/h1>/);
+  assert.match(res.text, /<h1>Your agile toolkit, one login\.<\/h1>/);
   assert.match(res.text, /href="\/login"[^>]*>\s*Sign in\s*</);
 });
 
