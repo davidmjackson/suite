@@ -58,7 +58,7 @@ test("landing has exactly one h1 and a sign-in CTA to /login", async () => {
   const res = await request(app).get("/");
   const h1s = res.text.match(/<h1[\s>]/g) || [];
   assert.equal(h1s.length, 1, "exactly one <h1>");
-  assert.match(res.text, /Agile tools for teams that ship/);
+  assert.match(res.text, /<h1>RAID logs, retros, health checks and poker\. One login, no setup\.<\/h1>/);
   assert.match(res.text, /href="\/login"[^>]*>\s*Sign in\s*</);
 });
 
@@ -90,10 +90,12 @@ test("app grid shows four cards all linking to /login", async () => {
   assert.equal(cardLinks.length, 4, "four app cards link to /login");
 });
 
-test("FAQ uses 'free to try' framing and the closing CTA links to /login", async () => {
+test("FAQ leads the free answer with 'yes' and the closing CTA links to /login", async () => {
   const { app } = await buildTestApp();
   const res = await request(app).get("/");
-  assert.match(res.text, /free to try/i);
+  // honest framing: answers "yes" up front, then states the limit, never "free forever"
+  assert.match(res.text, /Is it really free\?<\/h3><p>Yes\./);
+  assert.match(res.text, /not unlimited/i);
   assert.doesNotMatch(res.text, /free forever/i);
   assert.match(res.text, /class="close"[\s\S]*href="\/login"/);
 });
@@ -132,7 +134,7 @@ test("landing offers a Request free access path to /request for new businesses",
   const { app } = await buildTestApp();
   const res = await request(app).get("/");
   // visible primary-journey CTA for cold prospects, in hero + closing card
-  assert.match(res.text, /href="\/request"[^>]*>\s*Request free access\s*</);
+  assert.match(res.text, /href="\/request"[^>]*>\s*Get free access\s*</);
   // present at the hero, the closing CTA, and the footer
   const reqLinks = (res.text.match(/href="\/request"/g) || []);
   assert.ok(reqLinks.length >= 3, `expected /request in hero, closing CTA and footer; saw ${reqLinks.length}`);
