@@ -18,7 +18,7 @@
     oklch(0.996 0.002 240 / 0.82) 48%,
     oklch(0.996 0.002 240 / 0) 72%);}
 .lp-hero{padding:64px 40px 58px}
-.lp-hero h1{font-size:52px;line-height:1.02;margin:10px 0 14px;max-width:18ch;text-wrap:balance}
+.lp-hero h1{font-size:52px;line-height:1.02;margin:10px 0 14px;max-width:30ch;text-wrap:balance}
 .lp-lede{font-size:17px;max-width:60ch}
 .cta-row{display:flex;align-items:center;gap:16px;margin-top:26px;flex-wrap:wrap}
 .cta-note{font-family:'IBM Plex Mono',monospace;font-size:11px;letter-spacing:0.12em;
