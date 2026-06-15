@@ -8,6 +8,7 @@ const APP_DOMAIN = {
   signal: "https://sprintsignal.uk",
   retro: "https://sprintretro.uk",
   poker: "https://sprintpoker.uk",
+  plan: "https://sprintplan.uk",
 };
 
 export function mountLaunch(app) {

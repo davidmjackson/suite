@@ -19,6 +19,7 @@ export async function buildTestApp({ env = {} } = {}) {
   process.env.HUB_API_KEY_SIGNAL ??= "k-signal";
   process.env.HUB_API_KEY_RETRO ??= "k-retro";
   process.env.HUB_API_KEY_POKER ??= "k-poker";
+  process.env.HUB_API_KEY_PLAN ??= "k-plan";
   Object.assign(process.env, env);
 
   const { default: config } = await import("../config.js?t=" + Date.now());

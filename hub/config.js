@@ -22,6 +22,7 @@ const config = {
     signal: required("HUB_API_KEY_SIGNAL"),
     retro: required("HUB_API_KEY_RETRO"),
     poker: required("HUB_API_KEY_POKER"),
+    plan: required("HUB_API_KEY_PLAN"),
   },
   sessionIdleMs: 30 * 60 * 1000,
   sessionMaxMs: 30 * 24 * 60 * 60 * 1000,
