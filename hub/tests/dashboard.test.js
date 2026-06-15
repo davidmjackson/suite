@@ -19,7 +19,7 @@ test("logged-out user is redirected to /login", async () => {
   assert.match(res.headers.location, /\/login/);
 });
 
-test("logged-in user sees the four gated tiles plus the free Sprintplan tile", async () => {
+test("logged-in user sees all five app tiles", async () => {
   const { app, db } = await buildWithDashboard();
   db.prepare("INSERT INTO users (id,email,created_at) VALUES (?,?,?)").run("u1", "a@b.c", now());
   const sid = randomToken();
@@ -34,7 +34,7 @@ test("logged-in user sees the four gated tiles plus the free Sprintplan tile", a
   assert.match(res.text, /Sprintplan/);
 });
 
-test("the Sprintplan tile is a free direct link out — no SSO launch, no entitlement gate", async () => {
+test("Phase 2: Sprintplan is a launched app, no longer a free direct link", async () => {
   const { app, db } = await buildWithDashboard();
   db.prepare("INSERT INTO users (id,email,created_at) VALUES (?,?,?)").run("u1", "a@b.c", now());
   const sid = randomToken();
@@ -42,10 +42,10 @@ test("the Sprintplan tile is a free direct link out — no SSO launch, no entitl
     .run(sid, "u1", now(), now(), now() + 60_000);
   const res = await request(app).get("/dashboard").set("Cookie", `hub_session=${sid}`);
   assert.equal(res.status, 200);
-  // direct link out to the account-free app...
-  assert.match(res.text, /href="https:\/\/sprintplan\.uk"/);
-  assert.match(res.text, /Free . no sign-in/);
-  // ...never an SSO launch form, even though the user has no plan entitlement
+  // The Brief 10 free-direct-link tile is gone (collaboration requires an account).
+  assert.doesNotMatch(res.text, /href="https:\/\/sprintplan\.uk"/);
+  // This user has no plan entitlement, so (like any gated app) no launch form yet —
+  // it shows Request access until entitled, then /launch/plan appears.
   assert.doesNotMatch(res.text, /action="\/launch\/plan"/);
 });
 
