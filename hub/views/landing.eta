@@ -58,38 +58,38 @@
 <section class="section appgrid-section">
   <h2 class="sec-h">Five tools behind one login.</h2>
   <div class="appgrid">
-    <a class="appcard" data-app="raid" href="<%= it.signinUrl %>">
+    <div class="appcard" data-app="raid">
       <span class="tile"><svg width="26" height="26" aria-hidden="true"><use href="/illos/glyphs.svg#glyph-raid"/></svg></span>
       <div class="appcard-body">
         <h3>Sprintraid <span class="tag tag-raid">RAID</span></h3>
         <p>Risks, assumptions, issues and dependencies. Paste in email or Teams text, get a structured RAID log.</p>
       </div>
-    </a>
-    <a class="appcard" data-app="signal" href="<%= it.signinUrl %>">
+    </div>
+    <div class="appcard" data-app="signal">
       <span class="tile"><svg width="26" height="26" aria-hidden="true"><use href="/illos/glyphs.svg#glyph-signal"/></svg></span>
       <div class="appcard-body">
         <h3>Sprintsignal <span class="tag tag-signal">Health</span></h3>
         <p>Run a team health check and surface what's working and what isn't, anonymously.</p>
       </div>
-    </a>
-    <a class="appcard" data-app="retro" href="<%= it.signinUrl %>">
+    </div>
+    <div class="appcard" data-app="retro">
       <span class="tile"><svg width="26" height="26" aria-hidden="true"><use href="/illos/glyphs.svg#glyph-retro"/></svg></span>
       <div class="appcard-body">
         <h3>Sprintretro <span class="tag tag-retro">Retro</span></h3>
         <p>Fast sprint retrospectives with Start / Stop / Continue boards and a built-in timer.</p>
       </div>
-    </a>
-    <a class="appcard" data-app="poker" href="<%= it.signinUrl %>">
+    </div>
+    <div class="appcard" data-app="poker">
       <span class="tile"><svg width="26" height="26" aria-hidden="true"><use href="/illos/glyphs.svg#glyph-poker"/></svg></span>
       <div class="appcard-body">
         <h3>Sprintpoker <span class="tag tag-poker">Estimate</span></h3>
         <p>Planning poker for estimating your backlog together, no accounts needed for guests.</p>
       </div>
-    </a>
+    </div>
     <div class="appcard" data-app="plan">
       <span class="tile"><svg width="26" height="26" aria-hidden="true"><use href="/illos/glyphs.svg#glyph-plan"/></svg></span>
       <div class="appcard-body">
-        <h3>Sprintplan <span class="tag tag-plan">Free</span></h3>
+        <h3>Sprintplan <span class="tag tag-plan">Plan</span></h3>
         <p>Map a delivery roadmap sprint by sprint. Drag stories into sprints, watch capacity, flag dependencies. Runs in your browser, no account needed.</p>
       </div>
     </div>

@@ -50,9 +50,7 @@
 .sec-h{font-size:28px;margin-bottom:24px}
 .appgrid{display:grid;grid-template-columns:1fr 1fr;gap:18px}
 .appcard{display:flex;gap:18px;background:var(--panel);border:1px solid var(--line2);
-  border-radius:10px;padding:24px 26px;text-decoration:none;color:var(--ink);
-  transition:border-color .12s,transform .12s}
-.appcard:hover{border-color:var(--green);transform:translateY(-2px)}
+  border-radius:10px;padding:24px 26px;text-decoration:none;color:var(--ink)}
 .appcard .tile{width:52px;height:52px;flex:0 0 auto;border-radius:12px;background:var(--bone);
   border:1px solid var(--line2);display:flex;align-items:center;justify-content:center;color:var(--accent)}
 .appcard[data-app="raid"]{--accent:var(--amber)}

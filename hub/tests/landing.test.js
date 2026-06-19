@@ -80,14 +80,15 @@ test("landing shows the four trust items", async () => {
   assert.match(res.text, /No tracking, no clutter/);
 });
 
-test("app grid shows four cards all linking to /login", async () => {
+test("app grid shows five non-clickable info cards", async () => {
   const { app } = await buildTestApp();
   const res = await request(app).get("/");
-  for (const name of ["Sprintraid", "Sprintsignal", "Sprintretro", "Sprintpoker"]) {
+  for (const name of ["Sprintraid", "Sprintsignal", "Sprintretro", "Sprintpoker", "Sprintplan"]) {
     assert.match(res.text, new RegExp(name));
   }
-  const cardLinks = (res.text.match(/class="appcard"[^>]*href="\/login"/g) || []);
-  assert.equal(cardLinks.length, 4, "four app cards link to /login");
+  // tiles are informational ("spider food"), not links — the two CTAs carry navigation
+  const cardLinks = (res.text.match(/class="appcard"[^>]*href=/g) || []);
+  assert.equal(cardLinks.length, 0, "no app cards are links");
 });
 
 test("FAQ leads the free answer with 'yes' and the closing CTA links to /login", async () => {
