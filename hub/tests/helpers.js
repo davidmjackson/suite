@@ -24,6 +24,7 @@ export async function buildTestApp({ env = {} } = {}) {
 
   const { default: config } = await import("../config.js?t=" + Date.now());
   const app = express();
+  app.disable("x-powered-by"); // mirror server.js (no Express fingerprint header)
   app.set("trust proxy", "loopback"); // mirror server.js (real client IP via X-Forwarded-For)
   const csp = DEFAULT_CSP.replace(
     "form-action 'self'",

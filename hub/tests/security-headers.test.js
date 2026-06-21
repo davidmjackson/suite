@@ -67,6 +67,20 @@ test("form-action allows the app origins (launch + magic-link cross-origin redir
   assert.match(csp, /form-action 'self'[^;]*https:\/\/sprintpoker\.uk/);
 });
 
+test("does not leak the X-Powered-By header", async () => {
+  const { app } = await buildTestApp();
+  const res = await request(app).get("/");
+  assert.equal(res.status, 200);
+  assert.equal(res.headers["x-powered-by"], undefined);
+});
+
+test("serves robots.txt from public/ with 200", async () => {
+  const { app } = await buildTestApp();
+  const res = await request(app).get("/robots.txt");
+  assert.equal(res.status, 200);
+  assert.match(res.text, /User-agent: \*/);
+});
+
 test("headers are present on a 404 (covers error responses)", async () => {
   const { app } = await buildTestApp();
   const res = await request(app).get("/no-such-path-xyz");

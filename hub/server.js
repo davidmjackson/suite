@@ -25,6 +25,7 @@ import { makeSecurityHeaders, DEFAULT_CSP } from "./middleware/securityHeaders.j
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const app = express();
+app.disable("x-powered-by");
 
 // Behind Apache on 127.0.0.1: trust the loopback proxy so req.ip reflects the
 // real client via X-Forwarded-For (per-IP rate limiting + accurate audit IPs).
