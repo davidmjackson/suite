@@ -2,7 +2,7 @@
 <section class="applist">
 <% it.apps.forEach(function (a) { %>
   <% if (a.free) { %>
-  <a class="card apptile" href="<%= a.href %>"><h3><svg class="glyph" width="26" height="26" aria-hidden="true"><use href="/illos/glyphs.svg#glyph-<%= a.key %>"/></svg> <%= a.name %></h3><p><%= a.desc %></p><p><span class="pill pill-ok">Free · no sign-in</span></p></a>
+  <a class="card apptile" href="<%= a.href %>"><h3><svg class="glyph" width="26" height="26" aria-hidden="true"><use href="/illos/glyphs.svg#glyph-<%= a.key %>"/></svg> <%= a.name %></h3><p><%= a.desc %></p><p><span class="pill pill-ok">No sign-in</span></p></a>
   <% } else if (a.entitled) { %>
   <form class="tileform" method="POST" action="/launch/<%= a.key %>"><button class="card apptile" type="submit"><h3><svg class="glyph" width="26" height="26" aria-hidden="true"><use href="/illos/glyphs.svg#glyph-<%= a.key %>"/></svg> <%= a.name %></h3><p><%= a.desc %></p></button></form>
   <% } else { %>

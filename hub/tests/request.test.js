@@ -91,7 +91,7 @@ test("request page wears the Instrument band header (signature wave chrome)", as
   const res = await request(app).get("/request");
   assert.match(res.text, /class="band"/);
   assert.match(res.text, /class="waves"/);
-  assert.match(res.text, /<h1>Request free access<\/h1>/);
+  assert.match(res.text, /<h1>Register your interest<\/h1>/);
   const h1s = res.text.match(/<h1[\s>]/g) || [];
   assert.equal(h1s.length, 1, "exactly one h1 (from the band, not duplicated in the card)");
 });

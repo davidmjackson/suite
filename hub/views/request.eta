@@ -1,4 +1,4 @@
-<%~ include("partials/header", { title: "Request free access", user: null, band: { eyebrow: "Get started", title: "Request free access", sub: "Tell us about your team and we'll set you up with a free trial." } }) %>
+<%~ include("partials/header", { title: "Register your interest", user: null, band: { eyebrow: "Get started", title: "Register your interest", sub: "Tell us about your team and we'll set you up with access." } }) %>
 <section class="card formcard">
 <% if (it.error) { %><div class="notice notice-err"><%= it.error %></div><% } %>
 <form method="POST" action="/request" class="formstack">

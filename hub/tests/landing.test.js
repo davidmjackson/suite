@@ -91,13 +91,13 @@ test("app grid shows five non-clickable info cards", async () => {
   assert.equal(cardLinks.length, 0, "no app cards are links");
 });
 
-test("FAQ leads the free answer with 'yes' and the closing CTA links to /login", async () => {
+test("FAQ frames access via register-your-interest and the closing CTA links to /login", async () => {
   const { app } = await buildTestApp();
   const res = await request(app).get("/");
-  // honest framing: answers "yes" up front, then states the limit, never "free forever"
-  assert.match(res.text, /Is it really free\?<\/h3><p>Yes\./);
+  // access framing: how to get in, then the honest usage limit, no "free" promise
+  assert.match(res.text, /How do I get access\?<\/h3><p>Register your interest/);
   assert.match(res.text, /not unlimited/i);
-  assert.doesNotMatch(res.text, /free forever/i);
+  assert.doesNotMatch(res.text, /free/i);
   assert.match(res.text, /class="close"[\s\S]*href="\/login"/);
 });
 
@@ -131,11 +131,11 @@ test("footer Apps links point to /login and legal links resolve", async () => {
   assert.match(footer, /href="#faq"/);
 });
 
-test("landing offers a Request free access path to /request for new businesses", async () => {
+test("landing offers a Register your interest path to /request for new businesses", async () => {
   const { app } = await buildTestApp();
   const res = await request(app).get("/");
   // visible primary-journey CTA for cold prospects, in hero + closing card
-  assert.match(res.text, /href="\/request"[^>]*>\s*Get free access\s*</);
+  assert.match(res.text, /href="\/request"[^>]*>\s*Register your interest\s*</);
   // present at the hero, the closing CTA, and the footer
   const reqLinks = (res.text.match(/href="\/request"/g) || []);
   assert.ok(reqLinks.length >= 3, `expected /request in hero, closing CTA and footer; saw ${reqLinks.length}`);

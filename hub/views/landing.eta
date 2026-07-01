@@ -37,9 +37,9 @@
     <h1>Your agile toolkit, one login.</h1>
     <p class="lede lp-lede">For scrum masters and delivery leads who would rather run the sprint than manage another tool. One passwordless sign-in covers all of it. No setup, no sprawl.</p>
     <div class="cta-row">
-      <a class="btn btn-pri btn-lg" href="<%= it.requestUrl %>">Get free access</a>
+      <a class="btn btn-pri btn-lg" href="<%= it.requestUrl %>">Register your interest</a>
       <a class="btn btn-ghost btn-lg" href="<%= it.signinUrl %>">Sign in</a>
-      <span class="cta-note">New here? Start free, no card. Returning? Sign in. Passwordless.</span>
+      <span class="cta-note">New here? Register your interest. Returning? Sign in. Passwordless.</span>
     </div>
   </div>
 </section>
@@ -183,7 +183,7 @@
 
   <div class="frow" data-app="plan">
     <div class="ftext">
-      <p class="frow-eyebrow"><svg class="frow-mk" width="14" height="14" aria-hidden="true"><use href="/illos/glyphs.svg#glyph-plan"/></svg>Sprintplan · Free, no sign-in</p>
+      <p class="frow-eyebrow"><svg class="frow-mk" width="14" height="14" aria-hidden="true"><use href="/illos/glyphs.svg#glyph-plan"/></svg>Sprintplan · No sign-in</p>
       <h3>Plan the whole roadmap, sprint by sprint.</h3>
       <p>Sprintplan is a lightweight delivery board: set your cadence, drag stories into sprints, and see capacity and cross-sprint dependencies as you go. It runs entirely in your browser, with no account and no backend, and your plan saves locally.</p>
       <ul class="flist">
@@ -205,7 +205,7 @@
 
 <section class="faq" id="faq">
   <h2 class="sec-h">Questions</h2>
-  <div class="qa"><h3>Is it really free?</h3><p>Yes. Sign in and use all five tools without paying, no card and no trial clock. A few apps cap heavy usage or AI calls, so it is not unlimited, but everyday team use is covered.</p></div>
+  <div class="qa"><h3>How do I get access?</h3><p>Register your interest and we'll set your team up with a passwordless login to all five tools. A few apps cap heavy usage or AI calls, so it is not unlimited, but everyday team use is covered.</p></div>
   <div class="qa"><h3>Do I need a password?</h3><p>No. Sign-in is a passwordless magic link sent to your email. The same link both signs you up and signs you in.</p></div>
   <div class="qa"><h3>Do my guests need accounts?</h3><p>No. Retrospectives and planning poker rooms can be shared with a link, so guests join without creating an account.</p></div>
   <div class="qa"><h3>Where does my data go?</h3><p>Your data stays in Sprint Suite. There's no third-party tracking, and health-check submissions are anonymous.</p></div>
@@ -214,9 +214,9 @@
 
 <section class="close">
   <h2>Run your next sprint from one login.</h2>
-  <p>Get free access for your team in a couple of clicks. Passwordless, no card, no setup, no sprawl.</p>
+  <p>Register your interest and we'll set your team up in a couple of clicks. Passwordless, no setup, no sprawl.</p>
   <div class="cta-row">
-    <a class="btn btn-pri btn-lg" href="<%= it.requestUrl %>">Get free access</a>
+    <a class="btn btn-pri btn-lg" href="<%= it.requestUrl %>">Register your interest</a>
     <a class="btn btn-ghost btn-lg" href="<%= it.signinUrl %>">Sign in</a>
   </div>
 </section>
