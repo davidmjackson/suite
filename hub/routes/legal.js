@@ -1,8 +1,8 @@
 // routes/legal.js
-// /license renders the Free Use Licence (views/license.eta). /privacy and /terms
-// remain "coming soon" stubs until their copy is finalised (lawyer review).
+// /license renders the Free Use Licence (views/license.eta) and /privacy renders
+// the Data & Privacy Note (views/privacy.eta). /terms remains a "coming soon"
+// stub until its copy is finalised (lawyer review).
 const STUBS = {
-  "/privacy": "Privacy",
   "/terms": "Terms",
 };
 
@@ -11,4 +11,5 @@ export function mountLegal(app) {
     app.get(path, (req, res) => res.render("legal", { title }));
   }
   app.get("/license", (req, res) => res.render("license"));
+  app.get("/privacy", (req, res) => res.render("privacy"));
 }
