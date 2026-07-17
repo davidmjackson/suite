@@ -20,7 +20,7 @@ three independent counts, each of which this design addresses:
    `<script>` block. It would never execute, and nothing would report the failure.
 2. **It would breach PECR.** The snippet sets `_ga` / `_ga_*` analytics cookies on load,
    before any consent. UK PECR reg. 6 requires consent *before* non-essential storage.
-3. **It would make three published claims false.** See below.
+3. **It would make four published claims false.** See below.
 
 ## The false-claims problem (drives the copy scope)
 
@@ -30,6 +30,7 @@ Adding GA4 contradicts copy we currently publish:
 |---|---|
 | `views/landing.eta` trust strip | "No tracking, no clutter" |
 | `views/landing.eta` FAQ, *Where does my data go?* | "There's no third-party tracking…" |
+| `views/privacy.eta` §2 | "We do **not** use advertising or analytics trackers…" |
 | `views/privacy.eta` §6 | "…there are no third-party tracking cookies." |
 
 `/privacy` §6 is the sharpest: the Data & Privacy Note (v1.0, effective 2026-07-01,

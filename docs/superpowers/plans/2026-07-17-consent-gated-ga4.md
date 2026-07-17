@@ -1143,6 +1143,15 @@ test("GET /privacy renders the Data & Privacy Note (Version 1.1)", async () => {
   assert.doesNotMatch(res.text, /\[[A-Z][^\]]*\]/);     // no leftover [BRACKET] placeholders
 });
 
+test("/privacy no longer claims it uses no analytics trackers (section 2)", async () => {
+  const { app } = await buildWithLegal({ GA_MEASUREMENT_ID: "G-TEST123" });
+  const res = await request(app).get("/privacy");
+  // The v1.0 §2 line "We do not use advertising or analytics trackers" is false once
+  // GA4 ships. The advertising half of the claim survives; the analytics half must not.
+  assert.doesNotMatch(res.text, /not<\/strong> use advertising or analytics trackers/);
+  assert.match(res.text, /not<\/strong> use advertising trackers/);
+});
+
 test("/privacy discloses Google Analytics accurately and drops the false claim", async () => {
   const { app } = await buildWithLegal({ GA_MEASUREMENT_ID: "G-TEST123" });
   const res = await request(app).get("/privacy");
@@ -1174,6 +1183,15 @@ Expected: FAIL — `Version 1.1` not found (still 1.0)
 - [ ] **Step 3: Rewrite the affected sections**
 
 In `hub/views/privacy.eta`:
+
+**§2 — retire the fourth false claim.** The closing line of §2 currently reads
+"We do **not** use advertising or analytics trackers, and we do not sell your data or
+share it for anyone else's marketing." The "analytics trackers" half is false once GA4
+ships. Replace that whole paragraph with:
+
+```html
+  <p>We do <strong>not</strong> use advertising trackers, and we do not sell your data or share it for anyone else's marketing. We use analytics only on our public pages, only with your consent, and never for advertising &mdash; see section 6.</p>
+```
 
 Bump the version in the header include (line 1), leaving the `analytics` key Task 5 added in place:
 
