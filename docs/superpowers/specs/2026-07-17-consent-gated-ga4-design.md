@@ -2,8 +2,8 @@
 
 **Date:** 2026-07-17
 **Status:** Approved, ready for implementation plan
-**Scope:** Hub only — the `/` and `/request` route paths (the latter covering the
-`request-received` view). No app repos touched.
+**Scope:** Hub only — the public pages `/`, `/request` (covering the `request-received`
+view) and `/privacy`. No app repos touched.
 **Roadmap slot:** Marketing / measurement. Independent of Tier-1 stack work (#3 Express 5 / ESM).
 
 ## Problem
@@ -44,7 +44,7 @@ sold, never used for advertising. The absolute "no tracking" claim is retired.
 | Decision | Choice | Rationale |
 |---|---|---|
 | Positioning | Reframe to "No ads, no clutter" | Defensible; retires the absolute claim |
-| Scope | `/` and `/request` route paths | Measures the conversion; analytics stop at the login door |
+| Scope | `/`, `/request`, `/privacy` | Measures the conversion; `/privacy` hosts the withdraw control; analytics stop at the login door |
 | Form factor | Sticky bottom bar | Non-blocking; hero lands unobstructed; PECR needs no blocking |
 | Gating | Server-side + consent cookie | Zero Google contact unless granted |
 | Consent Mode v2 | **Rejected** | Redundant under a server gate — see below |
@@ -94,7 +94,7 @@ Reuses `parseCookies` from `lib/cookies.js` — no new dependency. Anything that
 exactly `granted` or `denied` (absent, malformed, tampered, unknown value) returns
 `null`, meaning *ask again*. **It never fails open to granted.**
 
-**View plumbing** — the two marketing paths are the *only* ones that opt in, via a
+**View plumbing** — the three public paths are the *only* ones that opt in, via a
 middleware pair applied at the route (never globally):
 
 ```js
@@ -105,8 +105,23 @@ const marketing = [
 ];
 mountLanding(app, { marketing });
 mountRequest(app, { emailSender, marketing });
+mountLegal(app, { marketing });   // /privacy only; /license and /terms stay inert
 // inside each: app.get("/", marketing, handler)
 ```
+
+**Why `/privacy` is in the set.** The withdraw control lives in §6, and it needs
+`consent-banner.js` present to do anything. Without the marketing middleware the
+button would render and silently do nothing. Including `/privacy` also keeps the
+banner copy ("visits to our public pages") honest. `/license` and `/terms` stay out:
+they carry no analytics, so they need no bar. The line that matters is unchanged —
+analytics stop at the login door.
+
+**Eta partials do not inherit `it`.** A partial sees only what is explicitly passed,
+so `partials/header.eta` must be given `analytics: it.analytics` by each top-level
+view that wants it (`request.eta`, `request-received.eta`, `privacy.eta`). This is a
+feature, not a chore: `login.eta`, `dashboard.eta` and the admin views simply never
+pass it, so the header is inert there **structurally** rather than by a conditional
+someone could later get wrong.
 
 **Why `res.locals` and not a render argument.** `routes/request.js` renders from **four**
 call sites — `:17` (400 invalid), `:38` (GET), `:43` (honeypot), `:68` (POST success).
@@ -163,9 +178,10 @@ which is the shared theme across all five surfaces; this banner is hub marketing
 - `img-src` … `https://www.google-analytics.com`
 - `connect-src` … `https://www.google-analytics.com https://analytics.google.com`
 
-Applied **only** to the `/` and `/request` routes, via the `marketing` middleware pair
-above. `/dashboard`, `/admin`, `/company` and the API keep the strict default — widening
-`script-src` globally to serve two public pages would be a real regression. The global
+Applied **only** to the `/`, `/request` and `/privacy` routes, via the `marketing`
+middleware pair above. `/dashboard`, `/admin`, `/company` and the API keep the strict
+default — widening `script-src` globally to serve three public pages would be a real
+regression. The global
 `makeSecurityHeaders` mount at `server.js:41` still runs first; the route-level mount
 overwrites the header via `res.setHeader`, which replaces rather than appends.
 
@@ -272,11 +288,13 @@ mention Google and `_ga`.
 `views/partials/analytics.eta` · `public/js/consent-banner.js` · `public/js/ga.js` ·
 `public/css/consent.css` · `tests/consent.test.js`
 
-**Modified (8):** `config.js` · `middleware/securityHeaders.js` · `server.js` ·
-`routes/landing.js` · `routes/request.js` · `views/landing.eta` ·
-`views/partials/header.eta` · `views/privacy.eta`
+**Modified (12):** `config.js` · `middleware/securityHeaders.js` · `server.js` ·
+`tests/helpers.js` · `routes/landing.js` · `routes/request.js` · `routes/legal.js` ·
+`views/landing.eta` · `views/partials/header.eta` · `views/request.eta` ·
+`views/request-received.eta` · `views/privacy.eta`
 
-Plus assertions added to the existing landing and legal test files.
+Plus assertions added to the existing landing, legal and security-headers test files.
+Note `tests/helpers.js` mirrors `server.js` and must be updated in step with it.
 
 ## Out of scope (YAGNI)
 
