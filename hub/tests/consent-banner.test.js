@@ -69,3 +69,31 @@ test("the banner styles are hub-only, not in the synced foundation", () => {
   const core = readFileSync(join(pub, "css", "instrument-core.css"), "utf8");
   assert.doesNotMatch(core, /\.consent/, "instrument-core.css is synced across all five surfaces");
 });
+
+// --- Ads-denied consent defaults -------------------------------------------
+// From 2026-06-15 Google narrowed `allow_google_signals` to analytics-internal
+// use: whether GA4 data may reach Google Ads is now decided by Consent Mode's
+// ad_storage state. Undeclared reads as granted, so the flags above no longer
+// carry the "never used for advertising" promise on their own.
+
+test("ga.js denies every ads-related consent signal", () => {
+  for (const k of ["ad_storage", "ad_user_data", "ad_personalization"]) {
+    assert.match(
+      gaSrc,
+      new RegExp(`${k}:\\s*"denied"`),
+      `${k} must be denied — /privacy §§2/5/6 and the landing FAQ promise analytics are never used for advertising`
+    );
+  }
+});
+
+test("ga.js grants analytics_storage (initGa only runs after explicit consent)", () => {
+  assert.match(gaSrc, /analytics_storage:\s*"granted"/);
+});
+
+test("consent defaults are queued before config, or gtag applies them too late", () => {
+  const consentAt = gaSrc.indexOf('gtag("consent", "default"');
+  const configAt = gaSrc.indexOf('gtag("config"');
+  assert.ok(consentAt > -1, "consent default is set");
+  assert.ok(configAt > -1, "config is called");
+  assert.ok(consentAt < configAt, "consent default must precede config in the dataLayer");
+});
