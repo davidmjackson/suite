@@ -63,6 +63,39 @@ There is no CI in this repo yet, so nothing runs these automatically. Wiring
   no-slash form to `/sprintsight/`, which is the canonical URL redirecting to a
   non-canonical one.
 
+## Deploying — READ THIS FIRST, the spec is wrong here
+
+Build spec §2.2 says to serve `marketing/public` as the document root for
+`sprintsuite.uk`. **That is not possible.** The hub already owns that document
+root: it runs on port 3004 behind Apache and does `express.static(hub/public)`,
+which already serves `/`, `/request`, `/privacy`, `/login`, and the asset trees
+`/css/`, `/js/`, `/illos/`, `/fonts/` — plus its own `/favicon.svg`.
+
+Deployed naively, this page would 404 on `/css/sight.css` and `/js/sight.js`, and
+`<link rel="icon" href="/favicon.svg">` would silently serve the **hub's** icon
+instead of the melon. Nothing would look broken enough to notice.
+
+The shared assets are not the problem: `instrument-core.css`, `glyphs.svg` and
+the fonts are byte-identical across both surfaces (that is what the drift check
+guarantees), so they resolve correctly whichever surface answers.
+
+Two workable options, both needing a decision before launch:
+
+**A. Alias the marketing-only paths ahead of the hub proxy.** Page unchanged.
+Apache needs an entry per marketing-only asset (`/sprintsight`, `/css/sight.css`,
+`/js/sight.js`, `/illos/sight-og.png`) and the favicon still collides.
+
+**B. Self-contain under `/sprintsight/`.** One Apache alias, no collisions. Costs
+a change to the page: every asset href becomes `/sprintsight/…`. Note that
+`instrument-core.css` hardcodes `url("/fonts/…")`, so the fonts would still come
+from the hub's tree — same bytes, but an implicit cross-surface dependency worth
+knowing about.
+
+Also unresolved either way: `/sprintsight` (no trailing slash) is the canonical
+URL, but default static serving 301s it to `/sprintsight/`. So the canonical URL
+redirects to a non-canonical one. Needs `DirectorySlash Off` plus an explicit
+rewrite, or an `Alias` straight to the file.
+
 ## Docs
 
 - `docs/sprintsight-promo-BUILD-SPEC.md` — the build specification
