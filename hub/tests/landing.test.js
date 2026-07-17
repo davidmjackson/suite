@@ -110,15 +110,113 @@ test("no dead control: the footer hides Cookie settings when analytics are off",
   assert.doesNotMatch(res.text, /Cookie settings/);
 });
 
-test("app grid shows five non-clickable info cards", async () => {
+test("app grid shows all six apps", async () => {
   const { app } = await buildTestApp();
   const res = await request(app).get("/");
-  for (const name of ["Sprintraid", "Sprintsignal", "Sprintretro", "Sprintpoker", "Sprintplan"]) {
+  for (const name of ["Sprintraid", "Sprintsignal", "Sprintretro", "Sprintpoker", "Sprintplan", "Sprintsight"]) {
     assert.match(res.text, new RegExp(name));
   }
-  // tiles are informational ("spider food"), not links — the two CTAs carry navigation
-  const cardLinks = (res.text.match(/class="appcard"[^>]*href=/g) || []);
-  assert.equal(cardLinks.length, 0, "no app cards are links");
+  assert.equal((res.text.match(/class="appcard"/g) || []).length, 6);
+});
+
+test("a tile links only when it has a page behind it", async () => {
+  const { app } = await buildTestApp();
+  const res = await request(app).get("/");
+  // @3742c58 made the tiles divs because pointing one at a login-gated app lies
+  // about where it goes. Sprintsight is the first with a real public page, so it
+  // is the first <a>. The rest are informational for now; the two CTAs carry
+  // navigation. EXPECTED TO CHANGE: each app is getting a detail page, and as one
+  // lands its tile becomes an <a> and joins this list. That is the design, not a
+  // regression — move the name across, don't delete the assertion.
+  const linked = ["sight"];
+  const notLinked = ["raid", "signal", "retro", "poker", "plan"];
+
+  // Matched by tag + data-app without pinning attribute order: rewriting the
+  // element as <a href="…" class="appcard"> is not a defect and must not fail.
+  const card = (slug) => {
+    const m = res.text.match(new RegExp(`<(a|div)\\b[^>]*\\bdata-app="${slug}"[^>]*>`));
+    assert.ok(m, `no tile found for ${slug}`);
+    return { tag: m[1], html: m[0] };
+  };
+
+  for (const slug of linked) {
+    const { tag, html } = card(slug);
+    assert.equal(tag, "a", `${slug} has a page, so its tile must be a link`);
+    assert.match(html, /href="\//, `${slug} must link somewhere real`);
+  }
+  for (const slug of notLinked) {
+    assert.equal(card(slug).tag, "div", `${slug} has no page yet, so its tile must not be a link`);
+  }
+  // no tile may link to nowhere
+  assert.doesNotMatch(res.text, /class="appcard"[^>]*href="#"/);
+  assert.equal((res.text.match(/<a\b[^>]*class="appcard"/g) || []).length, linked.length);
+});
+
+test("the Sprintsight tile points at the live promo page, same tab", async () => {
+  const { app } = await buildTestApp();
+  const res = await request(app).get("/");
+  assert.match(res.text, /href="\/sprintsight-coming-soon\/intro\/"/);
+  // same origin: forcing a new tab breaks the back button people expect
+  assert.doesNotMatch(res.text, /class="appcard"[^>]*target="_blank"/);
+});
+
+test("the Sprintsight tile cannot be mistaken for a working tool", async () => {
+  const { app } = await buildTestApp();
+  const res = await request(app).get("/");
+  // The product does not exist. Every other tag names a capability (RAID,
+  // Health, Retro...); this one names the STATE on purpose. If it ever ships,
+  // this assertion is the thing that should stop a silent capability claim.
+  const h3 = res.text.match(/<h3\b[^>]*>Sprintsight[\s\S]*?<\/h3>/)[0];
+  assert.match(h3, /<span class="tag tag-sight">Coming soon<\/span>/);
+  // and the state must be inside the accessible name, not merely nearby
+  const anchor = res.text.match(/<a\b[^>]*data-app="sight"[^>]*>/)[0];
+  const labelledby = anchor.match(/aria-labelledby="([^"]+)"/);
+  assert.ok(labelledby, "the tile names itself from its heading");
+  assert.match(h3, new RegExp(`id="${labelledby[1]}"`), "aria-labelledby points at that h3");
+});
+
+test("every published tool count matches the tools that exist", async () => {
+  const { app } = await buildTestApp();
+  const res = await request(app).get("/");
+  // These had said "four" since Sprintplan shipped, and its absence from
+  // featureList went with it. Nobody reads a meta description, which is exactly
+  // why it rotted — a section-by-section review misses it, a grep does not.
+  // Five is the honest number: five apps are behind the sign-in. Sprintsight is
+  // NOT counted and NOT in featureList — it does not exist, and featureList
+  // means present features, not planned ones.
+  assert.doesNotMatch(res.text, /four focused apps/, "stale count in meta/og/JSON-LD");
+  assert.match(res.text, /name="description" content="One sign-in, five focused apps/);
+  assert.match(res.text, /og:description" content="One sign-in, five focused apps/);
+
+  const ld = JSON.parse(res.text.match(/<script type="application\/ld\+json">([\s\S]*?)<\/script>/)[1]);
+  assert.match(ld.description, /five focused apps/);
+  assert.equal(ld.featureList.length, 5, "one entry per app behind the login");
+  assert.ok(
+    !ld.featureList.some((f) => /sight|watermelon/i.test(f)),
+    "Sprintsight must not be listed as a present feature"
+  );
+});
+
+test("the footer Apps nav lists every app you can actually sign in to", async () => {
+  const { app } = await buildTestApp();
+  const res = await request(app).get("/");
+  const nav = res.text.match(/<nav class="lp-foot-col" aria-label="Apps">([\s\S]*?)<\/nav>/)[1];
+  for (const name of ["Sprintraid", "Sprintsignal", "Sprintretro", "Sprintpoker", "Sprintplan"]) {
+    assert.match(nav, new RegExp(name), `${name} is usable, so it belongs here`);
+  }
+  // Sprintsight cannot be signed in to, so it must not sit among things that can.
+  assert.doesNotMatch(nav, /Sprintsight/, "Sprintsight is not a usable app yet");
+});
+
+test("the app-grid heading does not claim six working tools", async () => {
+  const { app } = await buildTestApp();
+  const res = await request(app).get("/");
+  // Five ARE behind the login. Sprintsight is not behind it at all — it has no
+  // login, it is a public promo. "Six tools behind one login" would be false.
+  assert.match(res.text, /Five tools behind one login\. A sixth on the way\./);
+  assert.doesNotMatch(res.text, /Six tools behind one login/);
+  // the hero eyebrow makes the same claim and is still true for the same reason
+  assert.match(res.text, /Five tools · one passwordless login/);
 });
 
 test("FAQ frames access via register-your-interest and the closing CTA links to /login", async () => {

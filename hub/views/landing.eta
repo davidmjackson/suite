@@ -4,10 +4,10 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Sprint Suite — Agile tools for teams that ship</title>
-<meta name="description" content="One sign-in, four focused apps for scrum masters and delivery leads. RAID logs, team health checks, retrospectives and planning poker.">
+<meta name="description" content="One sign-in, five focused apps for scrum masters and delivery leads. RAID logs, team health checks, retrospectives, planning poker and delivery roadmaps.">
 <link rel="canonical" href="https://sprintsuite.uk/">
 <meta property="og:title" content="Sprint Suite — Agile tools for teams that ship">
-<meta property="og:description" content="One sign-in, four focused apps for scrum masters and delivery leads.">
+<meta property="og:description" content="One sign-in, five focused apps for scrum masters and delivery leads.">
 <meta property="og:type" content="website">
 <meta property="og:url" content="https://sprintsuite.uk/">
 <meta property="og:image" content="https://sprintsuite.uk/img/og.png">
@@ -18,7 +18,7 @@
 <link rel="stylesheet" href="/css/instrument-core.css">
 <link rel="stylesheet" href="/css/landing.css">
 <script type="application/ld+json">
-{"@context":"https://schema.org","@type":"SoftwareApplication","name":"Sprint Suite","applicationCategory":"BusinessApplication","operatingSystem":"Web","description":"One sign-in, four focused apps for scrum masters and delivery leads.","url":"https://sprintsuite.uk/","offers":{"@type":"Offer","price":"0","priceCurrency":"GBP"},"featureList":["RAID log","Team health check","Sprint retrospective","Scrum planning poker"]}
+{"@context":"https://schema.org","@type":"SoftwareApplication","name":"Sprint Suite","applicationCategory":"BusinessApplication","operatingSystem":"Web","description":"One sign-in, five focused apps for scrum masters and delivery leads.","url":"https://sprintsuite.uk/","offers":{"@type":"Offer","price":"0","priceCurrency":"GBP"},"featureList":["RAID log","Team health check","Sprint retrospective","Scrum planning poker","Delivery roadmap planning"]}
 </script>
 <script type="module" src="/js/landing-hero.js"></script>
 <%~ include("partials/analytics", { analytics: it.analytics }) %>
@@ -57,7 +57,7 @@
 <main class="wrap">
 
 <section class="section appgrid-section">
-  <h2 class="sec-h">Five tools behind one login.</h2>
+  <h2 class="sec-h">Five tools behind one login. A sixth on the way.</h2>
   <div class="appgrid">
     <div class="appcard" data-app="raid">
       <span class="tile"><svg width="26" height="26" aria-hidden="true"><use href="/illos/glyphs.svg#glyph-raid"/></svg></span>
@@ -94,6 +94,27 @@
         <p>Map a delivery roadmap sprint by sprint. Drag stories into sprints, watch capacity, flag dependencies. Runs in your browser, no account needed.</p>
       </div>
     </div>
+    <%/* Sprintsight is the first tile with a page behind it, so it is the first
+         <a> in this grid. The other five stay <div>s only because they have no
+         detail page YET (each is getting one). They are not unlinkable in
+         principle — @3742c58 made them divs because pointing a tile at a
+         login-gated app lies about where it goes, and an <a> with nowhere real
+         to go is worse than no <a>. As each gains a page, it becomes an <a>
+         here and nothing else has to change: .appcard already styles both.
+         The tag slot carries the STATE, not a capability, because Sprintsight
+         does not exist yet and a visitor must not think they can use it. */%>
+    <%/* aria-labelledby, not the default: the <a> wraps the heading AND the
+         paragraph, so without it the accessible name is the whole subtree — one
+         unreadable entry in a screen reader's link list. Pointing at the h3 gives
+         "Sprintsight Coming soon". NOT aria-label, which would drop "Coming soon"
+         from the name and lose the honesty signal. */%>
+    <a class="appcard" data-app="sight" href="/sprintsight-coming-soon/intro/" aria-labelledby="appcard-sight-h">
+      <span class="tile"><svg width="26" height="26" aria-hidden="true"><use href="/illos/glyphs.svg#glyph-sight"/></svg></span>
+      <div class="appcard-body">
+        <h3 id="appcard-sight-h">Sprintsight <span class="tag tag-sight">Coming soon</span></h3>
+        <p>Finds the teams reporting green while delivery is red, and cites the evidence.</p>
+      </div>
+    </a>
   </div>
 </section>
 
@@ -236,6 +257,12 @@
       <a href="<%= it.signinUrl %>">Sprintsignal</a>
       <a href="<%= it.signinUrl %>">Sprintretro</a>
       <a href="<%= it.signinUrl %>">Sprintpoker</a>
+      <%/* Sprintplan was missing here since it shipped — same rot as the meta
+           description's "four apps". Sprintsight is deliberately NOT listed:
+           every link in this nav goes to the sign-in because "Apps" means things
+           you can sign in and use, and Sprintsight cannot be used yet. Its grid
+           tile, marked "Coming soon", is where it belongs. */%>
+      <a href="<%= it.signinUrl %>">Sprintplan</a>
     </nav>
     <nav class="lp-foot-col" aria-label="Product">
       <p class="lp-foot-h">Product</p>
