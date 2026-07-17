@@ -17,7 +17,7 @@
 set -euo pipefail
 
 HERE="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-OUT="$HERE/../public/illos/sight-og.png"
+OUT="$HERE/../public/sprintsight-coming-soon/intro/sight-og.png"
 THEME_FONTS="/var/www/suite/shared/theme/fonts"
 WORK="$(mktemp -d)"
 trap 'rm -rf "$WORK"' EXIT

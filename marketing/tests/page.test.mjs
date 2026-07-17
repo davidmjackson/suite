@@ -10,9 +10,9 @@ import { fileURLToPath } from "node:url";
 
 const ROOT = join(dirname(fileURLToPath(import.meta.url)), "..");
 const PUBLIC = join(ROOT, "public");
-const html = readFileSync(join(PUBLIC, "sprintsight/index.html"), "utf8");
-const css = readFileSync(join(PUBLIC, "css/sight.css"), "utf8");
-const js = readFileSync(join(PUBLIC, "js/sight.js"), "utf8");
+const html = readFileSync(join(PUBLIC, "sprintsight-coming-soon/intro/index.html"), "utf8");
+const css = readFileSync(join(PUBLIC, "sprintsight-coming-soon/intro/sight.css"), "utf8");
+const js = readFileSync(join(PUBLIC, "sprintsight-coming-soon/intro/sight.js"), "utf8");
 // Comments discuss the very things these tests forbid, so strip them first or a
 // comment saying "no @font-face here" trips the @font-face check.
 const cssCode = css.replace(/\/\*[\s\S]*?\*\//g, "");
@@ -202,8 +202,9 @@ test("JSON-LD is valid and honest about availability", () => {
   assert.ok(!("aggregateRating" in ld) && !("review" in ld));
 });
 
-test("canonical URL has no trailing slash", () => {
-  assert.match(html, /<link rel="canonical" href="https:\/\/sprintsuite\.uk\/sprintsight">/);
+test("canonical names the URL that actually serves 200", () => {
+  // /intro (no slash) 301s to /intro/, so /intro/ is the canonical form.
+  assert.match(html, /<link rel="canonical" href="https:\/\/sprintsuite\.uk\/sprintsight-coming-soon\/intro\/">/);
 });
 
 /* ---------- console ---------- */
@@ -336,6 +337,10 @@ test("success removes the form, leaving no live form behind a result", () => {
 
 /* ---------- assets ---------- */
 
+test("no favicon is claimed: the hub owns /favicon.svg on this domain", () => {
+  assert.doesNotMatch(html, /rel="icon"/);
+});
+
 test("the sight glyph respects its size rule: -sm below 24px", () => {
   // §5.1: #glyph-sight at >=24px, #glyph-sight-sm below. .gl is 18px, so every
   // .gl use of the sight glyph must be the seedless variant or it renders as mud.
@@ -358,14 +363,9 @@ test("every glyph referenced by the page exists in the synced sprite", () => {
   }
 });
 
-test("the favicon is declared and present", () => {
-  assert.match(html, /<link rel="icon" href="\/favicon\.svg" type="image\/svg\+xml">/);
-  assert.ok(existsSync(join(PUBLIC, "favicon.svg")));
-});
-
 test("the OG image exists at 1200x630 and fits the size budget", () => {
   // §5.3 forbids shipping a placeholder, so check the real bytes, not the path.
-  const png = readFileSync(join(PUBLIC, "illos/sight-og.png"));
+  const png = readFileSync(join(PUBLIC, "sprintsight-coming-soon/intro/sight-og.png"));
   assert.deepEqual(
     [...png.subarray(0, 8)],
     [137, 80, 78, 71, 13, 10, 26, 10],

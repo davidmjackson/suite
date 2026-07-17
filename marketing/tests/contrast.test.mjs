@@ -15,7 +15,7 @@ import { join, dirname } from "node:path";
 import { fileURLToPath } from "node:url";
 
 const THEME = "/var/www/suite/shared/theme/instrument-core.css";
-const SIGHT = join(dirname(fileURLToPath(import.meta.url)), "../public/css/sight.css");
+const SIGHT = join(dirname(fileURLToPath(import.meta.url)), "../public/sprintsight-coming-soon/intro/sight.css");
 
 /* ---------- colour maths ---------- */
 

@@ -12,7 +12,7 @@ import { join, dirname } from "node:path";
 import { fileURLToPath } from "node:url";
 
 const js = readFileSync(
-  join(dirname(fileURLToPath(import.meta.url)), "../public/js/sight.js"),
+  join(dirname(fileURLToPath(import.meta.url)), "../public/sprintsight-coming-soon/intro/sight.js"),
   "utf8"
 );
 
