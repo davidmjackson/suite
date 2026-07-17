@@ -2,7 +2,7 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
 import request from "supertest";
-import { makeSecurityHeaders, DEFAULT_CSP } from "../middleware/securityHeaders.js";
+import { makeSecurityHeaders, DEFAULT_CSP, MARKETING_CSP, withAppDomains } from "../middleware/securityHeaders.js";
 import { buildTestApp } from "./helpers.js";
 
 // Minimal res double that records setHeader calls.
@@ -90,4 +90,41 @@ test("headers are present on a 404 (covers error responses)", async () => {
   assert.equal(res.headers["x-frame-options"], "DENY");
   assert.equal(res.headers["referrer-policy"], "strict-origin-when-cross-origin");
   assert.match(res.headers["permissions-policy"], /camera=\(\)/);
+});
+
+// --- Marketing CSP (consent-gated GA4) -------------------------------------
+test("MARKETING_CSP allows exactly the Google origins GA4 needs", () => {
+  assert.match(MARKETING_CSP, /script-src 'self' https:\/\/www\.googletagmanager\.com/);
+  assert.match(MARKETING_CSP, /img-src 'self' data: https:\/\/www\.google-analytics\.com/);
+  assert.match(MARKETING_CSP, /connect-src 'self' https:\/\/www\.google-analytics\.com https:\/\/analytics\.google\.com/);
+});
+
+test("MARKETING_CSP keeps every other protection from the default", () => {
+  assert.match(MARKETING_CSP, /frame-ancestors 'none'/);
+  assert.match(MARKETING_CSP, /object-src 'none'/);
+  assert.match(MARKETING_CSP, /base-uri 'self'/);
+  // The invariant the whole design protects: no inline script, ever.
+  assert.doesNotMatch(MARKETING_CSP, /script-src[^;]*unsafe-inline/);
+});
+
+test("DEFAULT_CSP is untouched — Google is not allowed on app pages", () => {
+  assert.doesNotMatch(DEFAULT_CSP, /googletagmanager/);
+  assert.doesNotMatch(DEFAULT_CSP, /google-analytics/);
+});
+
+test("withAppDomains adds the app origins to form-action in both policies", () => {
+  const domains = ["https://sprintraid.uk", "https://sprintpoker.uk"];
+  for (const [name, csp] of [["default", DEFAULT_CSP], ["marketing", MARKETING_CSP]]) {
+    const out = withAppDomains(csp, domains);
+    assert.match(
+      out,
+      /form-action 'self' https:\/\/sprintraid\.uk https:\/\/sprintpoker\.uk/,
+      `${name} policy must carry the app domains — CSP form-action is enforced on redirect targets`
+    );
+  }
+});
+
+test("withAppDomains changes form-action only", () => {
+  const out = withAppDomains(DEFAULT_CSP, ["https://x.uk"]);
+  assert.equal(out.replace(" https://x.uk", ""), DEFAULT_CSP);
 });
