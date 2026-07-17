@@ -1,0 +1,510 @@
+/* sight.css — Sprintsight promo page.
+   Layer 2 of 2. instrument-core.css (synced, never hand-edited) is layer 1.
+   Everything here is scoped to .ins[data-app="sight"] so it cannot leak into
+   another surface. No @font-face here: the faces are declared canonically.
+   Spec: marketing/docs/sprintsight-promo-BUILD-SPEC.md */
+
+.ins[data-app="sight"] {
+  /* radii — this page is sharper than Instrument's 10px default */
+  --r-sharp: 3px;
+  --r-panel: 6px;
+
+  /* graph-paper ground */
+  --grid: var(--line);
+  --grid-cell: 26px;
+
+  /* console surface (dark) */
+  --con-bg:     oklch(0.235 0.013 250);
+  --con-chrome: oklch(0.200 0.015 250);
+  --con-line:   oklch(0.300 0.020 250);
+  --con-text:   oklch(0.800 0.015 250);
+  /* 0.62 is load-bearing, not a round number. It carries the // comments and the
+     verdict notes, which are informational, and lands 4.58:1 on --con-bg — a pass
+     with 0.08 to spare. The mock's 0.5 fails AA outright, and even 0.61 drops
+     under 4.5:1. Do not lower it back toward the mock. */
+  --con-dim:    oklch(0.620 0.015 250);
+  --con-key:    oklch(0.720 0.090 200);
+  --con-str:    oklch(0.820 0.110 90);
+  --con-red:    oklch(0.680 0.160 25);
+  --con-grn:    oklch(0.720 0.130 155);
+  --con-amb:    oklch(0.780 0.120 78);
+  --con-label:  oklch(0.660 0.020 250);  /* chrome bar label, 5.83:1 on --con-chrome */
+  --con-dot:    oklch(0.360 0.020 250);  /* chrome dots: decorative, aria-hidden */
+  --con-tabhov: oklch(0.850 0.020 250);
+  --con-tabon:  oklch(0.950 0.010 250);  /* selected tab, 14.4:1 on --con-bg */
+
+  /* The spec gives these as literals inside component rules (§7.2, §7.4, §7.9),
+     but §14 forbids literals outside the token block. Promoted here so both hold. */
+  --green-hov:  oklch(0.380 0.100 152);  /* .btn-pri hover */
+  --amber-ink:  oklch(0.500 0.110 62);   /* amber RAG chip text, 5.31:1 on --amberwash */
+
+  /* elevation — exactly two. Depth here comes from hairlines, not blur. */
+  --shadow-console: 0 24px 50px -30px oklch(0.235 0.013 250 / 0.55);
+  --focus-ring: 0 0 0 3px var(--greenwash);
+
+  /* Instrument's reset is `.ins *`, which matches DESCENDANTS. This element is
+     <body>, so it is not one, and it keeps the UA's 8px margin. Invisible on the
+     hub's centred cards; very visible behind a full-bleed rail. The mock's reset
+     is an unscoped `*`, which is why the mock never showed it. */
+  margin: 0;
+
+  font-size: 14.5px;
+  line-height: 1.6;
+  background-color: var(--bone);
+  background-image:
+    linear-gradient(var(--grid) 1px, transparent 1px),
+    linear-gradient(90deg, var(--grid) 1px, transparent 1px);
+  background-size: var(--grid-cell) var(--grid-cell);
+  /* 1px offset keeps the first grid line off the viewport edge */
+  background-position: -1px -1px;
+}
+
+.ins[data-app="sight"] h1 { font-size: clamp(32px, 3.8vw, 46px); line-height: 1.10; letter-spacing: -0.025em; }
+.ins[data-app="sight"] h2 { font-size: 26px; line-height: 1.15; letter-spacing: -0.02em; }
+.ins[data-app="sight"] h3 { font-size: 16.5px; line-height: 1.30; letter-spacing: -0.01em; }
+
+/* Local label. NOT .ins .micro: that uses --faint, which is 3.55:1 on --bone and
+   fails AA. This page leans on small uppercase labels, so they must be --soft. */
+.ins[data-app="sight"] .lbl {
+  font-family: 'IBM Plex Mono', monospace; font-size: 10.5px; line-height: 1.4;
+  letter-spacing: 0.14em; text-transform: uppercase; color: var(--soft); font-weight: 500;
+}
+
+.ins[data-app="sight"] a { color: inherit; }
+.ins[data-app="sight"] .wrap { max-width: 1240px; margin-inline: auto; padding-inline: 18px; }
+
+.ins[data-app="sight"] .gl { width: 18px; height: 18px; flex: none; color: var(--soft); }
+.ins[data-app="sight"] .gl-melon { color: var(--melon); }
+
+.ins[data-app="sight"] .sr-only {
+  position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px;
+  overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; border: 0;
+}
+
+/* ---- focus (§11.2). Every interactive element, no exceptions. ---- */
+.ins[data-app="sight"] :focus-visible {
+  outline: 2px solid var(--green);
+  outline-offset: 2px;
+  border-radius: var(--r-sharp);
+}
+/* The console is dark, and --green only manages 2.33:1 on --con-bg / 2.53:1 on
+   --con-chrome — under the 3:1 a focus indicator needs. It is also drawn OUTSIDE
+   the border box, which .console's overflow:hidden then clips, so the panel and
+   the end tabs lose part of their ring entirely. Draw inward, in the light token
+   the selected tab already uses (14.4:1). */
+.ins[data-app="sight"] .console :focus-visible {
+  outline-color: var(--con-tabon);
+  outline-offset: -2px;
+}
+
+.ins[data-app="sight"] .skip {
+  /* fixed, not absolute: absolute resolves against the initial containing block,
+     so reverse-tabbing to it after scrolling parks it off-screen. */
+  position: fixed; left: 8px; top: -60px; z-index: 60;
+  background: var(--panel); color: var(--ink); border: 1px solid var(--line2);
+  border-radius: var(--r-sharp); padding: 9px 15px; font-size: 13px; font-weight: 600;
+  text-decoration: none; transition: top .15s;
+}
+.ins[data-app="sight"] .skip:focus { top: 8px; }
+
+/* ---- rail ---- */
+.ins[data-app="sight"] .rail {
+  background: var(--ink); color: var(--bone);
+  font-family: 'IBM Plex Mono', monospace; font-size: 11px; line-height: 1.5; letter-spacing: 0.06em;
+  padding: 7px 18px;
+  display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 10px;
+}
+.ins[data-app="sight"] .rail .dot {
+  width: 6px; height: 6px; border-radius: 50%; background: var(--amber);
+  display: inline-block; margin-right: 7px; animation: sight-pulse 2s infinite;
+}
+@keyframes sight-pulse { 50% { opacity: .25; } }
+
+/* ---- header ---- */
+.ins[data-app="sight"] .site-hd {
+  background: var(--panel); border-bottom: 1px solid var(--line2);
+  position: sticky; top: 0; z-index: 30;
+}
+/* padding-BLOCK only: .hd and .wrap have equal specificity, so a padding-inline
+   here would win on source order and knock the header out of the container's
+   gutter. Let .wrap own the horizontal at every breakpoint. */
+.ins[data-app="sight"] .hd {
+  display: flex; align-items: center; justify-content: space-between; gap: 16px; padding-block: 12px;
+}
+
+/* ---- brand breadcrumb: the return path (§7.2.1) ---- */
+.ins[data-app="sight"] .brandcrumb ol {
+  display: flex; align-items: center; gap: 8px; list-style: none; margin: 0; padding: 0;
+}
+.ins[data-app="sight"] .bc-home {
+  display: inline-flex; align-items: center; justify-content: center; gap: 8px;
+  font-weight: 500; font-size: 14px; color: var(--soft); text-decoration: none;
+  /* Below md the label is hidden, leaving only an 18px glyph: padding alone gave
+     30x42, under the 44x44 §7.2.1 requires. Mobile is where shared links land and
+     where this link is the ONLY way back to the suite, so the floor is explicit. */
+  min-width: 44px; min-height: 44px;
+  padding: 12px 6px; margin: -12px -6px;
+}
+.ins[data-app="sight"] .bc-home:hover { color: var(--ink); text-decoration: underline; }
+.ins[data-app="sight"] .bc-home:hover .gl { color: var(--ink); }
+.ins[data-app="sight"] .brandcrumb .sep { color: var(--line2); font-size: 14px; margin-inline: 2px; }
+.ins[data-app="sight"] .bc-here { display: inline-flex; align-items: center; gap: 8px; }
+.ins[data-app="sight"] .bc-here [aria-current="page"] {
+  display: inline-flex; align-items: center; gap: 8px;
+  font-family: 'Bricolage Grotesque', sans-serif; font-weight: 700;
+  font-size: 17px; letter-spacing: -0.02em; color: var(--ink);
+}
+.ins[data-app="sight"] .ver {
+  font-family: 'IBM Plex Mono', monospace; font-size: 10px; letter-spacing: 0.06em;
+  border: 1px solid var(--line2); border-radius: var(--r-sharp);
+  padding: 2px 6px; color: var(--soft); white-space: nowrap;
+}
+/* Below md the label text goes, the glyph and the link stay. Mobile is where
+   shared links land, so the return path must never be the thing that is cut. */
+.ins[data-app="sight"] .bc-label { display: none; }
+
+.ins[data-app="sight"] .links { display: none; gap: 22px; font-size: 13.5px; }
+.ins[data-app="sight"] .links a { text-decoration: none; color: var(--soft); }
+.ins[data-app="sight"] .links a:hover { color: var(--ink); }
+
+/* ---- buttons: reuse .ins .btn, override radius/scale only ---- */
+.ins[data-app="sight"] .btn { border-radius: var(--r-sharp); font-size: 13px; padding: 9px 15px; }
+.ins[data-app="sight"] .btn-pri:hover { background: var(--green-hov); }
+.ins[data-app="sight"] .btn-ghost:hover { border-color: var(--faint); }
+
+/* ---- hero ---- */
+.ins[data-app="sight"] .hero { padding: 56px 0 44px; display: grid; grid-template-columns: 1fr; gap: 32px; align-items: start; }
+.ins[data-app="sight"] .hero h1 { margin: 12px 0 16px; }
+.ins[data-app="sight"] .hero h1 .accent { color: var(--melon); }
+.ins[data-app="sight"] .hero-lede { color: var(--soft); font-size: 16px; line-height: 1.55; max-width: 48ch; }
+.ins[data-app="sight"] .acts { display: flex; gap: 10px; margin-top: 24px; flex-wrap: wrap; }
+
+.ins[data-app="sight"] .specs { margin-top: 34px; border-top: 1px solid var(--line2); }
+.ins[data-app="sight"] .spec {
+  display: grid; grid-template-columns: 118px 1fr; gap: 16px;
+  padding: 9px 0; border-bottom: 1px solid var(--line2); font-size: 13px;
+}
+.ins[data-app="sight"] .spec dt {
+  font-family: 'IBM Plex Mono', monospace; font-size: 10.5px; letter-spacing: 0.14em;
+  text-transform: uppercase; color: var(--soft); font-weight: 500; padding-top: 2px;
+}
+.ins[data-app="sight"] .spec dd { color: var(--soft); margin: 0; }
+.ins[data-app="sight"] .spec dd b { color: var(--ink); font-weight: 600; }
+
+/* ---- console: the signature ---- */
+.ins[data-app="sight"] .console {
+  background: var(--con-bg); border-radius: var(--r-panel);
+  overflow: hidden; box-shadow: var(--shadow-console);
+}
+.ins[data-app="sight"] .con-top {
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 11px 14px; background: var(--con-chrome); border-bottom: 1px solid var(--con-line);
+}
+.ins[data-app="sight"] .con-top .t {
+  font-family: 'IBM Plex Mono', monospace; font-size: 10.5px; letter-spacing: 0.14em;
+  text-transform: uppercase; color: var(--con-label); font-weight: 500;
+}
+.ins[data-app="sight"] .dots { display: flex; gap: 5px; }
+.ins[data-app="sight"] .dots i { width: 8px; height: 8px; border-radius: 50%; background: var(--con-dot); }
+
+.ins[data-app="sight"] .picker { display: flex; background: var(--con-chrome); border-bottom: 1px solid var(--con-line); }
+.ins[data-app="sight"] .picker button {
+  flex: 1; background: transparent; border: none; border-right: 1px solid var(--con-line);
+  color: var(--con-dim); font-family: 'IBM Plex Mono', monospace; font-size: 11px;
+  letter-spacing: 0.08em; padding: 10px 4px; cursor: pointer; font-weight: 500;
+  transition: color .15s, background .15s;
+}
+.ins[data-app="sight"] .picker button:last-child { border-right: none; }
+.ins[data-app="sight"] .picker button:hover { color: var(--con-tabhov); }
+/* Selected state is carried by background AND text colour, not the melon
+   underline alone — the underline is 2.86:1 on --con-bg, which is under the
+   3:1 that a state indicator would need if it were the only signal. */
+.ins[data-app="sight"] .picker button[aria-selected="true"] {
+  background: var(--con-bg); color: var(--con-tabon);
+  box-shadow: inset 0 -2px 0 var(--melon);
+}
+
+.ins[data-app="sight"] .con-body {
+  padding: 18px; margin: 0;
+  font-family: 'IBM Plex Mono', monospace; font-size: 12.5px; line-height: 1.75;
+  color: var(--con-text); min-height: 352px; overflow-x: auto;
+}
+.ins[data-app="sight"] .con-body .k   { color: var(--con-key); }
+.ins[data-app="sight"] .con-body .s   { color: var(--con-str); }
+.ins[data-app="sight"] .con-body .red { color: var(--con-red); }
+.ins[data-app="sight"] .con-body .grn { color: var(--con-grn); }
+.ins[data-app="sight"] .con-body .amb { color: var(--con-amb); }
+.ins[data-app="sight"] .con-body .p   { color: var(--con-dim); }
+.ins[data-app="sight"] .con-body .cmt { color: var(--con-dim); font-style: italic; }
+.ins[data-app="sight"] .caret {
+  display: inline-block; width: 7px; height: 14px; background: var(--melon);
+  vertical-align: -2px; animation: sight-blink 1s step-end infinite;
+}
+@keyframes sight-blink { 50% { opacity: 0; } }
+
+.ins[data-app="sight"] .con-foot {
+  display: flex; justify-content: space-between; align-items: center; gap: 10px;
+  padding: 10px 14px; background: var(--con-chrome); border-top: 1px solid var(--con-line);
+  font-family: 'IBM Plex Mono', monospace; font-size: 10.5px; letter-spacing: 0.14em;
+  text-transform: uppercase; font-weight: 500; color: var(--con-dim);
+}
+
+/* ---- sections ---- */
+.ins[data-app="sight"] .blk { padding: 64px 0; border-top: 1px solid var(--line); }
+.ins[data-app="sight"] .sechd { display: grid; grid-template-columns: 1fr; gap: 8px; margin-bottom: 34px; }
+.ins[data-app="sight"] .sechd h2 { margin-bottom: 10px; }
+.ins[data-app="sight"] .sechd p { color: var(--soft); max-width: 62ch; }
+
+/* ---- melon anatomy ---- */
+.ins[data-app="sight"] .anat {
+  display: grid; grid-template-columns: 1fr; gap: 44px; align-items: center;
+  background: var(--panel); border: 1px solid var(--line2);
+  border-radius: var(--r-panel); padding: 24px;
+}
+.ins[data-app="sight"] .anat > svg { width: 100%; height: auto; max-width: 320px; margin-inline: auto; display: block; }
+.ins[data-app="sight"] .legend { list-style: none; display: flex; flex-direction: column; margin: 0; padding: 0; }
+.ins[data-app="sight"] .legend li {
+  display: grid; grid-template-columns: 16px 92px 1fr; gap: 14px; align-items: start;
+  padding: 14px 0; border-bottom: 1px solid var(--line2);
+}
+.ins[data-app="sight"] .legend li:last-child { border-bottom: none; }
+.ins[data-app="sight"] .legend .sw { width: 14px; height: 14px; border-radius: 3px; margin-top: 4px; }
+/* pith is near-white, so it needs a border to read as a swatch at all */
+.ins[data-app="sight"] .legend .sw-pith { background: var(--pithcream); border: 1px solid var(--line2); }
+.ins[data-app="sight"] .legend .nm {
+  font-family: 'IBM Plex Mono', monospace; font-size: 10.5px; letter-spacing: 0.14em;
+  text-transform: uppercase; color: var(--ink); font-weight: 500; padding-top: 3px;
+}
+.ins[data-app="sight"] .legend .de { font-size: 13.5px; color: var(--soft); }
+.ins[data-app="sight"] .legend .de b { color: var(--ink); font-weight: 600; }
+
+/* ---- tell grid ---- */
+.ins[data-app="sight"] .tellgrid {
+  display: grid; grid-template-columns: 1fr;
+  border: 1px solid var(--line2); border-radius: var(--r-panel);
+  overflow: hidden; background: var(--panel);
+}
+.ins[data-app="sight"] .tellcell { padding: 26px 24px; border-bottom: 1px solid var(--line2); }
+.ins[data-app="sight"] .tellcell:last-child { border-bottom: none; }
+.ins[data-app="sight"] .tellcell .id {
+  font-family: 'IBM Plex Mono', monospace; font-size: 10px; letter-spacing: 0.12em;
+  color: var(--melon); font-weight: 600;
+}
+.ins[data-app="sight"] .tellcell h3 { margin: 10px 0 8px; }
+.ins[data-app="sight"] .tellcell > p { font-size: 13.5px; color: var(--soft); }
+.ins[data-app="sight"] .viz {
+  margin: 20px 0 16px; height: 96px; background: var(--bone);
+  border: 1px solid var(--line2); border-radius: var(--r-sharp); padding: 10px;
+}
+.ins[data-app="sight"] .viz svg { width: 100%; height: 100%; }
+.ins[data-app="sight"] .compare {
+  border-top: 1px solid var(--line2); padding-top: 14px;
+  display: flex; flex-direction: column; gap: 8px; font-size: 12px;
+}
+.ins[data-app="sight"] .compare div { display: grid; grid-template-columns: 74px 1fr; gap: 10px; }
+.ins[data-app="sight"] .compare .who {
+  font-family: 'IBM Plex Mono', monospace; font-size: 9.5px; letter-spacing: 0.08em;
+  text-transform: uppercase; color: var(--soft); padding-top: 2px;
+}
+.ins[data-app="sight"] .compare .gen { color: var(--soft); }
+.ins[data-app="sight"] .compare .ss { color: var(--ink); font-weight: 500; }
+
+/* ---- pipeline ---- */
+.ins[data-app="sight"] .pipe { display: grid; grid-template-columns: 1fr; gap: 16px; }
+.ins[data-app="sight"] .pnode {
+  background: var(--panel); border: 1px solid var(--line2);
+  border-radius: var(--r-panel); overflow: hidden;
+}
+.ins[data-app="sight"] .pnode .ph {
+  background: var(--bone); border-bottom: 1px solid var(--line2);
+  padding: 10px 16px; display: flex; justify-content: space-between; align-items: center; gap: 10px;
+}
+.ins[data-app="sight"] .pass-name { color: var(--green); }
+.ins[data-app="sight"] .pnode .pb { padding: 18px 16px; }
+.ins[data-app="sight"] .pnode h3 { margin-bottom: 8px; }
+.ins[data-app="sight"] .pnode p { font-size: 13px; color: var(--soft); }
+.ins[data-app="sight"] .io {
+  margin-top: 14px; border-top: 1px dashed var(--line2); padding-top: 12px;
+  display: flex; flex-direction: column; gap: 5px;
+}
+.ins[data-app="sight"] .io span { font-family: 'IBM Plex Mono', monospace; font-size: 10.5px; color: var(--soft); }
+.ins[data-app="sight"] .io span b { color: var(--green); font-weight: 500; }
+
+/* ---- eval scorecard ---- */
+.ins[data-app="sight"] .score {
+  display: grid; grid-template-columns: 1fr 1fr;
+  border: 1px solid var(--line2); border-radius: var(--r-panel);
+  overflow: hidden; background: var(--panel);
+}
+.ins[data-app="sight"] .sc { padding: 22px 20px; border-right: 1px solid var(--line2); }
+.ins[data-app="sight"] .sc:nth-child(2) { border-right: none; }
+.ins[data-app="sight"] .sc:nth-child(1),
+.ins[data-app="sight"] .sc:nth-child(2) { border-bottom: 1px solid var(--line2); }
+.ins[data-app="sight"] .sc:last-child { border-right: none; }
+.ins[data-app="sight"] .sc .n {
+  font-family: 'Bricolage Grotesque', sans-serif; font-weight: 700;
+  font-size: 30px; line-height: 1; letter-spacing: -0.03em; color: var(--green);
+}
+.ins[data-app="sight"] .sc .n .suffix { color: var(--soft); }
+.ins[data-app="sight"] .sc .t { font-size: 12.5px; color: var(--soft); margin-top: 4px; }
+.ins[data-app="sight"] .sc .m {
+  font-family: 'IBM Plex Mono', monospace; font-size: 9.5px; letter-spacing: 0.14em;
+  text-transform: uppercase; color: var(--soft); margin-top: 10px; font-weight: 500;
+}
+.ins[data-app="sight"] .bar {
+  height: 3px; background: var(--line2); border-radius: 2px; margin-top: 12px; overflow: hidden;
+}
+.ins[data-app="sight"] .bar i {
+  display: block; height: 100%; background: var(--green); width: 0;
+  transition: width 1.1s cubic-bezier(.3, 1, .4, 1);
+}
+
+/* ---- case table: a real table (§11.3) ---- */
+.ins[data-app="sight"] .cases {
+  margin-top: 20px; border: 1px solid var(--line2); border-radius: var(--r-panel);
+  overflow: hidden; background: var(--panel);
+}
+.ins[data-app="sight"] .cases table { width: 100%; border-collapse: collapse; }
+.ins[data-app="sight"] .cases th {
+  background: var(--bone);
+  font-family: 'IBM Plex Mono', monospace; font-size: 9.5px; letter-spacing: 0.12em;
+  text-transform: uppercase; color: var(--soft); font-weight: 500;
+}
+.ins[data-app="sight"] .cases th,
+.ins[data-app="sight"] .cases td {
+  padding: 13px 20px; border-bottom: 1px solid var(--line2); text-align: left; font-size: 13px;
+}
+.ins[data-app="sight"] .cases tbody tr:last-child td { border-bottom: none; }
+.ins[data-app="sight"] .cases .tm { font-weight: 600; }
+.ins[data-app="sight"] .cases .desc { color: var(--soft); font-size: 12.5px; }
+.ins[data-app="sight"] .cases .tick {
+  font-family: 'IBM Plex Mono', monospace; font-size: 11px; color: var(--green); font-weight: 600;
+}
+/* the guard column is prose; it is the first thing to go when space is tight */
+.ins[data-app="sight"] .col-guard { display: none; }
+
+.ins[data-app="sight"] .rg {
+  font-family: 'IBM Plex Mono', monospace; font-size: 11px; font-weight: 600;
+  letter-spacing: 0.06em; text-transform: uppercase;
+  padding: 3px 8px; border-radius: var(--r-sharp); display: inline-block; white-space: nowrap;
+}
+.ins[data-app="sight"] .rg-g { background: var(--greenwash); color: var(--green); }
+.ins[data-app="sight"] .rg-a { background: var(--amberwash); color: var(--amber-ink); }
+.ins[data-app="sight"] .rg-r { background: var(--melonwash); color: var(--melon); }
+
+/* ---- callout ---- */
+.ins[data-app="sight"] .callout {
+  background: var(--panel); border: 1px solid var(--line2);
+  border-left: 3px solid var(--melon); border-radius: var(--r-sharp);
+  padding: 20px 24px; margin-top: 24px; font-size: 14px; color: var(--soft);
+}
+.ins[data-app="sight"] .callout b { color: var(--ink); font-weight: 600; }
+
+/* ---- signup ---- */
+.ins[data-app="sight"] .signup {
+  border: 1px solid var(--line2); border-radius: var(--r-panel); background: var(--panel);
+  padding: 26px; margin: 64px 0; display: grid; grid-template-columns: 1fr; gap: 44px; align-items: center;
+}
+.ins[data-app="sight"] .signup h2 { margin-bottom: 10px; }
+.ins[data-app="sight"] .signup > div > p { color: var(--soft); }
+.ins[data-app="sight"] .form { display: flex; gap: 8px; }
+.ins[data-app="sight"] .form input {
+  flex: 1; min-width: 0;
+  font-family: 'Hanken Grotesk', sans-serif; font-size: 14.5px; font-weight: 400;
+  padding: 11px 13px; border-radius: var(--r-sharp);
+  background: var(--bone); color: var(--ink);
+  /* NOT --line2 (§7.10 and .ins .input both use it): that is 1.47:1 on --bone.
+     A panel hairline can be decorative, but this border is the only thing that
+     marks out the only control on the page, so 1.4.11's 3:1 applies. --faint is
+     3.55:1. The same latent issue exists in .ins .input across every surface;
+     fixing it canonically is a separate job. */
+  border: 1px solid var(--faint);
+}
+/* placeholder is decorative, so --faint-as-text is permitted here and nowhere else */
+.ins[data-app="sight"] .form input::placeholder { color: var(--faint); }
+/* No `outline: none` here. §7.10 specifies it, but it out-specifies the global
+   :focus-visible ring, leaving only the --greenwash halo — 1.13:1 on --panel,
+   i.e. no visible focus indicator at all on the page's only input. */
+.ins[data-app="sight"] .form input:focus-visible {
+  border-color: var(--green); box-shadow: var(--focus-ring);
+}
+/* only after a submit attempt — never punish someone mid-type */
+.ins[data-app="sight"] .form.attempted input:invalid { border-color: var(--melon); }
+.ins[data-app="sight"] .formmsg { font-size: 13px; margin-top: 10px; min-height: 1px; }
+.ins[data-app="sight"] .formmsg.err { color: var(--melon); }
+.ins[data-app="sight"] .formmsg.ok  { color: var(--green); font-weight: 500; }
+.ins[data-app="sight"] .hint {
+  font-family: 'IBM Plex Mono', monospace; font-size: 10.5px; color: var(--soft);
+  margin-top: 10px; letter-spacing: 0.06em;
+}
+
+/* ---- footer ---- */
+.ins[data-app="sight"] .site-ft {
+  border-top: 1px solid var(--line2); background: var(--panel);
+  padding: 26px 0; font-size: 12.5px; color: var(--soft);
+}
+.ins[data-app="sight"] .ft { display: flex; justify-content: space-between; gap: 16px; flex-wrap: wrap; }
+.ins[data-app="sight"] .site-ft a { color: var(--green); text-decoration: none; }
+.ins[data-app="sight"] .site-ft a:hover { text-decoration: underline; }
+
+/* ---- reveal ---- */
+.ins[data-app="sight"] .rv {
+  opacity: 0; transform: translateY(12px);
+  transition: opacity .5s cubic-bezier(.2, .6, .2, 1), transform .5s cubic-bezier(.2, .6, .2, 1);
+}
+.ins[data-app="sight"] .rv.in { opacity: 1; transform: none; }
+
+/* =========================================================================
+   Breakpoints. Mobile-first: base is single column, everything stacks.
+   ========================================================================= */
+
+/* sm — chip rows stop wrapping, rail goes one line */
+@media (min-width: 640px) {
+  .ins[data-app="sight"] .rail { flex-wrap: nowrap; }
+}
+
+/* md — the layout engages */
+@media (min-width: 980px) {
+  .ins[data-app="sight"] .wrap { padding-inline: 28px; }
+  .ins[data-app="sight"] .rail { padding: 7px 28px; }
+  .ins[data-app="sight"] .bc-label { display: inline; }
+  .ins[data-app="sight"] .links { display: flex; }
+  .ins[data-app="sight"] .hero { grid-template-columns: 1fr 1fr; gap: 44px; }
+  /* 76px clears the sticky header */
+  .ins[data-app="sight"] .console { position: sticky; top: 76px; }
+  .ins[data-app="sight"] .sechd { grid-template-columns: 170px 1fr; gap: 34px; }
+  .ins[data-app="sight"] .sechd .lbl { padding-top: 5px; }
+  .ins[data-app="sight"] .anat { grid-template-columns: 1fr 1.15fr; padding: 36px; }
+  .ins[data-app="sight"] .tellgrid { grid-template-columns: repeat(3, 1fr); }
+  .ins[data-app="sight"] .tellcell { border-right: 1px solid var(--line2); border-bottom: none; }
+  .ins[data-app="sight"] .tellcell:last-child { border-right: none; }
+  .ins[data-app="sight"] .pipe { grid-template-columns: repeat(3, 1fr); }
+  .ins[data-app="sight"] .score { grid-template-columns: repeat(4, 1fr); }
+  .ins[data-app="sight"] .sc:nth-child(2) { border-right: 1px solid var(--line2); }
+  .ins[data-app="sight"] .sc:nth-child(1),
+  .ins[data-app="sight"] .sc:nth-child(2) { border-bottom: none; }
+  .ins[data-app="sight"] .sc:last-child { border-right: none; }
+  .ins[data-app="sight"] .col-guard { display: table-cell; }
+  .ins[data-app="sight"] .cases th:nth-child(1) { width: 100px; }
+  .ins[data-app="sight"] .cases th:nth-child(3),
+  .ins[data-app="sight"] .cases th:nth-child(4) { width: 96px; }
+  .ins[data-app="sight"] .cases th:nth-child(5) { width: 110px; }
+  .ins[data-app="sight"] .signup { grid-template-columns: 1fr 380px; padding: 40px; }
+}
+
+/* =========================================================================
+   Reduced motion. The end state must be applied immediately: never leave
+   content hidden when motion is off. JS branches on this too (§8), because
+   the typing and counting effects are JS-driven and CSS cannot stop them.
+   ========================================================================= */
+@media (prefers-reduced-motion: reduce) {
+  .ins[data-app="sight"] *,
+  .ins[data-app="sight"] *::before,
+  .ins[data-app="sight"] *::after {
+    animation: none !important;
+    transition: none !important;
+  }
+  .ins[data-app="sight"] .rv { opacity: 1; transform: none; }
+  .ins[data-app="sight"] .caret { display: none; }
+  .ins[data-app="sight"] .bar i { width: 100%; }
+}

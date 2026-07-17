@@ -1,0 +1,491 @@
+<!DOCTYPE html>
+<!--
+  Sprintsight promo page. Built to marketing/docs/sprintsight-promo-BUILD-SPEC.md.
+  Visual target: marketing/docs/reference/sprintsight-C-evidence-desk.html
+
+  Two rules that are correctness, not style (spec §9.5):
+    1. The rail and the "coming soon" chip stay while the product does not exist.
+       Present tense is only honest because the page says it is in build.
+    2. The eval scorecard shows TARGET figures from sight/docs/evals/watermelon-eval.md
+       §8. If a real run scores lower, this page changes before launch. A page
+       claiming perfect scores for a detector that has not run is itself a watermelon.
+
+  Console JSON tracks sight/docs/evals/watermelon-eval.md §2.
+  Evidence ids track sight/docs/data/data-strategy.md §6. Do not invent ids.
+-->
+<html lang="en-GB">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Sprintsight — find the teams reporting green while delivery is red | Sprint Suite</title>
+<meta name="description" content="Sprintsight reads across Jira, Confluence, Slack and your RAID log, reconciles what each team claims against what its data shows, and names the watermelons. Every verdict ships with its evidence. Coming soon to Sprint Suite.">
+<link rel="canonical" href="https://sprintsuite.uk/sprintsight-coming-soon/intro/">
+<meta name="robots" content="index, follow">
+
+<meta property="og:type" content="website">
+<meta property="og:site_name" content="Sprint Suite">
+<meta property="og:url" content="https://sprintsuite.uk/sprintsight-coming-soon/intro/">
+<meta property="og:title" content="Sprintsight — green on the outside, red on the inside">
+<meta property="og:description" content="AI delivery intelligence that finds the teams reporting healthier than they are, and cites the evidence. Coming soon.">
+<meta property="og:image" content="https://sprintsuite.uk/sprintsight-coming-soon/intro/sight-og.png">
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" content="630">
+<meta property="og:image:alt" content="A watermelon cross-section labelled rind, pith, flesh and seeds, next to the Sprintsight name.">
+<meta name="twitter:card" content="summary_large_image">
+
+<!-- Only the two faces visible above the fold. Bricolage is one heading; it can swap. -->
+<link rel="preload" href="/fonts/hanken-grotesk-400.woff2" as="font" type="font/woff2" crossorigin>
+<link rel="preload" href="/fonts/ibm-plex-mono-400.woff2" as="font" type="font/woff2" crossorigin>
+
+<link rel="stylesheet" href="/css/instrument-core.css">
+<link rel="stylesheet" href="/sprintsight-coming-soon/intro/sight.css">
+
+<!-- Reveals are opacity:0 until an IntersectionObserver adds .in, so without JS
+     everything below the hero would be invisible and the console blank — on a
+     page whose entire job is to be shared, linked and indexed. Same principle as
+     the reduced-motion branch (§8): never leave content hidden. -->
+<noscript><style>
+  .ins[data-app="sight"] .rv { opacity: 1; transform: none; }
+  .ins[data-app="sight"] .bar i { width: 100%; }
+</style></noscript>
+
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "SoftwareApplication",
+  "name": "Sprintsight",
+  "applicationCategory": "BusinessApplication",
+  "applicationSubCategory": "Project Management",
+  "operatingSystem": "Web",
+  "url": "https://sprintsuite.uk/sprintsight",
+  "description": "AI delivery intelligence that reads across Jira, Confluence, Slack and RAID logs to produce cited status reports, risk detection, and watermelon detection (reported green, actually red).",
+  "isPartOf": { "@type": "WebSite", "name": "Sprint Suite", "url": "https://sprintsuite.uk" },
+  "offers": { "@type": "Offer", "availability": "https://schema.org/PreOrder" }
+}
+</script>
+</head>
+<body class="ins" data-app="sight">
+
+<a class="skip" href="#main">Skip to content</a>
+
+<!-- Rail: not sticky, scrolls away. Removing it while the product does not exist
+     would make every present-tense claim below a lie. See spec §9.5. -->
+<div class="rail">
+  <span><span class="dot" aria-hidden="true"></span>Sprintsight is in build · Stage 0 foundation · launching on sprintsuite.uk</span>
+  <span>Showcase data: synthetic</span>
+</div>
+
+<header class="site-hd">
+  <div class="wrap hd">
+    <!-- The only return path for anyone arriving from a shared link, where the
+         back button has no history. Static by design: works with no session,
+         no JS, no referrer. Never suite-return.js here (spec §7.2.1). -->
+    <nav class="brandcrumb" aria-label="Breadcrumb">
+      <ol>
+        <li>
+          <a class="bc-home" href="https://sprintsuite.uk">
+            <svg class="gl" aria-hidden="true"><use href="/illos/glyphs.svg#glyph-suite"></use></svg>
+            <span class="bc-label">Sprint Suite</span>
+          </a>
+        </li>
+        <li aria-hidden="true" class="sep">/</li>
+        <li class="bc-here">
+          <span aria-current="page">
+            <!-- -sm, not #glyph-sight: .gl is 18px, and below 24px the seeds turn
+                 to mud. §7.2.1's markup uses the seeded variant at 18px, which
+                 contradicts the size rule in §5.1. The rule is right. -->
+            <svg class="gl gl-melon" aria-hidden="true"><use href="/illos/glyphs.svg#glyph-sight-sm"></use></svg>
+            Sprintsight
+          </span>
+          <span class="ver">coming soon</span>
+        </li>
+      </ol>
+    </nav>
+
+    <nav class="links" aria-label="Sections">
+      <a href="#detect">Detector</a>
+      <a href="#tells">The tells</a>
+      <a href="#pipeline">Pipeline</a>
+      <a href="#evals">Evals</a>
+    </nav>
+
+    <a class="btn btn-pri" href="#notify">Get notified</a>
+  </div>
+</header>
+
+<main id="main">
+<div class="wrap">
+
+<!-- ================= HERO ================= -->
+<section class="hero" aria-labelledby="hero-h">
+  <div class="hero-copy">
+    <p class="lbl">Sprint Suite · Delivery intelligence</p>
+    <h1 id="hero-h">Your portfolio is all green.<br><span class="accent">One of those greens is a watermelon.</span></h1>
+    <p class="hero-lede">Sprintsight reads across Jira, Confluence, Slack and your RAID log, reconciles what each team claims against what its data actually shows, and names the teams reporting healthier than they are. Every verdict ships with its evidence.</p>
+    <div class="acts">
+      <a class="btn btn-pri" href="#notify">Get notified at launch</a>
+      <a class="btn btn-ghost" href="#detect">Run the detector</a>
+    </div>
+
+    <dl class="specs">
+      <div class="spec"><dt>Reads</dt><dd>Jira, Confluence, Slack, RAID log, burndown and velocity data</dd></div>
+      <div class="spec"><dt>Outputs</dt><dd><b>Watermelon verdict</b> with cited evidence · <b>Audience-tuned status reports</b> (team, programme, exec) · <b>Risk radar</b> and RAID hygiene</dd></div>
+      <div class="spec"><dt>Never does</dt><dd>Writes to your RAID unprompted. It recommends, a human confirms.</dd></div>
+      <div class="spec"><dt>Data</dt><dd>Zero Data Retention on all model traffic. Encrypted at rest, UK and EU region.</dd></div>
+      <div class="spec"><dt>Access</dt><dd>Via your Sprint Suite tile. One sign-in.</dd></div>
+    </dl>
+  </div>
+
+  <!-- SIGNATURE: the detector console. WAI-ARIA tabs pattern, spec §11.4.
+       tabindex=-1 so the hero's "Run the detector" link moves FOCUS here, not
+       just the viewport; otherwise a keyboard user jumps the page but keeps
+       focus back on the button. -->
+  <div class="console" id="detect" tabindex="-1">
+    <div class="con-top">
+      <span class="t">detector · sprint 15</span>
+      <span class="dots" aria-hidden="true"><i></i><i></i><i></i></span>
+    </div>
+    <div class="picker" role="tablist" aria-label="Team">
+      <button role="tab" id="tab-atlas"  aria-selected="true"  aria-controls="conPanel" tabindex="0"  data-t="atlas">ATLAS</button>
+      <button role="tab" id="tab-boreas" aria-selected="false" aria-controls="conPanel" tabindex="-1" data-t="boreas">BOREAS</button>
+      <button role="tab" id="tab-cygnus" aria-selected="false" aria-controls="conPanel" tabindex="-1" data-t="cygnus">CYGNUS</button>
+      <button role="tab" id="tab-draco"  aria-selected="false" aria-controls="conPanel" tabindex="-1" data-t="draco">DRACO</button>
+    </div>
+    <!-- tabindex=0: the panel scrolls, so it must be keyboard-reachable.
+         No aria-live: it would announce every typing tick. aria-busy instead. -->
+    <pre class="con-body" id="conPanel" role="tabpanel" aria-labelledby="tab-atlas" tabindex="0"><noscript><span class="p">$</span> sprintsight detect <span class="s">--team Atlas --sprint 15</span>
+<span class="cmt">// reading 4 sources · 61 artifacts · 2 sprints</span>
+
+{
+  <span class="k">"team"</span>: <span class="s">"Atlas"</span>,
+  <span class="k">"reported_status"</span>: <span class="grn">"green"</span>,
+  <span class="k">"actual_status"</span>: <span class="red">"red"</span>,
+  <span class="k">"is_watermelon"</span>: <span class="red">true</span>,
+  <span class="k">"evidence"</span>: [
+    <span class="s">"burndown-atlas-s15"</span>,
+    <span class="s">"slack-atlas-s15-msg-dep"</span>,
+    <span class="s">"status-atlas-s15"</span>
+  ],
+  <span class="k">"explanation"</span>: <span class="s">"Reported on track for a
+    second sprint while the burndown stayed flat
+    (12 of 40 points). Velocity down ~30%, carry-over
+    2 → 5. A dependency on Draco's auth API was raised
+    in chat on 12 Jun and never logged in the RAID."</span>
+}
+
+<span class="red">▲ WATERMELON</span> <span class="p">· raise with the Atlas delivery lead before the portfolio review</span></noscript></pre>
+    <div class="con-foot">
+      <span id="footL">verdict · 3 evidence ids</span>
+      <span>deterministic grading</span>
+    </div>
+  </div>
+</section>
+
+<!-- ================= ANATOMY ================= -->
+<section class="blk rv" id="anatomy" aria-labelledby="anatomy-h">
+  <div class="sechd">
+    <p class="lbl">Anatomy</p>
+    <div>
+      <h2 id="anatomy-h">Why a watermelon</h2>
+      <p>It is the delivery term for a team that is green on the outside and red on the inside. Nobody set out to mislead. The status report is written from the narrative, and the narrative is always the last thing to change. Sprintsight cuts through and checks the two against each other.</p>
+    </div>
+  </div>
+
+  <div class="anat">
+    <svg viewBox="0 0 320 320" role="img" aria-label="Labelled watermelon cross-section: rind is reported status, pith is the reconciliation layer, flesh is actual delivery, seeds are the evidence.">
+      <circle cx="160" cy="160" r="128" fill="var(--green)"/>
+      <g opacity=".3" stroke="var(--rinddark)" stroke-width="4" fill="none">
+        <path d="M62 100 Q112 160 62 220"/><path d="M112 66 Q152 160 112 254"/>
+        <path d="M160 54 Q192 160 160 266"/><path d="M208 66 Q236 160 208 254"/>
+        <path d="M258 100 Q276 160 258 220"/>
+      </g>
+      <circle cx="160" cy="160" r="116" fill="var(--pithcream)"/>
+      <circle cx="160" cy="160" r="104" fill="var(--melon)"/>
+      <g fill="var(--seed)">
+        <ellipse cx="128" cy="122" rx="4.5" ry="7" transform="rotate(-18 128 122)"/>
+        <ellipse cx="192" cy="134" rx="4.5" ry="7" transform="rotate(14 192 134)"/>
+        <ellipse cx="156" cy="176" rx="4.5" ry="7" transform="rotate(-6 156 176)"/>
+        <ellipse cx="212" cy="192" rx="4.5" ry="7" transform="rotate(22 212 192)"/>
+        <ellipse cx="112" cy="196" rx="4.5" ry="7" transform="rotate(-24 112 196)"/>
+        <ellipse cx="168" cy="232" rx="4.5" ry="7" transform="rotate(8 168 232)"/>
+        <ellipse cx="100" cy="152" rx="4.5" ry="7" transform="rotate(-32 100 152)"/>
+        <ellipse cx="226" cy="146" rx="4.5" ry="7" transform="rotate(30 226 146)"/>
+      </g>
+      <!-- Leaders must EXIT the circle: a soft-grey label on the green rind is
+           invisible (~1.2:1). The mock stops PITH's leader at x=200 and drops
+           FLESH's baseline at y=290 against a circle bottom of y=288, so both
+           labels are unreadable at the 320px they ship at. Extended past the
+           edge instead. FLESH's leader also now starts inside the flesh (r under
+           104) rather than in the pith ring, which is what it claims to point at.
+           No double hyphens in here: this is an XML comment. -->
+      <g stroke="var(--ink)" stroke-width="1" fill="none" opacity=".55">
+        <path d="M160 38 L160 24 L250 24"/><path d="M160 50 L236 50"/>
+        <path d="M112 196 L60 250 L20 250"/>
+      </g>
+      <g font-family="IBM Plex Mono" font-size="9" fill="var(--soft)" letter-spacing="1">
+        <text x="254" y="21">RIND</text>
+        <text x="240" y="53">PITH</text>
+        <text x="20" y="246">SEEDS</text>
+      </g>
+      <text x="160" y="304" text-anchor="middle" font-family="IBM Plex Mono" font-size="9" fill="var(--soft)" letter-spacing="1">FLESH</text>
+      <path d="M160 250 L160 294" stroke="var(--ink)" stroke-width="1" opacity=".55"/>
+    </svg>
+
+    <ul class="legend">
+      <li>
+        <span class="sw" style="background:var(--green)"></span>
+        <span class="nm">Rind</span>
+        <span class="de"><b>The reported status.</b> The RAG rating and the narrative your teams submit. Green, week after week. It is what the steering group sees.</span>
+      </li>
+      <li>
+        <span class="sw sw-pith"></span>
+        <span class="nm">Pith</span>
+        <span class="de"><b>The reconciliation layer.</b> Where Sprintsight compares the claim against the computed signals: burn ratio, velocity delta, carry-over growth.</span>
+      </li>
+      <li>
+        <span class="sw" style="background:var(--melon)"></span>
+        <span class="nm">Flesh</span>
+        <span class="de"><b>The actual status.</b> What the delivery data says, independent of who wrote the update. When flesh and rind disagree, you have a watermelon.</span>
+      </li>
+      <li>
+        <span class="sw" style="background:var(--seed)"></span>
+        <span class="nm">Seeds</span>
+        <span class="de"><b>The evidence.</b> Named, citable artifacts. Every verdict points at these, so a delivery lead can check the claim rather than take it on trust.</span>
+      </li>
+    </ul>
+  </div>
+</section>
+
+<!-- ================= TELLS ================= -->
+<section class="blk rv" id="tells" aria-labelledby="tells-h">
+  <div class="sechd">
+    <p class="lbl">Detection</p>
+    <div>
+      <h2 id="tells-h">Three tells a generic tool cannot see</h2>
+      <p>Search-over-documents retrieves what a document says. Sprintsight reasons about the delivery process behind the documents. That difference is the whole product, and it shows up in three specific places.</p>
+    </div>
+  </div>
+
+  <div class="tellgrid">
+    <div class="tellcell">
+      <p class="id">TELL 01 · flat_burndown_vs_green</p>
+      <h3>Flat burndown, green status</h3>
+      <p>Scope is not moving across two sprints while the write-up says on track. Reading a burndown as a delivery signal, rather than as text, is what catches it.</p>
+      <div class="viz">
+        <svg viewBox="0 0 240 76" role="img" aria-label="Atlas's ideal burndown descends steadily while the actual burndown stays almost flat, only 12 of 40 points burned.">
+          <line x1="22" y1="62" x2="234" y2="62" stroke="var(--line2)"/>
+          <line x1="22" y1="6" x2="22" y2="62" stroke="var(--line2)"/>
+          <path d="M22 10 L230 60" stroke="var(--soft)" stroke-width="1.2" stroke-dasharray="3 3" fill="none"/>
+          <path class="ln" d="M22 10 L74 13 L126 17 L178 20 L230 24" stroke="var(--melon)" stroke-width="2.4" fill="none" stroke-linecap="round"/>
+          <text x="182" y="54" font-family="IBM Plex Mono" font-size="7.5" fill="var(--soft)">ideal</text>
+          <text x="182" y="14" font-family="IBM Plex Mono" font-size="7.5" fill="var(--melon)">actual</text>
+          <text x="26" y="72" font-family="IBM Plex Mono" font-size="7" fill="var(--soft)">S14</text>
+          <text x="216" y="72" font-family="IBM Plex Mono" font-size="7" fill="var(--soft)">S15</text>
+        </svg>
+      </div>
+      <div class="compare">
+        <div><span class="who">Generic</span><span class="gen">"Atlas reports on track."</span></div>
+        <div><span class="who">Sprintsight</span><span class="ss">"The data contradicts the report. 12 of 40 points burned."</span></div>
+      </div>
+    </div>
+
+    <div class="tellcell">
+      <p class="id">TELL 02 · risk_in_chat_not_raid</p>
+      <h3>Risk in chat, not in the RAID</h3>
+      <p>A risk raised in a thread that never reached the log. Catching it needs an understanding of the RAID as a governance process, not just as a document to summarise.</p>
+      <div class="viz">
+        <svg viewBox="0 0 240 76" role="img" aria-label="A Slack message on 12 June warns that Draco's auth API is not ready, but Atlas's RAID log for sprint 15 has no matching entry.">
+          <rect x="4" y="8" width="100" height="42" rx="6" fill="var(--panel)" stroke="var(--line2)"/>
+          <text x="11" y="23" font-family="IBM Plex Mono" font-size="7" fill="var(--soft)">"heads up, Draco's</text>
+          <text x="11" y="34" font-family="IBM Plex Mono" font-size="7" fill="var(--soft)">auth API isn't ready,</text>
+          <text x="11" y="45" font-family="IBM Plex Mono" font-size="7" fill="var(--soft)">this will bite us"</text>
+          <text x="4" y="64" font-family="IBM Plex Mono" font-size="6.5" fill="var(--soft)">#atlas-team · 12 Jun</text>
+          <!-- carries stroke-dasharray: the line-draw must skip it or the dashes are destroyed (spec §8.5) -->
+          <path class="ln" d="M110 29 L132 29" stroke="var(--melon)" stroke-width="1.6" stroke-dasharray="3 3"/>
+          <rect x="138" y="8" width="98" height="42" rx="6" fill="var(--melonwash)" stroke="var(--melon)" stroke-width="1.2" stroke-dasharray="4 3"/>
+          <text x="162" y="34" font-family="IBM Plex Mono" font-size="8.5" fill="var(--melon)">no entry</text>
+          <text x="138" y="64" font-family="IBM Plex Mono" font-size="6.5" fill="var(--soft)">RAID · Atlas · S15</text>
+        </svg>
+      </div>
+      <div class="compare">
+        <div><span class="who">Generic</span><span class="gen">Silent. It was never logged, so there is nothing to retrieve.</span></div>
+        <div><span class="who">Sprintsight</span><span class="ss">"Unlogged risk. Recommend adding it with an owner."</span></div>
+      </div>
+    </div>
+
+    <div class="tellcell">
+      <p class="id">TELL 03 · cross_team_dependency_slip</p>
+      <h3>Cross-team dependency slip</h3>
+      <p>Atlas depends on Draco. Draco slips. Atlas's status is silent. The proof sits on both sides of a boundary that single-tool products never cross.</p>
+      <div class="viz">
+        <svg viewBox="0 0 240 76" role="img" aria-label="Atlas depends on Draco's auth API, which has slipped and is absent from Atlas's status report.">
+          <rect x="4" y="20" width="74" height="34" rx="6" fill="var(--panel)" stroke="var(--line2)"/>
+          <text x="24" y="41" font-family="IBM Plex Mono" font-size="10" font-weight="600" fill="var(--ink)">Atlas</text>
+          <rect x="162" y="20" width="74" height="34" rx="6" fill="var(--panel)" stroke="var(--line2)"/>
+          <text x="180" y="41" font-family="IBM Plex Mono" font-size="10" font-weight="600" fill="var(--ink)">Draco</text>
+          <path class="ln" d="M82 37 L154 37" stroke="var(--melon)" stroke-width="1.8"/>
+          <path d="M148 33 L157 37 L148 41Z" fill="var(--melon)"/>
+          <text x="92" y="28" font-family="IBM Plex Mono" font-size="7" fill="var(--melon)">auth API · slipped</text>
+          <text x="88" y="52" font-family="IBM Plex Mono" font-size="6.5" fill="var(--soft)">absent from Atlas status</text>
+        </svg>
+      </div>
+      <div class="compare">
+        <div><span class="who">Generic</span><span class="gen">"Atlas is on track." It never left Atlas's own documents.</span></div>
+        <div><span class="who">Sprintsight</span><span class="ss">"No. A cross-team dependency is slipping and Atlas has not surfaced it."</span></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- LOCKED scope guardrail (moat-behaviours.md §2). Stops the page over-promising
+       a dependency-graph engine that is explicitly out of scope. Do not remove. -->
+  <div class="callout">
+    <b>Scope, stated plainly.</b> Sprintsight reconciles dependencies that are actually named somewhere in an artifact, like the Atlas chat message naming Draco's auth API. It does not invent links between teams that nobody wrote down.
+  </div>
+</section>
+
+<!-- ================= PIPELINE ================= -->
+<section class="blk rv" id="pipeline" aria-labelledby="pipeline-h">
+  <div class="sechd">
+    <p class="lbl">How it works</p>
+    <div>
+      <h2 id="pipeline-h">Three passes, nothing for your team to fill in</h2>
+      <p>Sprintsight reads what your teams already produce. No new ceremony, no extra form, no change to how anyone works.</p>
+    </div>
+  </div>
+
+  <div class="pipe">
+    <div class="pnode">
+      <div class="ph"><span class="lbl">Pass 01</span><span class="lbl pass-name">Retrieval</span></div>
+      <div class="pb">
+        <h3>Read the delivery record</h3>
+        <p>Status reports, RAID entries, ticket and burndown summaries, chat. Indexed together, each item keeping the source ID it will later be cited by.</p>
+        <div class="io">
+          <span>in <b>Jira · Confluence · Slack · RAID</b></span>
+          <span>out <b>indexed artifacts + ids</b></span>
+        </div>
+      </div>
+    </div>
+    <div class="pnode">
+      <div class="ph"><span class="lbl">Pass 02</span><span class="lbl pass-name">Reconciliation</span></div>
+      <div class="pb">
+        <h3>Check the story against the data</h3>
+        <p>Burn ratio, velocity delta and carry-over growth are computed deterministically as facts. Published reference thresholds cue the judgement, they never decide it alone.</p>
+        <div class="io">
+          <span>in <b>indexed artifacts</b></span>
+          <span>out <b>signals + divergences</b></span>
+        </div>
+      </div>
+    </div>
+    <div class="pnode">
+      <div class="ph"><span class="lbl">Pass 03</span><span class="lbl pass-name">Report writer</span></div>
+      <div class="pb">
+        <h3>Write it for the room</h3>
+        <p>Exec (~150 words, outcome and decision), programme (~400 words, governance), or team (granular). Same evidence, different altitude. Thin data returns "insufficient evidence" rather than a guess.</p>
+        <div class="io">
+          <span>in <b>signals + audience</b></span>
+          <span>out <b>cited report (JSON)</b></span>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ================= EVALS ================= -->
+<section class="blk rv" id="evals" aria-labelledby="evals-h">
+  <div class="sechd">
+    <p class="lbl">Why trust it</p>
+    <div>
+      <h2 id="evals-h">A right answer with no evidence still counts as a failure</h2>
+      <p>Telling a delivery director that a team is reporting inaccurately is a serious claim. So the detector is graded on two gates: did it get the call right, and did it cite the specific artifacts that prove it. Lucky guesses fail.</p>
+    </div>
+  </div>
+
+  <!-- TARGET figures (watermelon-eval.md §8), not results. See the header comment. -->
+  <div class="score">
+    <div class="sc"><p class="n" data-n="4">0<span class="suffix">/4</span></p><p class="t">Classification accuracy</p><p class="m">Correct verdict</p><div class="bar"><i data-w="100"></i></div></div>
+    <div class="sc"><p class="n" data-n="4">0<span class="suffix">/4</span></p><p class="t">Evidence accuracy</p><p class="m">All required ids cited</p><div class="bar"><i data-w="100"></i></div></div>
+    <div class="sc"><p class="n">100<span class="suffix">%</span></p><p class="t">Citation coverage</p><p class="m">No uncited claims</p><div class="bar"><i data-w="100"></i></div></div>
+    <div class="sc"><p class="n">Pass</p><p class="t">Fabrication gate</p><p class="m">Declines on thin data</p><div class="bar"><i data-w="100"></i></div></div>
+  </div>
+
+  <div class="table-wrap cases">
+    <table>
+      <thead>
+        <tr>
+          <th scope="col">Case</th>
+          <th scope="col" class="col-guard">What it guards against</th>
+          <th scope="col">Reported</th>
+          <th scope="col">Assessed</th>
+          <th scope="col">Result</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td class="tm">Atlas</td>
+          <td class="col-guard desc">The one it must never miss. A false negative here is the worst possible failure.</td>
+          <td><span class="rg rg-g">Green</span></td>
+          <td><span class="rg rg-r">Red</span></td>
+          <td class="tick">✓ watermelon</td>
+        </tr>
+        <tr>
+          <td class="tm">Boreas</td>
+          <td class="col-guard desc">A genuinely healthy team. Flagging it would be a precision failure.</td>
+          <td><span class="rg rg-g">Green</span></td>
+          <td><span class="rg rg-g">Green</span></td>
+          <td class="tick">✓ not flagged</td>
+        </tr>
+        <tr>
+          <td class="tm">Cygnus</td>
+          <td class="col-guard desc">Honest amber. Reports its problems openly, so it is not a watermelon.</td>
+          <td><span class="rg rg-a">Amber</span></td>
+          <td><span class="rg rg-a">Amber</span></td>
+          <td class="tick">✓ not flagged</td>
+        </tr>
+        <tr>
+          <td class="tm">Draco</td>
+          <td class="col-guard desc">The decoy. An alarming bug spike that is actually triaged and under control.</td>
+          <td><span class="rg rg-a">Amber</span></td>
+          <td><span class="rg rg-a">Amber</span></td>
+          <td class="tick">✓ not flagged</td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+
+  <div class="callout">
+    <b>Honest amber is not a watermelon.</b> Sprintsight compares reported against actual. A team that reports its problems openly gets left alone. That distinction is graded on every run, precisely so the tool never punishes candour.
+  </div>
+</section>
+
+<!-- ================= SIGNUP ================= -->
+<section class="signup rv" id="notify" aria-labelledby="notify-h">
+  <div>
+    <p class="lbl">Coming soon</p>
+    <h2 id="notify-h">Find your watermelon before your steering group does</h2>
+    <p>Sprintsight is in build and opens on sprintsuite.uk. Leave your email and we'll tell you the day it launches, with early access for Sprint Suite users.</p>
+  </div>
+  <div>
+    <form class="form" id="notifyForm" novalidate>
+      <label class="sr-only" for="notifyEmail">Email address</label>
+      <input id="notifyEmail" name="email" type="email" required
+             autocomplete="email" placeholder="you@company.com">
+      <button class="btn btn-pri" type="submit">Notify me</button>
+    </form>
+    <p class="formmsg" id="notifyMsg" role="status" aria-live="polite"></p>
+    <p class="hint">No marketing list. One email at launch.</p>
+  </div>
+</section>
+
+</div>
+</main>
+
+<footer class="site-ft">
+  <div class="wrap ft">
+    <span>Sprintsight is part of <a href="https://sprintsuite.uk">Sprint Suite</a> · Sprintraid · Sprintsignal · Sprintretro · Sprintpoker</span>
+    <span>Showcase runs on fully synthetic data. Zero Data Retention on all model traffic.</span>
+  </div>
+</footer>
+
+<script src="/sprintsight-coming-soon/intro/sight.js"></script>
+</body>
+</html>

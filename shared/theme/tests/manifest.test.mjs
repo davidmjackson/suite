@@ -10,8 +10,10 @@ test("manifest lists each asset with a source file and a public subdir", () => {
   }
 });
 
-test("the four apps + the hub are registered as surfaces with public roots", () => {
+// The list is spelled out on purpose: adding a surface should be a deliberate
+// edit here, not something that slips in unnoticed.
+test("every surface is registered with a public root", () => {
   const names = SURFACES.map((s) => s.name).sort();
-  assert.deepEqual(names, ["hub", "poker", "raid", "retro", "signal"]);
+  assert.deepEqual(names, ["hub", "marketing", "plan", "poker", "raid", "retro", "signal"]);
   for (const s of SURFACES) assert.match(s.publicRoot, /\/public$/);
 });

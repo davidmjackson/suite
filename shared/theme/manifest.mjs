@@ -34,4 +34,6 @@ export const SURFACES = [
   { name: "poker", publicRoot: "/var/www/scrumpoker/public" },
   { name: "raid", publicRoot: "/var/www/raid/public" },
   { name: "plan", publicRoot: "/var/www/plan/public" },
+  // marketing is a static surface (no app server); it consumes the theme like any other.
+  { name: "marketing", publicRoot: "/var/www/suite/marketing/public" },
 ];
