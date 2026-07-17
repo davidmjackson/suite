@@ -60,6 +60,16 @@
 /* plan is plum; the hub body is plain .ins (no data-app), so the shared
    --plum token isn't in scope here — mirror its value (Brief 10). */
 .appcard[data-app="plan"]{--accent:oklch(0.5 0.1 290)}
+/* sight is melon; same reason as plan — the hub body is plain .ins, so the
+   shared --melon token isn't in scope here. Mirrored value, verified 5.25:1 on
+   the tile's --bone fill. */
+.appcard[data-app="sight"]{--accent:oklch(0.53 0.19 24)}
+/* A tile with a page behind it is an <a>; one without is a <div>. Both get the
+   same box, so a tile becomes a link by changing its tag and nothing else.
+   The foundation's link ring is box-shadow:0 0 0 3px var(--greenwash), which is
+   1.13:1 on --panel and 1.03:1 on --bone — invisible. This wins on specificity
+   (0,3,0 beats .ins a:focus-visible's 0,2,1) and is 7.07:1. */
+.ins .appcard:focus-visible{outline:2px solid var(--green);outline-offset:2px;box-shadow:none}
 .appcard h3{font-size:21px;display:flex;align-items:center;gap:9px}
 .appcard p{color:var(--soft);font-size:14px;margin-top:7px}
 .tag{font-family:'IBM Plex Mono',monospace;font-size:10px;font-weight:600;letter-spacing:0.06em;
@@ -72,6 +82,9 @@
    is plain .ins so the shared --plum token isn't in scope; mirror its value as
    the .appcard[data-app="plan"] accent does. */
 .tag-plan{background:oklch(0.95 0.03 290);color:oklch(0.5 0.1 290)}
+/* sight badge — melon, mirrored for the same reason as plan. Unlike every other
+   tag this names a STATE, not a capability: the product is in build. 4.82:1. */
+.tag-sight{background:oklch(0.95 0.045 24);color:oklch(0.53 0.19 24)}
 @media (max-width:720px){.appgrid{grid-template-columns:1fr}}
 
 .features{padding-bottom:20px}
