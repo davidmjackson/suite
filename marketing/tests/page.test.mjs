@@ -84,6 +84,20 @@ test("the skip link is fixed, not absolute", () => {
   assert.match(rule, /position: fixed/);
 });
 
+test("the section-header rail fits its labels without becoming a gap", () => {
+  // The mock and §6 both say 170px. Measured, the labels render at 53-92px in
+  // IBM Plex Mono 10.5px/0.14em, so 170 left 46-69% of the column empty and read
+  // as dead space rather than an aligned rail. This is a deliberate deviation —
+  // the assertion exists so nobody "corrects" it back to the mock's value.
+  const rail = cssCode.match(/\.sechd \{ grid-template-columns: (\d+)px 1fr/);
+  assert.ok(rail, "the md section-header rail is defined");
+  const px = Number(rail[1]);
+  assert.ok(px >= 100, `${px}px would clip HOW IT WORKS, which renders at 92px`);
+  assert.ok(px <= 130, `${px}px is dead space, not a rail — the widest label is 92px`);
+  // the rail itself must survive: all four labels align down one edge
+  assert.match(cssCode, /\.sechd \{ grid-template-columns: \d+px 1fr/, "still two columns at md");
+});
+
 /* ---------- works without JS ---------- */
 
 test("content below the hero is visible with JS off", () => {

@@ -472,7 +472,13 @@
   .ins[data-app="sight"] .hero { grid-template-columns: 1fr 1fr; gap: 44px; }
   /* 76px clears the sticky header */
   .ins[data-app="sight"] .console { position: sticky; top: 76px; }
-  .ins[data-app="sight"] .sechd { grid-template-columns: 170px 1fr; gap: 34px; }
+  /* 120px, NOT the mock's and §6's 170px. The rail exists so all four section
+     labels align down one edge — that device stays. But measured in IBM Plex Mono
+     10.5px/0.14em the labels render at 53px (ANATOMY) to 92px (HOW IT WORKS), so
+     170px left 46-69% of the column empty and read as a gap rather than a rail.
+     120px keeps the widest label plus 28px of air. Do not "restore" 170 from the
+     mock; the value below is deliberate. */
+  .ins[data-app="sight"] .sechd { grid-template-columns: 120px 1fr; gap: 34px; }
   .ins[data-app="sight"] .sechd .lbl { padding-top: 5px; }
   .ins[data-app="sight"] .anat { grid-template-columns: 1fr 1.15fr; padding: 36px; }
   .ins[data-app="sight"] .tellgrid { grid-template-columns: repeat(3, 1fr); }
