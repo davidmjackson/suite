@@ -70,6 +70,13 @@
    1.13:1 on --panel and 1.03:1 on --bone — invisible. This wins on specificity
    (0,3,0 beats .ins a:focus-visible's 0,2,1) and is 7.07:1. */
 .ins .appcard:focus-visible{outline:2px solid var(--green);outline-offset:2px;box-shadow:none}
+/* Hover affordance, scoped to the LINKED form only. @3742c58 stripped hover when
+   these became divs, correctly — a div that lifts under the cursor promises a
+   click it cannot honour. But a tile whose whole job is to be clicked has to
+   advertise it, and cursor:pointer alone does not exist on touch. Keyed off the
+   element type, so divs never get it and each tile earns it by gaining a page. */
+.ins a.appcard{transition:border-color .15s}
+.ins a.appcard:hover{border-color:var(--accent)}
 .appcard h3{font-size:21px;display:flex;align-items:center;gap:9px}
 .appcard p{color:var(--soft);font-size:14px;margin-top:7px}
 .tag{font-family:'IBM Plex Mono',monospace;font-size:10px;font-weight:600;letter-spacing:0.06em;

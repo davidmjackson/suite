@@ -103,10 +103,15 @@
          here and nothing else has to change: .appcard already styles both.
          The tag slot carries the STATE, not a capability, because Sprintsight
          does not exist yet and a visitor must not think they can use it. */%>
-    <a class="appcard" data-app="sight" href="/sprintsight-coming-soon/intro/">
+    <%/* aria-labelledby, not the default: the <a> wraps the heading AND the
+         paragraph, so without it the accessible name is the whole subtree — one
+         unreadable entry in a screen reader's link list. Pointing at the h3 gives
+         "Sprintsight Coming soon". NOT aria-label, which would drop "Coming soon"
+         from the name and lose the honesty signal. */%>
+    <a class="appcard" data-app="sight" href="/sprintsight-coming-soon/intro/" aria-labelledby="appcard-sight-h">
       <span class="tile"><svg width="26" height="26" aria-hidden="true"><use href="/illos/glyphs.svg#glyph-sight"/></svg></span>
       <div class="appcard-body">
-        <h3>Sprintsight <span class="tag tag-sight">Coming soon</span></h3>
+        <h3 id="appcard-sight-h">Sprintsight <span class="tag tag-sight">Coming soon</span></h3>
         <p>Finds the teams reporting green while delivery is red, and cites the evidence.</p>
       </div>
     </a>

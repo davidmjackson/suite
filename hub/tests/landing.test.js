@@ -131,23 +131,25 @@ test("a tile links only when it has a page behind it", async () => {
   const linked = ["sight"];
   const notLinked = ["raid", "signal", "retro", "poker", "plan"];
 
-  for (const app of linked) {
-    assert.match(
-      res.text,
-      new RegExp(`<a class="appcard" data-app="${app}" href="/`),
-      `${app} has a page, so its tile must be a link`
-    );
+  // Matched by tag + data-app without pinning attribute order: rewriting the
+  // element as <a href="…" class="appcard"> is not a defect and must not fail.
+  const card = (slug) => {
+    const m = res.text.match(new RegExp(`<(a|div)\\b[^>]*\\bdata-app="${slug}"[^>]*>`));
+    assert.ok(m, `no tile found for ${slug}`);
+    return { tag: m[1], html: m[0] };
+  };
+
+  for (const slug of linked) {
+    const { tag, html } = card(slug);
+    assert.equal(tag, "a", `${slug} has a page, so its tile must be a link`);
+    assert.match(html, /href="\//, `${slug} must link somewhere real`);
   }
-  for (const app of notLinked) {
-    assert.match(
-      res.text,
-      new RegExp(`<div class="appcard" data-app="${app}"`),
-      `${app} has no page yet, so its tile must not be a link`
-    );
+  for (const slug of notLinked) {
+    assert.equal(card(slug).tag, "div", `${slug} has no page yet, so its tile must not be a link`);
   }
   // no tile may link to nowhere
   assert.doesNotMatch(res.text, /class="appcard"[^>]*href="#"/);
-  assert.equal((res.text.match(/<a class="appcard"/g) || []).length, linked.length);
+  assert.equal((res.text.match(/<a\b[^>]*class="appcard"/g) || []).length, linked.length);
 });
 
 test("the Sprintsight tile points at the live promo page, same tab", async () => {
@@ -164,7 +166,13 @@ test("the Sprintsight tile cannot be mistaken for a working tool", async () => {
   // The product does not exist. Every other tag names a capability (RAID,
   // Health, Retro...); this one names the STATE on purpose. If it ever ships,
   // this assertion is the thing that should stop a silent capability claim.
-  assert.match(res.text, /<h3>Sprintsight <span class="tag tag-sight">Coming soon<\/span><\/h3>/);
+  const h3 = res.text.match(/<h3\b[^>]*>Sprintsight[\s\S]*?<\/h3>/)[0];
+  assert.match(h3, /<span class="tag tag-sight">Coming soon<\/span>/);
+  // and the state must be inside the accessible name, not merely nearby
+  const anchor = res.text.match(/<a\b[^>]*data-app="sight"[^>]*>/)[0];
+  const labelledby = anchor.match(/aria-labelledby="([^"]+)"/);
+  assert.ok(labelledby, "the tile names itself from its heading");
+  assert.match(h3, new RegExp(`id="${labelledby[1]}"`), "aria-labelledby points at that h3");
 });
 
 test("every published tool count matches the tools that exist", async () => {
