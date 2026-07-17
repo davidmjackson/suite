@@ -110,7 +110,40 @@ redirects.
   them is honest, but §14's "ids match §6 exactly" cannot be ticked until §6
   grows the other three teams.
 
+## Coupling — this page restates specs that live elsewhere
+
+Sprintsight is still in build, so these WILL move. When they do, this page moves
+with them. Lifted from the build spec's §15 before it was archived; it is the one
+part of that document that was never "done".
+
+| On this page | Source of truth |
+|---|---|
+| Console JSON shape | `/var/www/sight/docs/evals/watermelon-eval.md` §2 |
+| Evidence ids, team roster | `/var/www/sight/docs/data/data-strategy.md` §3, §6 |
+| The three tells and their ids | `/var/www/sight/docs/moat/moat-behaviours.md` §2-4 |
+| Scope guardrail callout | `/var/www/sight/docs/moat/moat-behaviours.md` §2, **LOCKED** |
+| "Recommend-only, never auto-writes" | `/var/www/sight/docs/moat/moat-behaviours.md` §4, **LOCKED**, permanent product principle |
+| Audience word counts (150/400/none) | `/var/www/sight/docs/evals/report-quality-eval.md` §4, **LOCKED** |
+| Scorecard target figures | `/var/www/sight/docs/evals/watermelon-eval.md` §8 |
+
+If any of these move, add a line to `/var/www/sight/HANDOVER.md` under
+`Learning queue` so this page gets updated with them.
+
+**Known gap:** only Atlas's three evidence ids actually appear in
+`data-strategy.md` §6, and they are given there as an *"Example:"*. Boreas,
+Cygnus and Draco have none, and `bugspike`/`triage` are not artifact types in §5
+at all. The five ids the console cites for those teams follow the documented
+convention but are not recorded anywhere. The page labels its data synthetic in
+both the rail and the footer, so shipping them is honest — but the ids cannot be
+verified against §6 until §6 grows the other three teams.
+`tests/page.test.mjs` asserts the Atlas three against the real file and checks
+the rest for convention conformance, which is the strongest check available.
+
 ## Docs
 
-- `docs/sprintsight-promo-BUILD-SPEC.md` — the build specification
-- `docs/reference/sprintsight-C-evidence-desk.html` — approved mock-up, visual target
+The build spec and its approved mock-up were archived to
+`~/suite-archive/marketing/docs/` once the page shipped — see the git history for
+`marketing/docs/`. They were build instructions for a page that now exists, and
+the deviations made during the build mean they no longer describe what shipped.
+The reasoning that outlived them lives in the commit bodies, in code comments,
+and in `tests/` — which enforce it rather than merely describing it.
