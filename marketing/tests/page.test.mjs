@@ -257,6 +257,19 @@ test("success removes the form, leaving no live form behind a result", () => {
 
 /* ---------- assets ---------- */
 
+test("the sight glyph respects its size rule: -sm below 24px", () => {
+  // §5.1: #glyph-sight at >=24px, #glyph-sight-sm below. .gl is 18px, so every
+  // .gl use of the sight glyph must be the seedless variant or it renders as mud.
+  const gl = css.match(/\.gl \{ width: (\d+)px/);
+  assert.ok(gl, ".gl sets an explicit size");
+  const px = Number(gl[1]);
+  const usesSeeded = /class="gl[^"]*"[^>]*>\s*<use href="[^"]*#glyph-sight"/.test(html);
+  if (px < 24) {
+    assert.ok(!usesSeeded, `.gl is ${px}px, so it must not use the seeded #glyph-sight`);
+    assert.match(html, /#glyph-sight-sm/, "uses the seedless variant");
+  }
+});
+
 test("every glyph referenced by the page exists in the synced sprite", () => {
   const sprite = readFileSync(join(PUBLIC, "illos/glyphs.svg"), "utf8");
   const used = [...html.matchAll(/glyphs\.svg#(glyph-[a-z-]+)/g)].map((m) => m[1]);

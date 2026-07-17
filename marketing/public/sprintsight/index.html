@@ -84,7 +84,10 @@
         <li aria-hidden="true" class="sep">/</li>
         <li class="bc-here">
           <span aria-current="page">
-            <svg class="gl gl-melon" aria-hidden="true"><use href="/illos/glyphs.svg#glyph-sight"></use></svg>
+            <!-- -sm, not #glyph-sight: .gl is 18px, and below 24px the seeds turn
+                 to mud. §7.2.1's markup uses the seeded variant at 18px, which
+                 contradicts the size rule in §5.1. The rule is right. -->
+            <svg class="gl gl-melon" aria-hidden="true"><use href="/illos/glyphs.svg#glyph-sight-sm"></use></svg>
             Sprintsight
           </span>
           <span class="ver">coming soon</span>
