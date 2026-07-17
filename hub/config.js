@@ -15,6 +15,10 @@ const config = {
   // Optional: where new access-request notifications are sent. If unset, no
   // operator notification is sent (the request is still recorded as normal).
   adminEmail: process.env.ADMIN_EMAIL || null,
+  // Optional: GA4 measurement id for the public pages. Unset ⇒ analytics are off
+  // entirely (no tag, no consent bar), which is the default for dev and tests so
+  // they never pollute the property. Prod sets GA_MEASUREMENT_ID=G-6FJLV7EE1X.
+  gaMeasurementId: process.env.GA_MEASUREMENT_ID || null,
   cookieSecret: required("COOKIE_SECRET"),
   allowedAppDomains: required("ALLOWED_APP_DOMAINS").split(",").map(s => s.trim()),
   apiKeys: {

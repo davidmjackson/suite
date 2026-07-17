@@ -21,6 +21,7 @@
 {"@context":"https://schema.org","@type":"SoftwareApplication","name":"Sprint Suite","applicationCategory":"BusinessApplication","operatingSystem":"Web","description":"One sign-in, four focused apps for scrum masters and delivery leads.","url":"https://sprintsuite.uk/","offers":{"@type":"Offer","price":"0","priceCurrency":"GBP"},"featureList":["RAID log","Team health check","Sprint retrospective","Scrum planning poker"]}
 </script>
 <script type="module" src="/js/landing-hero.js"></script>
+<%~ include("partials/analytics", { analytics: it.analytics }) %>
 </head>
 <body class="ins">
 

@@ -4,7 +4,8 @@ import { Eta } from "eta";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 import { openDb } from "../db/index.js";
-import { makeSecurityHeaders, DEFAULT_CSP } from "../middleware/securityHeaders.js";
+import { makeSecurityHeaders, DEFAULT_CSP, MARKETING_CSP, withAppDomains } from "../middleware/securityHeaders.js";
+import { analyticsLocals } from "../middleware/analytics.js";
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 
@@ -26,11 +27,7 @@ export async function buildTestApp({ env = {} } = {}) {
   const app = express();
   app.disable("x-powered-by"); // mirror server.js (no Express fingerprint header)
   app.set("trust proxy", "loopback"); // mirror server.js (real client IP via X-Forwarded-For)
-  const csp = DEFAULT_CSP.replace(
-    "form-action 'self'",
-    `form-action 'self' ${config.allowedAppDomains.join(" ")}`
-  );
-  app.use(makeSecurityHeaders({ contentSecurityPolicy: csp }));
+  app.use(makeSecurityHeaders({ contentSecurityPolicy: withAppDomains(DEFAULT_CSP, config.allowedAppDomains) }));
   const viewsDir = path.join(__dirname, "../views");
   const eta = new Eta({ views: viewsDir, cache: false });
   app.engine("eta", (fp, opts, cb) => {
@@ -45,7 +42,12 @@ export async function buildTestApp({ env = {} } = {}) {
   const db = openDb(":memory:");
   app.locals.db = db;
   app.locals.config = config;
+  // Mirror server.js — the marketing middleware pair for the public pages.
+  const marketing = [
+    makeSecurityHeaders({ contentSecurityPolicy: withAppDomains(MARKETING_CSP, config.allowedAppDomains) }),
+    analyticsLocals(config),
+  ];
   const { mountLanding } = await import("../routes/landing.js?t=" + Date.now());
-  mountLanding(app);
-  return { app, db, config };
+  mountLanding(app, { marketing });
+  return { app, db, config, marketing };
 }

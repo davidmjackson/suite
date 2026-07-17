@@ -1,4 +1,4 @@
-<%~ include("partials/header", { title: "Request received", user: null, band: { eyebrow: "Get started", title: "Request received", sub: "Thanks — we've got your request." } }) %>
+<%~ include("partials/header", { title: "Request received", user: null, analytics: it.analytics, band: { eyebrow: "Get started", title: "Request received", sub: "Thanks — we've got your request." } }) %>
 <section class="card formcard is-centered">
 <div class="notice">We'll review your request and email you a sign-in link once you're approved.</div>
 <p style="margin-top:18px;"><a class="btn btn-pri" href="/">Back to home</a></p>

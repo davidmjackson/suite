@@ -2,8 +2,8 @@
 import { parseCookies } from "../lib/cookies.js";
 import { now } from "../lib/tokens.js";
 
-export function mountLanding(app) {
-  app.get("/", (req, res) => {
+export function mountLanding(app, { marketing = [] } = {}) {
+  app.get("/", marketing, (req, res) => {
     const db = req.app.locals.db;
     const sid = parseCookies(req.headers.cookie).hub_session;
     if (sid) {

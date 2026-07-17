@@ -1,0 +1,6 @@
+<!-- views/partials/analytics.eta — renders nothing unless GA_MEASUREMENT_ID is set.
+     No inline <script>: config travels via data-* attributes (CSP script-src 'self'). -->
+<% if (it.analytics && it.analytics.gaId) { %>
+<link rel="stylesheet" href="/css/consent.css">
+<script type="module" src="/js/consent-banner.js" data-ga-id="<%= it.analytics.gaId %>" data-consent="<%= it.analytics.consent || '' %>"></script>
+<% } %>

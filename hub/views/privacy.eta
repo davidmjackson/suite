@@ -1,4 +1,4 @@
-<%~ include("partials/header", { title: "Data & Privacy Note — Sprint Suite", band: { eyebrow: "Legal", title: "Data & Privacy Note", sub: "Version 1.0 · Effective 1 July 2026" } }) %>
+<%~ include("partials/header", { title: "Data & Privacy Note — Sprint Suite", analytics: it.analytics, band: { eyebrow: "Legal", title: "Data & Privacy Note", sub: "Version 1.0 · Effective 1 July 2026" } }) %>
 <section class="card legal-doc">
   <p class="legal-meta">Controller: David Jackson. Last updated 1 July 2026.</p>
 

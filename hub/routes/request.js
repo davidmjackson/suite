@@ -28,13 +28,13 @@ function requestInvalid(req, res, _zodError) {
   });
 }
 
-export function mountRequest(app, { emailSender } = {}) {
+export function mountRequest(app, { emailSender, marketing = [] } = {}) {
   const db = app.locals.db;
   const config = app.locals.config;
   const reqs = createAccessRequests(db);
   const audit = createAuditLogger(db);
 
-  app.get("/request", (req, res) => {
+  app.get("/request", marketing, (req, res) => {
     res.render("request", { error: null, values: {} });
   });
 
@@ -48,7 +48,7 @@ export function mountRequest(app, { emailSender } = {}) {
     next();
   }
 
-  app.post("/request", honeypotAndLimit, validate(requestSchema, { onInvalid: requestInvalid }), async (req, res) => {
+  app.post("/request", marketing, honeypotAndLimit, validate(requestSchema, { onInvalid: requestInvalid }), async (req, res) => {
     const { company_name, contact_name, email, job_title, team_size, message, apps } = req.body;
     reqs.createRequest({ companyName: company_name, contactName: contact_name, email, jobTitle: job_title, teamSize: team_size, appsInterest: apps, message });
     audit.log({ userId: null, eventType: "access_requested", metadata: { company: company_name, email }, ip: req.ip });

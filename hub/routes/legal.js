@@ -6,10 +6,12 @@ const STUBS = {
   "/terms": "Terms",
 };
 
-export function mountLegal(app) {
+export function mountLegal(app, { marketing = [] } = {}) {
   for (const [path, title] of Object.entries(STUBS)) {
     app.get(path, (req, res) => res.render("legal", { title }));
   }
   app.get("/license", (req, res) => res.render("license"));
-  app.get("/privacy", (req, res) => res.render("privacy"));
+  // /privacy carries the consent bar: it hosts the withdraw control in §6, which
+  // needs consent-banner.js present to do anything.
+  app.get("/privacy", marketing, (req, res) => res.render("privacy"));
 }
