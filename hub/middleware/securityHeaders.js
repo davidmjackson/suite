@@ -20,12 +20,22 @@ export const DEFAULT_CSP = [
 // ceiling, not a trigger: this policy is constant on those routes, while whether
 // the tag renders at all is decided by consent. Deliberately NOT applied to
 // /dashboard, /admin, /company or the API, which keep DEFAULT_CSP.
+//
+// Wildcards, not bare hosts: gtag.js does not always talk to
+// www.google-analytics.com. For EEA/UK visitors it routes the collection
+// beacon through a regional subdomain instead — e.g.
+// https://region1.google-analytics.com/g/collect — to keep data in-region.
+// Bare `https://www.google-analytics.com` does NOT match that, so it would
+// fail CSP silently: the consent bar and cookie still work, but the beacon
+// never reaches Google and the property stays empty. Google's own docs
+// prescribe the `https://*.google-analytics.com` / `https://*.googletagmanager.com`
+// wildcards for exactly this reason — do not "tidy" these back to exact hosts.
 export const MARKETING_CSP = DEFAULT_CSP
-  .replace("script-src 'self'", "script-src 'self' https://www.googletagmanager.com")
-  .replace("img-src 'self' data:", "img-src 'self' data: https://www.google-analytics.com")
+  .replace("script-src 'self'", "script-src 'self' https://*.googletagmanager.com")
+  .replace("img-src 'self' data:", "img-src 'self' data: https://*.google-analytics.com https://*.googletagmanager.com")
   .replace(
     "connect-src 'self'",
-    "connect-src 'self' https://www.google-analytics.com https://analytics.google.com"
+    "connect-src 'self' https://*.google-analytics.com https://*.googletagmanager.com"
   );
 
 // CSP form-action is enforced against redirect TARGETS, not just the initial

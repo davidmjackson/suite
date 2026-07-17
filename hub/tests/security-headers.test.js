@@ -94,9 +94,19 @@ test("headers are present on a 404 (covers error responses)", async () => {
 
 // --- Marketing CSP (consent-gated GA4) -------------------------------------
 test("MARKETING_CSP allows exactly the Google origins GA4 needs", () => {
-  assert.match(MARKETING_CSP, /script-src 'self' https:\/\/www\.googletagmanager\.com/);
-  assert.match(MARKETING_CSP, /img-src 'self' data: https:\/\/www\.google-analytics\.com/);
-  assert.match(MARKETING_CSP, /connect-src 'self' https:\/\/www\.google-analytics\.com https:\/\/analytics\.google\.com/);
+  assert.match(MARKETING_CSP, /script-src 'self' https:\/\/\*\.googletagmanager\.com/);
+  assert.match(MARKETING_CSP, /img-src 'self' data: https:\/\/\*\.google-analytics\.com https:\/\/\*\.googletagmanager\.com/);
+  assert.match(MARKETING_CSP, /connect-src 'self' https:\/\/\*\.google-analytics\.com https:\/\/\*\.googletagmanager\.com/);
+});
+
+// Regression guard for the bug this replaces: bare hosts like
+// https://www.google-analytics.com do NOT cover the regional endpoint gtag.js
+// uses for EEA/UK visitors (https://region1.google-analytics.com/g/collect),
+// so the collection beacon was silently CSP-blocked for those visitors even
+// though the bar and cookie behaved normally. Assert the wildcard that fixes
+// it is actually present in connect-src.
+test("MARKETING_CSP connect-src covers regional GA4 collection endpoints (e.g. region1.google-analytics.com)", () => {
+  assert.match(MARKETING_CSP, /connect-src[^;]*https:\/\/\*\.google-analytics\.com/);
 });
 
 test("MARKETING_CSP keeps every other protection from the default", () => {

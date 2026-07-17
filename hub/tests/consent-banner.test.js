@@ -27,6 +27,13 @@ test("ga.js is the only place that reaches googletagmanager", () => {
   assert.doesNotMatch(bannerSrc, /googletagmanager/, "the banner must go through initGa()");
 });
 
+test("ga.js enforces the published 'never used for advertising' promise, not just a GA console setting", () => {
+  // Guards a legal claim made in views/privacy.eta §§2/5/6 and views/landing.eta's
+  // FAQ, not a style preference — if this regresses, the copy is lying.
+  assert.match(gaSrc, /allow_google_signals:\s*false/);
+  assert.match(gaSrc, /allow_ad_personalization_signals:\s*false/);
+});
+
 test("the banner loads GA only in the granted branch", () => {
   // Exactly one initGa call site per branch: page-load-granted and accept.
   const calls = bannerSrc.match(/initGa\(/g) || [];

@@ -29,5 +29,12 @@ export function initGa(measurementId) {
   window.gtag = gtag;
 
   gtag("js", new Date());
-  gtag("config", measurementId);
+  // The published copy promises analytics are never used for advertising
+  // (views/privacy.eta §§2/5/6, views/landing.eta FAQ). Enforce that here rather
+  // than relying on a GA console setting that can regress silently and leaves no
+  // trace in git. Do not remove these without changing that copy first.
+  gtag("config", measurementId, {
+    allow_google_signals: false,
+    allow_ad_personalization_signals: false,
+  });
 }
