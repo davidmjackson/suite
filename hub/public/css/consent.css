@@ -1,0 +1,33 @@
+/* public/css/consent.css — analytics consent bar (hub public pages only).
+   Deliberately NOT in instrument-core.css: that is a synced foundation asset
+   shared by all five surfaces and guarded by tests/theme-drift.test.js. This bar
+   is hub-only. Tokens (--panel, --line2, --ink, --soft, --teal) come from it. */
+
+.consent{position:fixed;left:0;right:0;bottom:0;z-index:40;background:var(--panel);
+  border-top:1px solid var(--line2);box-shadow:0 -6px 24px oklch(0.235 0.013 250 / 0.08)}
+.consent[hidden]{display:none}
+.consent-in{max-width:1120px;margin:0 auto;padding:16px 40px;display:flex;
+  align-items:center;justify-content:space-between;gap:28px;flex-wrap:wrap}
+.consent-eyebrow{font-family:'IBM Plex Mono',monospace;font-size:11px;font-weight:600;
+  letter-spacing:0.16em;text-transform:uppercase;color:var(--teal);margin-bottom:4px}
+.consent-msg{color:var(--soft);font-size:13.5px;max-width:72ch}
+.consent-lnk{color:var(--green);text-decoration:underline}
+.consent-acts{display:flex;gap:10px;flex:0 0 auto}
+
+/* Equal prominence. The ICO's main enforcement theme is a prominent Accept beside
+   a diminished Reject — these two share size, padding and weight by construction.
+   Do not restyle one without the other. */
+.consent-acts .btn{min-width:104px;justify-content:center}
+
+@media (max-width:720px){
+  .consent-in{padding:14px 18px;gap:14px}
+  .consent-acts{width:100%}
+  .consent-acts .btn{flex:1}
+}
+
+/* Landing footer "Cookie settings" — a <button> because it performs an action
+   rather than navigating, styled to sit with its sibling links in .lp-foot-col. */
+.lp-foot-btn{display:block;color:var(--soft);font-size:14px;text-decoration:none;
+  padding:4px 0;background:none;border:0;cursor:pointer;text-align:left;
+  font-family:'Hanken Grotesk',sans-serif}
+.lp-foot-btn:hover{color:var(--green)}
