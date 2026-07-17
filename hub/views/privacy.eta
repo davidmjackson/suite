@@ -1,6 +1,6 @@
-<%~ include("partials/header", { title: "Data & Privacy Note — Sprint Suite", analytics: it.analytics, band: { eyebrow: "Legal", title: "Data & Privacy Note", sub: "Version 1.0 · Effective 1 July 2026" } }) %>
+<%~ include("partials/header", { title: "Data & Privacy Note — Sprint Suite", analytics: it.analytics, band: { eyebrow: "Legal", title: "Data & Privacy Note", sub: "Version 1.1 · Effective 17 July 2026" } }) %>
 <section class="card legal-doc">
-  <p class="legal-meta">Controller: David Jackson. Last updated 1 July 2026.</p>
+  <p class="legal-meta">Controller: David Jackson. Last updated 17 July 2026.</p>
 
   <p class="lede">This note explains what personal data Sprint Suite collects when you register your interest or use the apps &mdash; Sprintraid, Sprintsignal, Sprintretro, Sprintpoker, Sprintplan, and the central Sprint Suite hub &mdash; why we hold it, who processes it, and the rights you have over it. It sits alongside the <a class="lnk" href="/license">Free Use Licence</a>.</p>
 
@@ -13,7 +13,7 @@
     <li><strong>When you sign in and use the apps:</strong> a session record containing your IP address, browser user-agent, and sign-in and activity timestamps; and an audit log of key actions (for example sign-in, launching an app, and administrative changes) with the associated IP address.</li>
     <li><strong>Content you create in the apps:</strong> RAID entries, retrospective notes, planning-poker estimates, and Sprintsignal survey responses that you and your team enter.</li>
   </ul>
-  <p>We do <strong>not</strong> use advertising or analytics trackers, and we do not sell your data or share it for anyone else's marketing.</p>
+  <p>We do <strong>not</strong> use advertising trackers, and we do not sell your data or share it for anyone else's marketing. We use analytics only on our public pages, only with your consent, and never for advertising &mdash; see section 6.</p>
 
   <p><strong>3. Why we hold it and our lawful basis.</strong> We use this data to provide the service you have asked for: to respond to interest requests, to authenticate you by magic link, to run the apps and store the work you create in them, and to keep the service secure and diagnose problems (the session and audit records). Our lawful bases are performance of our arrangement with you and our legitimate interest in operating and securing the service; for interest requests we also rely on your consent in submitting the form.</p>
 
@@ -24,11 +24,17 @@
     <li><strong>Resend</strong> &mdash; delivers our transactional emails (magic-link sign-in and interest-request notifications); receives your email address.</li>
     <li><strong>Anthropic</strong> &mdash; powers the Sprintraid extraction feature described above; receives only the content you submit to that feature. Data sent through Anthropic's API is not used to train its models.</li>
     <li><strong>IONOS</strong> &mdash; provides the hosting on which the service and its data are stored.</li>
+    <li><strong>Google (Google Analytics):</strong> counts visits to our public pages, and only if you accept analytics cookies. Google receives your IP address and browser information. It is never used for advertising, and we do not share your account or app content with Google.</li>
   </ul>
 
-  <p><strong>6. Cookies.</strong> We set a single essential session cookie so you stay signed in. It is not used for tracking or advertising, and there are no third-party tracking cookies.</p>
+  <p><strong>6. Cookies.</strong> We set a single essential session cookie so you stay signed in. It is not used for tracking or advertising. If you make a choice about analytics on our public pages we also store that choice in an essential cookie (<code>ss_consent</code>) so we do not have to ask you again; it holds nothing but your answer.</p>
 
-  <p><strong>7. International transfers.</strong> Some processors (including Anthropic) are based outside the UK/EEA. Where data is transferred internationally, it is done under the safeguards recognised by UK and EU data-protection law, such as standard contractual clauses.</p>
+  <p>On our public pages (the home page, the interest-registration form, and this note) we would like to use Google Analytics to count visits, so we can see which pages are useful. It sets analytics cookies (<code>_ga</code> and <code>_ga_*</code>). <strong>These are only set if you accept</strong> &mdash; until then, and if you decline, your browser does not contact Google at all. They are never used for advertising, and we never sell your data. You can change your mind at any time. There are no advertising cookies anywhere on Sprint Suite.</p>
+<% if (it.analytics && it.analytics.gaId) { %>
+  <p><button type="button" class="btn btn-ghost" data-consent-settings>Change your analytics choice</button></p>
+<% } %>
+
+  <p><strong>7. International transfers.</strong> Some processors (including Anthropic and Google) are based outside the UK/EEA. Where data is transferred internationally, it is done under the safeguards recognised by UK and EU data-protection law, such as standard contractual clauses.</p>
 
   <p><strong>8. How long we keep it.</strong> We keep your account and the content you create for as long as your account is active and we are providing the service, and for a reasonable period afterwards to meet our legal and operational needs. Session and audit records are kept for security and diagnostic purposes. You can ask us to delete your data at any time (see below), and we will do so unless we are required to keep it.</p>
 
@@ -36,6 +42,6 @@
 
   <p><strong>10. Security.</strong> The service is served over HTTPS with security headers, sign-in is passwordless (magic link), access to your company's data is restricted to your company, and administrative actions are logged.</p>
 
-  <p><strong>11. Changes.</strong> We may update this note from time to time; the version shown here at the time of your use applies. Material changes will be reflected in the version and date above.</p>
+  <p><strong>11. Changes.</strong> We may update this note from time to time; the version shown here at the time of your use applies. Material changes will be reflected in the version and date above. Version 1.1 (17 July 2026) added Google Analytics on our public pages, behind your consent, and described the cookies it sets.</p>
 </section>
 <%~ include("partials/footer") %>
