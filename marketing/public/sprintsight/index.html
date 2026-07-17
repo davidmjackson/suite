@@ -178,17 +178,24 @@
         <ellipse cx="100" cy="152" rx="4.5" ry="7" transform="rotate(-32 100 152)"/>
         <ellipse cx="226" cy="146" rx="4.5" ry="7" transform="rotate(30 226 146)"/>
       </g>
+      <!-- Leaders must EXIT the circle: a soft-grey label on the green rind is
+           invisible (~1.2:1). The mock stops PITH's leader at x=200 and drops
+           FLESH's baseline at y=290 against a circle bottom of y=288, so both
+           labels are unreadable at the 320px they ship at. Extended past the
+           edge instead. FLESH's leader also now starts inside the flesh (r under
+           104) rather than in the pith ring, which is what it claims to point at.
+           No double hyphens in here: this is an XML comment. -->
       <g stroke="var(--ink)" stroke-width="1" fill="none" opacity=".55">
-        <path d="M160 38 L160 24 L250 24"/><path d="M160 50 L200 50"/>
+        <path d="M160 38 L160 24 L250 24"/><path d="M160 50 L236 50"/>
         <path d="M112 196 L60 250 L20 250"/>
       </g>
       <g font-family="IBM Plex Mono" font-size="9" fill="var(--soft)" letter-spacing="1">
         <text x="254" y="21">RIND</text>
-        <text x="204" y="53">PITH</text>
+        <text x="240" y="53">PITH</text>
         <text x="20" y="246">SEEDS</text>
       </g>
-      <text x="160" y="290" text-anchor="middle" font-family="IBM Plex Mono" font-size="9" fill="var(--soft)" letter-spacing="1">FLESH</text>
-      <path d="M160 268 L160 280" stroke="var(--ink)" stroke-width="1" opacity=".55"/>
+      <text x="160" y="304" text-anchor="middle" font-family="IBM Plex Mono" font-size="9" fill="var(--soft)" letter-spacing="1">FLESH</text>
+      <path d="M160 250 L160 294" stroke="var(--ink)" stroke-width="1" opacity=".55"/>
     </svg>
 
     <ul class="legend">

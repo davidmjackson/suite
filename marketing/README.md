@@ -39,6 +39,7 @@ every surface has to move together or the drift check goes red.
 ```bash
 npm test          # drift check + page tests
 npm run drift     # synced assets match shared/theme/
+npm run og        # rebuild the Open Graph card from tools/sight-og.svg
 ```
 
 `tests/` encodes the statically-checkable half of the build spec's definition of

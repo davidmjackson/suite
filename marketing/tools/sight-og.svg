@@ -1,0 +1,59 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="630" viewBox="0 0 1200 630">
+  <!-- Sprintsight OG card, 1200x630. BUILD-SPEC §5.3.
+       Colours are the Instrument tokens converted exactly from oklch to sRGB.
+       This file is a build input, not a shipped asset: the PNG is what ships. -->
+  <defs>
+    <pattern id="graph" width="26" height="26" patternUnits="userSpaceOnUse" patternTransform="translate(-1 -1)">
+      <path d="M0 0 H26 M0 0 V26" stroke="#dbdee2" stroke-width="1" fill="none"/>
+    </pattern>
+  </defs>
+
+  <rect width="1200" height="630" fill="#f1f3f5"/>
+  <rect width="1200" height="630" fill="url(#graph)"/>
+
+  <!-- melon anatomy, 340px, left. Same geometry as the page's inline SVG,
+       scaled from its 320 viewBox and re-centred. -->
+  <g transform="translate(80, 145) scale(1.0625)">
+    <circle cx="160" cy="160" r="128" fill="#266248"/>
+    <g opacity="0.3" stroke="#093213" stroke-width="4" fill="none">
+      <path d="M62 100 Q112 160 62 220"/><path d="M112 66 Q152 160 112 254"/>
+      <path d="M160 54 Q192 160 160 266"/><path d="M208 66 Q236 160 208 254"/>
+      <path d="M258 100 Q276 160 258 220"/>
+    </g>
+    <circle cx="160" cy="160" r="116" fill="#e3f0d8"/>
+    <circle cx="160" cy="160" r="104" fill="#c22630"/>
+    <g fill="#1e130f">
+      <ellipse cx="128" cy="122" rx="4.5" ry="7" transform="rotate(-18 128 122)"/>
+      <ellipse cx="192" cy="134" rx="4.5" ry="7" transform="rotate(14 192 134)"/>
+      <ellipse cx="156" cy="176" rx="4.5" ry="7" transform="rotate(-6 156 176)"/>
+      <ellipse cx="212" cy="192" rx="4.5" ry="7" transform="rotate(22 212 192)"/>
+      <ellipse cx="112" cy="196" rx="4.5" ry="7" transform="rotate(-24 112 196)"/>
+      <ellipse cx="168" cy="232" rx="4.5" ry="7" transform="rotate(8 168 232)"/>
+      <ellipse cx="100" cy="152" rx="4.5" ry="7" transform="rotate(-32 100 152)"/>
+      <ellipse cx="226" cy="146" rx="4.5" ry="7" transform="rotate(30 226 146)"/>
+    </g>
+    <g stroke="#1a1f24" stroke-width="1" fill="none" opacity="0.55">
+      <path d="M160 38 L160 24 L250 24"/><path d="M160 50 L236 50"/>
+      <path d="M112 196 L60 250 L20 250"/>
+    </g>
+    <g font-family="IBM Plex Mono Medium" font-size="9" fill="#52575d" letter-spacing="1">
+      <text x="254" y="21">RIND</text>
+      <text x="240" y="53">PITH</text>
+      <text x="20" y="246">SEEDS</text>
+    </g>
+    <text x="160" y="304" text-anchor="middle" font-family="IBM Plex Mono Medium" font-size="9" fill="#52575d" letter-spacing="1">FLESH</text>
+    <path d="M160 250 L160 294" stroke="#1a1f24" stroke-width="1" opacity="0.55"/>
+  </g>
+
+  <!-- right column -->
+  <text x="500" y="268" font-family="Bricolage Grotesque 96pt ExtraBold" font-size="64" fill="#1a1f24" letter-spacing="-1.6">Sprintsight</text>
+
+  <g font-family="Hanken Grotesk" font-size="30" fill="#52575d">
+    <text x="500" y="330">Find the teams reporting green</text>
+    <text x="500" y="372">while delivery is red</text>
+  </g>
+
+  <!-- COMING SOON chip, left-aligned under the text -->
+  <rect x="500" y="410" width="192" height="38" rx="3" fill="#ffe4e0"/>
+  <text x="514" y="435" font-family="IBM Plex Mono Medium" font-size="18" fill="#c22630" letter-spacing="2.52">COMING SOON</text>
+</svg>

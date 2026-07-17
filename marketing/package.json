@@ -6,6 +6,7 @@
   "type": "module",
   "scripts": {
     "drift": "node /var/www/suite/shared/theme/check-theme-drift.mjs /var/www/suite/marketing",
+    "og": "bash tools/build-og.sh",
     "test": "npm run drift && node --test tests/"
   },
   "engines": {

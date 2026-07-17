@@ -270,3 +270,34 @@ test("the favicon is declared and present", () => {
   assert.match(html, /<link rel="icon" href="\/favicon\.svg" type="image\/svg\+xml">/);
   assert.ok(existsSync(join(PUBLIC, "favicon.svg")));
 });
+
+test("the OG image exists at 1200x630 and fits the size budget", () => {
+  // §5.3 forbids shipping a placeholder, so check the real bytes, not the path.
+  const png = readFileSync(join(PUBLIC, "illos/sight-og.png"));
+  assert.deepEqual(
+    [...png.subarray(0, 8)],
+    [137, 80, 78, 71, 13, 10, 26, 10],
+    "is a PNG"
+  );
+  assert.equal(png.readUInt32BE(16), 1200, "width");
+  assert.equal(png.readUInt32BE(20), 630, "height");
+  assert.ok(png.length < 300_000, `${png.length} bytes is within the 300KB budget`);
+  // the meta must agree with the file
+  assert.match(html, /<meta property="og:image:width" content="1200">/);
+  assert.match(html, /<meta property="og:image:height" content="630">/);
+});
+
+test("the OG card and the page tell the same story", () => {
+  // They drift silently otherwise: the card is a committed binary built from a
+  // separate SVG, so nothing else couples them.
+  const og = readFileSync(join(ROOT, "tools/sight-og.svg"), "utf8");
+  for (const label of ["RIND", "PITH", "SEEDS", "FLESH"]) {
+    assert.ok(og.includes(`>${label}<`), `card labels ${label}`);
+    assert.ok(html.includes(`>${label}<`), `page labels ${label}`);
+  }
+  // the anatomy geometry must match the page's, or the brand mark differs
+  for (const geom of ['r="128"', 'r="116"', 'r="104"', 'd="M160 50 L236 50"']) {
+    assert.ok(og.includes(geom), `card has ${geom}`);
+    assert.ok(html.includes(geom), `page has ${geom}`);
+  }
+});
