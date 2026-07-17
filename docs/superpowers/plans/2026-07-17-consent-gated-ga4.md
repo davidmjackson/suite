@@ -995,7 +995,9 @@ Consent state reaches the client via data-* attributes only."
 - Consumes: `.lp-foot-btn` and the `[data-consent-settings]` hook from Task 4.
 - Produces: no code interface. Copy only.
 
-**Constraint:** the word "free" must not appear anywhere in the landing output — `tests/landing.test.js` asserts `doesNotMatch(/free/i)`.
+**Constraints:**
+- The word "free" must not appear anywhere in the landing output — `tests/landing.test.js` asserts `doesNotMatch(/free/i)`.
+- **Gate the Cookie settings button on `it.analytics && it.analytics.gaId`.** Its click listener lives in `consent-banner.js`, which Task 5's partial does not load when `gaId` is null. An ungated button renders dead. No analytics ⇒ no cookie to configure ⇒ no control.
 
 - [ ] **Step 1: Update the tests first (they encode the requirement)**
 
@@ -1027,12 +1029,22 @@ test("the data FAQ describes consent-gated analytics honestly", async () => {
   assert.match(res.text, /anonymous/i, "health-check anonymity claim survives");
 });
 
-test("the landing footer offers a withdraw-consent control", async () => {
-  const { app } = await buildTestApp();
+test("the landing footer offers a withdraw-consent control when analytics are on", async () => {
+  const { app } = await buildTestApp({ env: { GA_MEASUREMENT_ID: "G-TEST123" } });
   const res = await request(app).get("/");
   const footer = res.text.slice(res.text.indexOf('class="lp-footer"'));
   assert.match(footer, /data-consent-settings/, "PECR: withdrawing must be as easy as granting");
   assert.match(footer, /Cookie settings/);
+});
+
+test("no dead control: the footer hides Cookie settings when analytics are off", async () => {
+  // The [data-consent-settings] listener lives in consent-banner.js, which is not
+  // loaded when gaId is null — so an ungated control would render and silently do
+  // nothing. No analytics means no cookie to configure, so no control.
+  const { app } = await buildTestApp({ env: { GA_MEASUREMENT_ID: "" } });
+  const res = await request(app).get("/");
+  assert.doesNotMatch(res.text, /data-consent-settings/);
+  assert.doesNotMatch(res.text, /Cookie settings/);
 });
 ```
 
@@ -1052,13 +1064,15 @@ In `hub/views/landing.eta`, in the `.trust` strip, replace the fourth trust item
 Replace the "Where does my data go?" FAQ entry:
 
 ```html
-  <div class="qa"><h3>Where does my data go?</h3><p>Your work stays in Sprint Suite. We never sell it and we never use it for advertising, and health-check submissions are anonymous. On our public pages we use Google Analytics to count visits, but only if you accept &mdash; nothing loads until you do, and you can change your mind at any time from the Cookie settings link below.</p></div>
+  <div class="qa"><h3>Where does my data go?</h3><p>Your work stays in Sprint Suite. We never sell it and we never use it for advertising, and health-check submissions are anonymous. On our public pages we use Google Analytics to count visits, but only if you accept &mdash; nothing loads until you do, and you can change your mind at any time.</p></div>
 ```
 
-In the footer's Legal column, after the License link:
+In the footer's Legal column, after the License link. **Gate it on `gaId`** — the click
+listener lives in `consent-banner.js`, which is not loaded when analytics are off, so an
+ungated button would render dead:
 
 ```html
-      <button type="button" class="lp-foot-btn" data-consent-settings>Cookie settings</button>
+      <% if (it.analytics && it.analytics.gaId) { %><button type="button" class="lp-foot-btn" data-consent-settings>Cookie settings</button><% } %>
 ```
 
 - [ ] **Step 4: Run tests to verify they pass**
@@ -1095,7 +1109,24 @@ withdrawing must be as easy as granting)."
 
 - [ ] **Step 1: Update the tests first**
 
-In `hub/tests/legal.test.js`, replace the `/privacy` test:
+`hub/tests/legal.test.js` currently has a `buildWithLegal()` helper that calls
+`mountLegal(app)` with no `marketing`, so `/privacy` would get no analytics locals and
+the new assertions could never pass. Update the helper first so it mirrors `server.js`
+and can vary the env:
+
+```js
+async function buildWithLegal(env = {}) {
+  const { app, db, config, marketing } = await buildTestApp({ env });
+  const { mountLegal } = await import("../routes/legal.js?t=" + Date.now());
+  mountLegal(app, { marketing });
+  return { app, db, config };
+}
+```
+
+Existing callers pass no argument and keep working (`env` defaults to `{}`, so analytics
+stay off for the tests that do not care).
+
+Then replace the `/privacy` test:
 
 ```js
 test("GET /privacy renders the Data & Privacy Note (Version 1.1)", async () => {
@@ -1113,7 +1144,7 @@ test("GET /privacy renders the Data & Privacy Note (Version 1.1)", async () => {
 });
 
 test("/privacy discloses Google Analytics accurately and drops the false claim", async () => {
-  const { app } = await buildWithLegal();
+  const { app } = await buildWithLegal({ GA_MEASUREMENT_ID: "G-TEST123" });
   const res = await request(app).get("/privacy");
   // The v1.0 promise that consent-gated GA4 makes false.
   assert.doesNotMatch(res.text, /there are no third-party tracking cookies/i);
@@ -1122,6 +1153,16 @@ test("/privacy discloses Google Analytics accurately and drops the false claim",
   assert.match(res.text, /ss_consent/, "the consent cookie is disclosed too");
   assert.match(res.text, /only .{0,20}(if|when) you (accept|consent)/i);
   assert.match(res.text, /data-consent-settings/, "withdrawal control is present");
+});
+
+test("no dead control: /privacy hides the withdraw button when analytics are off", async () => {
+  // consent-banner.js (which owns the click listener) is not loaded when gaId is
+  // null, so an ungated button would render dead. The surrounding prose stands on
+  // its own — it describes the production service, so it must not dangle.
+  const { app } = await buildWithLegal({ GA_MEASUREMENT_ID: "" });
+  const res = await request(app).get("/privacy");
+  assert.equal(res.status, 200);
+  assert.doesNotMatch(res.text, /data-consent-settings/);
 });
 ```
 
@@ -1157,7 +1198,10 @@ Replace **§6 (cookies)** in full:
 ```html
   <p><strong>6. Cookies.</strong> We set a single essential session cookie so you stay signed in. It is not used for tracking or advertising. If you make a choice about analytics on our public pages we also store that choice in an essential cookie (<code>ss_consent</code>) so we do not have to ask you again; it holds nothing but your answer.</p>
 
-  <p>On our public pages (the home page, the interest-registration form, and this note) we would like to use Google Analytics to count visits, so we can see which pages are useful. It sets analytics cookies (<code>_ga</code> and <code>_ga_*</code>). <strong>These are only set if you accept</strong> &mdash; until then, and if you decline, your browser does not contact Google at all. They are never used for advertising, and we never sell your data. You can change your mind at any time: <button type="button" class="lnk" data-consent-settings>change your analytics choice</button>. There are no advertising cookies anywhere on Sprint Suite.</p>
+  <p>On our public pages (the home page, the interest-registration form, and this note) we would like to use Google Analytics to count visits, so we can see which pages are useful. It sets analytics cookies (<code>_ga</code> and <code>_ga_*</code>). <strong>These are only set if you accept</strong> &mdash; until then, and if you decline, your browser does not contact Google at all. They are never used for advertising, and we never sell your data. You can change your mind at any time. There are no advertising cookies anywhere on Sprint Suite.</p>
+<% if (it.analytics && it.analytics.gaId) { %>
+  <p><button type="button" class="btn btn-ghost" data-consent-settings>Change your analytics choice</button></p>
+<% } %>
 ```
 
 Update **§7 (international transfers)**:
