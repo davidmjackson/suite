@@ -21,7 +21,8 @@ import { createEmailSender } from "./lib/email.js";
 import logger from "./lib/logger.js";
 import { makeRequestLogger } from "./middleware/requestLogger.js";
 import { makeErrorHandler } from "./middleware/errorHandler.js";
-import { makeSecurityHeaders, DEFAULT_CSP } from "./middleware/securityHeaders.js";
+import { makeSecurityHeaders, DEFAULT_CSP, MARKETING_CSP, withAppDomains } from "./middleware/securityHeaders.js";
+import { analyticsLocals } from "./middleware/analytics.js";
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const app = express();
@@ -36,11 +37,7 @@ app.set("trust proxy", "loopback");
 // form-action must allow the app origins: POST /launch/:app and POST /auth/magic
 // (with an app return_to) 302-redirect cross-origin into the apps, and CSP
 // form-action is enforced against redirect targets, not just the initial action.
-const csp = DEFAULT_CSP.replace(
-  "form-action 'self'",
-  `form-action 'self' ${config.allowedAppDomains.join(" ")}`
-);
-app.use(makeSecurityHeaders({ contentSecurityPolicy: csp }));
+app.use(makeSecurityHeaders({ contentSecurityPolicy: withAppDomains(DEFAULT_CSP, config.allowedAppDomains) }));
 
 // Views
 const viewsDir = path.join(__dirname, "views");
@@ -69,7 +66,16 @@ app.locals.config = config;
 
 // Routes
 const emailSender = createEmailSender({ apiKey: config.resendApiKey, from: config.fromEmail });
-mountLanding(app);
+
+// Public pages (/, /request, /privacy) only: a wider CSP that permits GA4, plus the
+// consent state for the view. Applied at the route — never app.use("/"), which
+// prefix-matches every path and would leak analytics onto /dashboard and /admin.
+const marketing = [
+  makeSecurityHeaders({ contentSecurityPolicy: withAppDomains(MARKETING_CSP, config.allowedAppDomains) }),
+  analyticsLocals(config),
+];
+
+mountLanding(app, { marketing });
 mountLogin(app, { emailSender });
 mountMagic(app);
 mountDashboard(app);
@@ -79,8 +85,8 @@ mountApiApps(app);
 mountLogout(app);
 mountAdmin(app, { emailSender });
 mountCompany(app);
-mountRequest(app, { emailSender });
-mountLegal(app);
+mountRequest(app, { emailSender, marketing });
+mountLegal(app, { marketing });
 app.get("/healthz", (_req, res) => res.json({ ok: true }));
 
 // Central error handler — must be last.

@@ -77,7 +77,37 @@ test("landing shows the four trust items", async () => {
   assert.match(res.text, /Passwordless sign-in/);
   assert.match(res.text, /Anonymous health checks/);
   assert.match(res.text, /Exports to Jira, CSV &amp; Markdown/);
-  assert.match(res.text, /No tracking, no clutter/);
+  // GA4 (consent-gated) makes an absolute "no tracking" claim false. We keep the
+  // claim we can defend: no advertising, ever.
+  assert.match(res.text, /No ads, no clutter/);
+  assert.doesNotMatch(res.text, /No tracking, no clutter/);
+});
+
+test("the data FAQ describes consent-gated analytics honestly", async () => {
+  const { app } = await buildTestApp();
+  const res = await request(app).get("/");
+  assert.doesNotMatch(res.text, /no third-party tracking/i, "GA4 makes this false");
+  assert.match(res.text, /only if you accept/i, "consent is stated plainly");
+  assert.match(res.text, /never sell/i);
+  assert.match(res.text, /anonymous/i, "health-check anonymity claim survives");
+});
+
+test("the landing footer offers a withdraw-consent control when analytics are on", async () => {
+  const { app } = await buildTestApp({ env: { GA_MEASUREMENT_ID: "G-TEST123" } });
+  const res = await request(app).get("/");
+  const footer = res.text.slice(res.text.indexOf('class="lp-footer"'));
+  assert.match(footer, /data-consent-settings/, "PECR: withdrawing must be as easy as granting");
+  assert.match(footer, /Cookie settings/);
+});
+
+test("no dead control: the footer hides Cookie settings when analytics are off", async () => {
+  // The [data-consent-settings] listener lives in consent-banner.js, which is not
+  // loaded when gaId is null — so an ungated control would render and silently do
+  // nothing. No analytics means no cookie to configure, so no control.
+  const { app } = await buildTestApp({ env: { GA_MEASUREMENT_ID: "" } });
+  const res = await request(app).get("/");
+  assert.doesNotMatch(res.text, /data-consent-settings/);
+  assert.doesNotMatch(res.text, /Cookie settings/);
 });
 
 test("app grid shows five non-clickable info cards", async () => {

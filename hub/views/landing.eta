@@ -21,6 +21,7 @@
 {"@context":"https://schema.org","@type":"SoftwareApplication","name":"Sprint Suite","applicationCategory":"BusinessApplication","operatingSystem":"Web","description":"One sign-in, four focused apps for scrum masters and delivery leads.","url":"https://sprintsuite.uk/","offers":{"@type":"Offer","price":"0","priceCurrency":"GBP"},"featureList":["RAID log","Team health check","Sprint retrospective","Scrum planning poker"]}
 </script>
 <script type="module" src="/js/landing-hero.js"></script>
+<%~ include("partials/analytics", { analytics: it.analytics }) %>
 </head>
 <body class="ins">
 
@@ -49,7 +50,7 @@
     <span class="trust-item"><span class="dot"></span> Passwordless sign-in</span>
     <span class="trust-item"><span class="dot"></span> Anonymous health checks</span>
     <span class="trust-item"><span class="dot"></span> Exports to Jira, CSV &amp; Markdown</span>
-    <span class="trust-item"><span class="dot"></span> No tracking, no clutter</span>
+    <span class="trust-item"><span class="dot"></span> No ads, no clutter</span>
   </div>
 </div>
 
@@ -208,7 +209,7 @@
   <div class="qa"><h3>How do I get access?</h3><p>Register your interest and we'll set your team up with a passwordless login to all five tools. A few apps cap heavy usage or AI calls, so it is not unlimited, but everyday team use is covered.</p></div>
   <div class="qa"><h3>Do I need a password?</h3><p>No. Sign-in is a passwordless magic link sent to your email. The same link both signs you up and signs you in.</p></div>
   <div class="qa"><h3>Do my guests need accounts?</h3><p>No. Retrospectives and planning poker rooms can be shared with a link, so guests join without creating an account.</p></div>
-  <div class="qa"><h3>Where does my data go?</h3><p>Your data stays in Sprint Suite. There's no third-party tracking, and health-check submissions are anonymous.</p></div>
+  <div class="qa"><h3>Where does my data go?</h3><p>Your work stays in Sprint Suite. We never sell it and we never use it for advertising, and health-check submissions are anonymous. On our public pages we use Google Analytics to count visits, but only if you accept &mdash; nothing loads until you do, and you can change your mind at any time.</p></div>
   <div class="qa"><h3>Can I export?</h3><p>Yes. RAID logs export to Jira, CSV and Markdown so your work doesn't get stuck in another tool.</p></div>
 </section>
 
@@ -248,6 +249,7 @@
       <a href="/privacy">Privacy</a>
       <a href="/terms">Terms</a>
       <a href="/license">License</a>
+      <% if (it.analytics && it.analytics.gaId) { %><button type="button" class="lp-foot-btn" data-consent-settings>Cookie settings</button><% } %>
     </nav>
   </div>
   <div class="lp-foot-bar">
