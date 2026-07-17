@@ -42,6 +42,15 @@
 <link rel="stylesheet" href="/css/instrument-core.css">
 <link rel="stylesheet" href="/css/sight.css">
 
+<!-- Reveals are opacity:0 until an IntersectionObserver adds .in, so without JS
+     everything below the hero would be invisible and the console blank — on a
+     page whose entire job is to be shared, linked and indexed. Same principle as
+     the reduced-motion branch (§8): never leave content hidden. -->
+<noscript><style>
+  .ins[data-app="sight"] .rv { opacity: 1; transform: none; }
+  .ins[data-app="sight"] .bar i { width: 100%; }
+</style></noscript>
+
 <script type="application/ld+json">
 {
   "@context": "https://schema.org",
@@ -129,8 +138,11 @@
     </dl>
   </div>
 
-  <!-- SIGNATURE: the detector console. WAI-ARIA tabs pattern, spec §11.4. -->
-  <div class="console" id="detect">
+  <!-- SIGNATURE: the detector console. WAI-ARIA tabs pattern, spec §11.4.
+       tabindex=-1 so the hero's "Run the detector" link moves FOCUS here, not
+       just the viewport; otherwise a keyboard user jumps the page but keeps
+       focus back on the button. -->
+  <div class="console" id="detect" tabindex="-1">
     <div class="con-top">
       <span class="t">detector · sprint 15</span>
       <span class="dots" aria-hidden="true"><i></i><i></i><i></i></span>
@@ -143,7 +155,27 @@
     </div>
     <!-- tabindex=0: the panel scrolls, so it must be keyboard-reachable.
          No aria-live: it would announce every typing tick. aria-busy instead. -->
-    <pre class="con-body" id="conPanel" role="tabpanel" aria-labelledby="tab-atlas" tabindex="0"></pre>
+    <pre class="con-body" id="conPanel" role="tabpanel" aria-labelledby="tab-atlas" tabindex="0"><noscript><span class="p">$</span> sprintsight detect <span class="s">--team Atlas --sprint 15</span>
+<span class="cmt">// reading 4 sources · 61 artifacts · 2 sprints</span>
+
+{
+  <span class="k">"team"</span>: <span class="s">"Atlas"</span>,
+  <span class="k">"reported_status"</span>: <span class="grn">"green"</span>,
+  <span class="k">"actual_status"</span>: <span class="red">"red"</span>,
+  <span class="k">"is_watermelon"</span>: <span class="red">true</span>,
+  <span class="k">"evidence"</span>: [
+    <span class="s">"burndown-atlas-s15"</span>,
+    <span class="s">"slack-atlas-s15-msg-dep"</span>,
+    <span class="s">"status-atlas-s15"</span>
+  ],
+  <span class="k">"explanation"</span>: <span class="s">"Reported on track for a
+    second sprint while the burndown stayed flat
+    (12 of 40 points). Velocity down ~30%, carry-over
+    2 → 5. A dependency on Draco's auth API was raised
+    in chat on 12 Jun and never logged in the RAID."</span>
+}
+
+<span class="red">▲ WATERMELON</span> <span class="p">· raise with the Atlas delivery lead before the portfolio review</span></noscript></pre>
     <div class="con-foot">
       <span id="footL">verdict · 3 evidence ids</span>
       <span>deterministic grading</span>

@@ -49,6 +49,65 @@ test("no colour literals outside the token block", () => {
   assert.deepEqual(literals, [], `component rules must use tokens, found: ${literals.join(", ")}`);
 });
 
+/* ---------- reset and layout ---------- */
+
+test("body's own margin is reset", () => {
+  // Instrument's reset is `.ins *`, which matches descendants. <body> IS .ins,
+  // so it is never matched and keeps the UA's 8px margin. Harmless behind the
+  // hub's centred cards; an 8px gutter around this page's full-bleed rail.
+  const block = cssCode.slice(0, cssCode.indexOf("font-size: 14.5px"));
+  assert.match(block, /margin: 0;/, ".ins[data-app=sight] must reset its own margin");
+});
+
+test("the header shares the container's gutter at every breakpoint", () => {
+  // .hd and .wrap have equal specificity, so a padding-inline on .hd wins on
+  // source order and knocks the header out of alignment with everything below.
+  const hd = cssCode.match(/\.hd \{[^}]*\}/)[0];
+  assert.doesNotMatch(hd, /padding-inline/, ".hd must not set padding-inline");
+  assert.doesNotMatch(hd, /padding:\s*\d+px\s+\d+px/, ".hd must not set shorthand padding");
+  assert.match(hd, /padding-block/, ".hd owns the vertical only");
+  assert.doesNotMatch(cssCode, /\.hd \{ padding-inline: 0; \}/, "and never zeroes it at md");
+});
+
+test("the breadcrumb return path clears 44x44, which is a mobile-only risk", () => {
+  // At base the label is hidden, leaving an 18px glyph: padding alone gives 30x42.
+  // §7.2.1 requires 44x44 and singles out mobile as the case that matters most.
+  const rule = cssCode.match(/\.bc-home \{[^}]*\}/)[0];
+  assert.match(rule, /min-width: 44px/);
+  assert.match(rule, /min-height: 44px/);
+});
+
+test("the skip link is fixed, not absolute", () => {
+  // absolute resolves against the initial containing block, so reverse-tabbing to
+  // it after scrolling parks it off-screen.
+  const rule = cssCode.match(/\.skip \{[^}]*\}/)[0];
+  assert.match(rule, /position: fixed/);
+});
+
+/* ---------- works without JS ---------- */
+
+test("content below the hero is visible with JS off", () => {
+  // .rv is opacity:0 until an IntersectionObserver adds .in. Without a fallback
+  // the page is a hero and nothing else — on a page built to be shared and indexed.
+  const ns = html.match(/<noscript><style>([\s\S]*?)<\/style><\/noscript>/);
+  assert.ok(ns, "a noscript style block exists");
+  assert.match(ns[1], /\.rv \{ opacity: 1; transform: none; \}/);
+  assert.match(ns[1], /\.bar i \{ width: 100%; \}/);
+});
+
+test("the console shows its default payload with JS off, and it matches sight.js", () => {
+  // The panel is filled by JS, so without this it is a blank 352px dark box.
+  // Embedded via <noscript> so that with JS on it is not rendered at all and the
+  // typer still starts from empty — no flash of content.
+  const panel = html.match(/<pre class="con-body"[^>]*>([\s\S]*?)<\/pre>/)[1];
+  const fallback = panel.match(/<noscript>([\s\S]*)<\/noscript>/);
+  assert.ok(fallback, "the panel carries a noscript fallback");
+  // It is duplicated from sight.js, so pin it: this is the only thing stopping drift.
+  const atlas = js.match(/^\s{4}atlas: \{\n\s+foot: "[^"]+",\n\s+body: `([\s\S]*?)`,\n\s{4}\},$/m);
+  assert.ok(atlas, "the atlas payload is readable from sight.js");
+  assert.equal(fallback[1], atlas[1], "the no-JS fallback must be the ATLAS payload verbatim");
+});
+
 /* ---------- semantics (§11.3) ---------- */
 
 test("exactly one h1", () => {
@@ -111,8 +170,11 @@ test("Sprint Suite is a real link to the suite, same tab", () => {
 
 test("Sprintsight is not a link and carries aria-current", () => {
   assert.match(html, /<span aria-current="page">/);
-  // the current page must never link to itself
-  assert.doesNotMatch(html, /<a[^>]*>\s*<svg[^>]*gl-melon/);
+  // The current page must never link to itself. Scope to the breadcrumb's own
+  // cell and reject ANY anchor in it, rather than one hand-picked arrangement.
+  const cell = html.match(/<li class="bc-here">([\s\S]*?)<\/li>/);
+  assert.ok(cell, "breadcrumb current-page cell exists");
+  assert.doesNotMatch(cell[1], /<a\b/, "the current page cell must contain no link");
 });
 
 test("the return path survives at mobile: only the label hides, never the link", () => {
@@ -157,16 +219,22 @@ test("four tabs, four payloads, wired to one panel", () => {
 });
 
 test("exactly one tab is selected on load, with a roving tabindex", () => {
-  assert.equal((html.match(/aria-selected="true"/g) || []).length, 1);
-  assert.equal((html.match(/aria-selected="false"/g) || []).length, 3);
-  assert.match(html, /id="tab-atlas"\s+aria-selected="true"[^>]*tabindex="0"/);
-  assert.equal((html.match(/tabindex="-1"/g) || []).length, 3);
+  // Scoped to the tablist: a document-wide count of tabindex="-1" also catches
+  // unrelated focus targets (the console's own, for the #detect jump link).
+  const picker = html.match(/<div class="picker"[\s\S]*?<\/div>/)[0];
+  assert.equal((picker.match(/aria-selected="true"/g) || []).length, 1);
+  assert.equal((picker.match(/aria-selected="false"/g) || []).length, 3);
+  assert.match(picker, /id="tab-atlas"\s+aria-selected="true"[^>]*tabindex="0"/);
+  assert.equal((picker.match(/tabindex="-1"/g) || []).length, 3, "the 3 unselected tabs");
 });
 
 test("the panel is a pre, reachable, and never aria-live", () => {
   assert.match(html, /<pre class="con-body" id="conPanel" role="tabpanel"[^>]*tabindex="0">/);
-  // aria-live would announce every typing tick
-  assert.doesNotMatch(html, /aria-live="polite"[^>]*id="conPanel"/);
+  // aria-live would announce every typing tick. Test the panel's OWN opening tag:
+  // a regex hunting for aria-live near id="conPanel" cannot cross the '>' and so
+  // never fires, whatever the markup says.
+  const tag = html.match(/<pre class="con-body"[^>]*>/)[0];
+  assert.doesNotMatch(tag, /aria-live/, `panel must not be a live region: ${tag}`);
   assert.match(js, /aria-busy/);
 });
 
@@ -243,6 +311,17 @@ test("all five form states exist", () => {
   assert.match(js, /You're on the list/, "success");
   assert.match(js, /That didn't send/, "error");
   assert.match(js, /btn\.disabled = true/, "pending disables submit");
+});
+
+test("the error path fully restores the form, leaving nothing stuck", () => {
+  // The endpoint is null, so EVERY submit lands here. If the catch block forgets
+  // any of these the button stays disabled and aria-busy stays true forever, and
+  // the form is dead until reload. Assert the recovery, not just the disable.
+  const cat = js.slice(js.indexOf("} catch {"), js.indexOf("});", js.indexOf("} catch {")));
+  assert.match(cat, /btn\.disabled = false/, "re-enables the button");
+  assert.match(cat, /btn\.textContent = label/, "restores the button label");
+  assert.match(cat, /form\.removeAttribute\("aria-busy"\)/, "clears aria-busy");
+  assert.match(cat, /say\(/, "tells the user what happened");
 });
 
 test("submit never silently no-ops while the endpoint is unset", () => {

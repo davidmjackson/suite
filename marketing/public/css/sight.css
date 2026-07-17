@@ -42,6 +42,12 @@
   --shadow-console: 0 24px 50px -30px oklch(0.235 0.013 250 / 0.55);
   --focus-ring: 0 0 0 3px var(--greenwash);
 
+  /* Instrument's reset is `.ins *`, which matches DESCENDANTS. This element is
+     <body>, so it is not one, and it keeps the UA's 8px margin. Invisible on the
+     hub's centred cards; very visible behind a full-bleed rail. The mock's reset
+     is an unscoped `*`, which is why the mock never showed it. */
+  margin: 0;
+
   font-size: 14.5px;
   line-height: 1.6;
   background-color: var(--bone);
@@ -81,9 +87,20 @@
   outline-offset: 2px;
   border-radius: var(--r-sharp);
 }
+/* The console is dark, and --green only manages 2.33:1 on --con-bg / 2.53:1 on
+   --con-chrome — under the 3:1 a focus indicator needs. It is also drawn OUTSIDE
+   the border box, which .console's overflow:hidden then clips, so the panel and
+   the end tabs lose part of their ring entirely. Draw inward, in the light token
+   the selected tab already uses (14.4:1). */
+.ins[data-app="sight"] .console :focus-visible {
+  outline-color: var(--con-tabon);
+  outline-offset: -2px;
+}
 
 .ins[data-app="sight"] .skip {
-  position: absolute; left: 8px; top: -60px; z-index: 60;
+  /* fixed, not absolute: absolute resolves against the initial containing block,
+     so reverse-tabbing to it after scrolling parks it off-screen. */
+  position: fixed; left: 8px; top: -60px; z-index: 60;
   background: var(--panel); color: var(--ink); border: 1px solid var(--line2);
   border-radius: var(--r-sharp); padding: 9px 15px; font-size: 13px; font-weight: 600;
   text-decoration: none; transition: top .15s;
@@ -108,8 +125,11 @@
   background: var(--panel); border-bottom: 1px solid var(--line2);
   position: sticky; top: 0; z-index: 30;
 }
+/* padding-BLOCK only: .hd and .wrap have equal specificity, so a padding-inline
+   here would win on source order and knock the header out of the container's
+   gutter. Let .wrap own the horizontal at every breakpoint. */
 .ins[data-app="sight"] .hd {
-  display: flex; align-items: center; justify-content: space-between; gap: 16px; padding: 12px 18px;
+  display: flex; align-items: center; justify-content: space-between; gap: 16px; padding-block: 12px;
 }
 
 /* ---- brand breadcrumb: the return path (§7.2.1) ---- */
@@ -117,9 +137,12 @@
   display: flex; align-items: center; gap: 8px; list-style: none; margin: 0; padding: 0;
 }
 .ins[data-app="sight"] .bc-home {
-  display: inline-flex; align-items: center; gap: 8px;
+  display: inline-flex; align-items: center; justify-content: center; gap: 8px;
   font-weight: 500; font-size: 14px; color: var(--soft); text-decoration: none;
-  /* padded, not shrunk, to clear the 44px tap target */
+  /* Below md the label is hidden, leaving only an 18px glyph: padding alone gave
+     30x42, under the 44x44 §7.2.1 requires. Mobile is where shared links land and
+     where this link is the ONLY way back to the suite, so the floor is explicit. */
+  min-width: 44px; min-height: 44px;
   padding: 12px 6px; margin: -12px -6px;
 }
 .ins[data-app="sight"] .bc-home:hover { color: var(--ink); text-decoration: underline; }
@@ -162,8 +185,8 @@
   padding: 9px 0; border-bottom: 1px solid var(--line2); font-size: 13px;
 }
 .ins[data-app="sight"] .spec dt {
-  font-family: 'IBM Plex Mono', monospace; font-size: 10.5px; letter-spacing: 0.1em;
-  text-transform: uppercase; color: var(--soft); padding-top: 2px;
+  font-family: 'IBM Plex Mono', monospace; font-size: 10.5px; letter-spacing: 0.14em;
+  text-transform: uppercase; color: var(--soft); font-weight: 500; padding-top: 2px;
 }
 .ins[data-app="sight"] .spec dd { color: var(--soft); margin: 0; }
 .ins[data-app="sight"] .spec dd b { color: var(--ink); font-weight: 600; }
@@ -222,8 +245,8 @@
 .ins[data-app="sight"] .con-foot {
   display: flex; justify-content: space-between; align-items: center; gap: 10px;
   padding: 10px 14px; background: var(--con-chrome); border-top: 1px solid var(--con-line);
-  font-family: 'IBM Plex Mono', monospace; font-size: 10px; letter-spacing: 0.1em;
-  text-transform: uppercase; color: var(--con-dim);
+  font-family: 'IBM Plex Mono', monospace; font-size: 10.5px; letter-spacing: 0.14em;
+  text-transform: uppercase; font-weight: 500; color: var(--con-dim);
 }
 
 /* ---- sections ---- */
@@ -249,7 +272,7 @@
 /* pith is near-white, so it needs a border to read as a swatch at all */
 .ins[data-app="sight"] .legend .sw-pith { background: var(--pithcream); border: 1px solid var(--line2); }
 .ins[data-app="sight"] .legend .nm {
-  font-family: 'IBM Plex Mono', monospace; font-size: 11px; letter-spacing: 0.08em;
+  font-family: 'IBM Plex Mono', monospace; font-size: 10.5px; letter-spacing: 0.14em;
   text-transform: uppercase; color: var(--ink); font-weight: 500; padding-top: 3px;
 }
 .ins[data-app="sight"] .legend .de { font-size: 13.5px; color: var(--soft); }
@@ -388,13 +411,22 @@
 .ins[data-app="sight"] .form input {
   flex: 1; min-width: 0;
   font-family: 'Hanken Grotesk', sans-serif; font-size: 14.5px; font-weight: 400;
-  padding: 11px 13px; border: 1px solid var(--line2); border-radius: var(--r-sharp);
+  padding: 11px 13px; border-radius: var(--r-sharp);
   background: var(--bone); color: var(--ink);
+  /* NOT --line2 (§7.10 and .ins .input both use it): that is 1.47:1 on --bone.
+     A panel hairline can be decorative, but this border is the only thing that
+     marks out the only control on the page, so 1.4.11's 3:1 applies. --faint is
+     3.55:1. The same latent issue exists in .ins .input across every surface;
+     fixing it canonically is a separate job. */
+  border: 1px solid var(--faint);
 }
-/* placeholder is decorative, so --faint is permitted here and nowhere else */
+/* placeholder is decorative, so --faint-as-text is permitted here and nowhere else */
 .ins[data-app="sight"] .form input::placeholder { color: var(--faint); }
-.ins[data-app="sight"] .form input:focus {
-  outline: none; border-color: var(--green); box-shadow: var(--focus-ring);
+/* No `outline: none` here. §7.10 specifies it, but it out-specifies the global
+   :focus-visible ring, leaving only the --greenwash halo — 1.13:1 on --panel,
+   i.e. no visible focus indicator at all on the page's only input. */
+.ins[data-app="sight"] .form input:focus-visible {
+  border-color: var(--green); box-shadow: var(--focus-ring);
 }
 /* only after a submit attempt — never punish someone mid-type */
 .ins[data-app="sight"] .form.attempted input:invalid { border-color: var(--melon); }
@@ -434,7 +466,6 @@
 /* md — the layout engages */
 @media (min-width: 980px) {
   .ins[data-app="sight"] .wrap { padding-inline: 28px; }
-  .ins[data-app="sight"] .hd { padding-inline: 0; }
   .ins[data-app="sight"] .rail { padding: 7px 28px; }
   .ins[data-app="sight"] .bc-label { display: inline; }
   .ins[data-app="sight"] .links { display: flex; }
