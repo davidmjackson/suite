@@ -186,6 +186,15 @@ test("the pipeline section keeps the shared .blk/.sechd shell (not the spec's st
   assert.doesNotMatch(sec, /class="pipe"|class="pnode"/, "the old pipe boxes are gone");
 });
 
+test("the pipeline lede keeps the two trust claims the lean cards no longer state", () => {
+  // The card redesign dropped the per-pass prose; these two claims were preserved
+  // in the section lede (David's call at go-live). Guard them so they can't drift
+  // out again silently — they are the section's credibility, not decoration.
+  const sec = html.match(/id="pipeline"[\s\S]*?<\/section>/)[0];
+  assert.match(sec, /computed deterministically/, "the deterministic-signals claim");
+  assert.match(sec, /"insufficient evidence" rather than a guess/, "the insufficient-evidence gate");
+});
+
 test("three pass cards, each an <article> with pass label, title and in/out (copy verbatim, spec §6)", () => {
   const sec = html.match(/<div class="tp-grid">[\s\S]*?<\/section>/)[0];
   assert.equal((sec.match(/<article class="tp-card">/g) || []).length, 3);
