@@ -31,7 +31,7 @@ contains () { # url  needle  description
   # small ones. It cried wolf on instrument-core.css while prod was fine.
   local body
   body=$(curl -s "$1")
-  if printf '%s' "$body" | grep -q -- "$2"; then
+  if printf '%s' "$body" | grep -qF -- "$2"; then
     printf '  ok         %s\n' "$3"
   else
     printf '  FAIL       %s\n' "$3"
@@ -48,6 +48,13 @@ check "$BASE/sprintsight-coming-soon/intro/"              200 "the page the land
 check "$BASE/sprintsight-coming-soon/intro/sight.css"     200 "page stylesheet"
 check "$BASE/sprintsight-coming-soon/intro/sight.js"      200 "page behaviour"
 check "$BASE/sprintsight-coming-soon/intro/sight-og.png"  200 "OG card"
+# three-passes infographic SVGs — bare filenames served by THIS alias, NOT
+# /illos/ (which the hub serves). If they 404, the pipeline shows broken images.
+check "$BASE/sprintsight-coming-soon/intro/pass-01-retrieval.svg"      200 "three-passes illo 01"
+check "$BASE/sprintsight-coming-soon/intro/pass-02-reconciliation.svg" 200 "three-passes illo 02"
+check "$BASE/sprintsight-coming-soon/intro/pass-03-report-writer.svg"  200 "three-passes illo 03"
+# and the page must actually reference them, or SVGs ship but the section didn't
+contains "$BASE/sprintsight-coming-soon/intro/" 'src="pass-01-retrieval.svg"' "pipeline references the illustrations"
 # the parent must NOT be aliased: it would serve a directory listing
 check "$BASE/sprintsight-coming-soon/"                    404 "parent path does not list the directory"
 

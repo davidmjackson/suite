@@ -105,6 +105,7 @@ const TEXT = [
   ["con-amb", "con-bg", "amber verdicts"],
   ["con-label", "con-chrome", "console chrome label"],
   ["con-tabon", "con-bg", "selected tab"],
+  ["tp-accent", "panel", "three-passes pass label on the card"],
 ];
 
 for (const [fg, bg, what] of TEXT) {
@@ -158,6 +159,20 @@ test("the input's border is not --line2, which is 1.47:1 on its own fill", () =>
   const css = readFileSync(SIGHT, "utf8");
   const rule = css.match(/\.form input \{[^}]*\}/)[0];
   assert.doesNotMatch(rule, /border: 1px solid var\(--line2\)/);
+});
+
+test("primary button text stays white, not clobbered to ink by the page's a{} rule", () => {
+  // sight's `a { color: inherit }` once matched the ANCHOR buttons too, overriding
+  // instrument's .btn-pri {color:#fff} and dropping them to ink-on-green: 2.33:1,
+  // black-on-dark-green, unreadable. White-on-green is 7.15:1. The rule must spare
+  // .btn so the buttons keep white. (The form's <button> was never an <a>, so only
+  // the link-buttons broke — which hid it from a quick glance at one button.)
+  const white = [1, 0, 0];
+  assert.ok(ratio(white, T.green) >= 4.5, `white on --green is ${ratio(white, T.green).toFixed(2)}:1`);
+  assert.ok(ratio(T.ink, T.green) < 3, "premise: ink on --green really does fail (2.33:1)");
+  const css = readFileSync(SIGHT, "utf8");
+  assert.match(css, /a:not\(\.btn\) \{ color: inherit; \}/, "the a{} rule must exclude .btn");
+  assert.doesNotMatch(css, /\ba \{ color: inherit; \}/, "the unscoped rule must be gone");
 });
 
 test("no rule suppresses focus with outline:none", () => {

@@ -166,6 +166,83 @@ test("every section is labelled by its own heading", () => {
   }
 });
 
+/* ---------- three-passes infographic (marketing/three-passes spec) ---------- */
+
+const TP_ILLO_DIR = "sprintsight-coming-soon/intro";
+const TP_PASSES = [
+  ["pass-01-retrieval.svg", "Retrieval", "Read the delivery record"],
+  ["pass-02-reconciliation.svg", "Reconciliation", "Check the story against the data"],
+  ["pass-03-report-writer.svg", "Report writer", "Write it for the room"],
+];
+const RAG = /oklch\(0\.55 0\.19 25\)|oklch\(0\.55 0\.12 150\)|oklch\(0\.7 0\.13 70\)/; // red / green / amber
+
+test("the pipeline section keeps the shared .blk/.sechd shell (not the spec's standalone header)", () => {
+  // The card grid swaps IN; the header must still match the four sibling sections
+  // (eyebrow rail + h2), so the section reads as part of the page, not a transplant.
+  assert.match(html, /<section class="blk rv" id="pipeline" aria-labelledby="pipeline-h">/);
+  const sec = html.match(/id="pipeline"[\s\S]*?<\/section>/)[0];
+  assert.match(sec, /<div class="sechd">/, "keeps the section-header rail");
+  assert.match(sec, /<h2 id="pipeline-h">Three passes, nothing for your team to fill in<\/h2>/);
+  assert.doesNotMatch(sec, /class="pipe"|class="pnode"/, "the old pipe boxes are gone");
+});
+
+test("three pass cards, each an <article> with pass label, title and in/out (copy verbatim, spec §6)", () => {
+  const sec = html.match(/<div class="tp-grid">[\s\S]*?<\/section>/)[0];
+  assert.equal((sec.match(/<article class="tp-card">/g) || []).length, 3);
+  for (const [, stage, title] of TP_PASSES) {
+    assert.match(sec, new RegExp(`<p class="tp-pass">Pass 0\\d · ${stage}</p>`), `${stage} eyebrow`);
+    assert.match(sec, new RegExp(`<h3 class="tp-title">${title}</h3>`), `${stage} title`);
+  }
+  assert.match(sec, /<b>Jira · Confluence · Slack · RAID<\/b>/, "01 in");
+  assert.match(sec, /<b>signals \+ divergences<\/b>/, "02 out");
+  assert.match(sec, /<b>cited report \(JSON\)<\/b>/, "03 out");
+});
+
+test("card images use a bare page-relative filename, never the hub-served /illos/ path", () => {
+  // /illos/*, /css/*, /fonts/* are hub-served in prod, not the marketing Alias.
+  // An absolute /illos/… would 404 live; the src must resolve under this page.
+  // Capture ANY src (not just the good shape) so the guards below are live: a
+  // regex that only matches good paths would let a bad one escape via the count.
+  const sec = html.match(/<div class="tp-grid">[\s\S]*?<\/section>/)[0];
+  const imgs = [...sec.matchAll(/<img src="([^"]+)"[^>]*\balt="([^"]+)"/g)];
+  assert.equal(imgs.length, 3, "three images, each with alt");
+  for (const [, src, alt] of imgs) {
+    assert.doesNotMatch(src, /^(\/|https?:|\.\.\/)/, `${src} must be a page-relative filename, not absolute/external/traversal`);
+    assert.match(src, /^pass-0[123]-[a-z-]+\.svg$/, `${src} is a three-passes illustration in this dir`);
+    assert.ok(existsSync(join(PUBLIC, TP_ILLO_DIR, src)), `${src} exists on disk`);
+    assert.ok(alt.length > 20, "alt is a real description, not a filename");
+  }
+});
+
+test("the three SVGs are self-contained: no script, no external refs", () => {
+  // They ship as <img> (cannot run script), but guard anyway against a future
+  // inline, and confirm the uniform 340x220 viewBox the layout assumes.
+  for (const [file] of TP_PASSES) {
+    const svg = readFileSync(join(PUBLIC, TP_ILLO_DIR, file), "utf8");
+    // whitespace-tolerant around `=` (onload = "…" is valid XML) and catches the
+    // DOCTYPE/ENTITY XXE shape, so a future hostile SVG cannot slip past the guard.
+    assert.doesNotMatch(svg, /<script|<!doctype|<!entity|xlink:href|\bhref\s*=|\son[a-z]+\s*=|<image\b|<foreignObject|url\(|data:/i, `${file} has no active/external content`);
+    assert.match(svg, /viewBox="0 0 340 220"/, `${file} viewBox`);
+  }
+});
+
+test("RAG verdict hues appear only in Pass 02 (spec §1 colour rule)", () => {
+  // green/red/amber carry verdict meaning across the product; in 01/03 they would
+  // read as decoration. Those two stay indigo + neutral; only 02 reconciles.
+  const p02 = readFileSync(join(PUBLIC, TP_ILLO_DIR, "pass-02-reconciliation.svg"), "utf8");
+  assert.match(p02, RAG, "Pass 02 carries the RAG hues");
+  for (const file of ["pass-01-retrieval.svg", "pass-03-report-writer.svg"]) {
+    const svg = readFileSync(join(PUBLIC, TP_ILLO_DIR, file), "utf8");
+    assert.doesNotMatch(svg, RAG, `${file} must stay neutral (no RAG hues)`);
+  }
+});
+
+test("the pass labels use a section-local indigo, never the page-wide green --accent", () => {
+  assert.match(css, /--tp-accent:\s*oklch\([^)]*\b262\)/, "--tp-accent defined (indigo)");
+  assert.match(css, /\.tp-pass \{[^}]*color: var\(--tp-accent\)/, "the pass label reads --tp-accent");
+  assert.doesNotMatch(css, /--accent:/, "sight.css must never redefine the page-wide --accent");
+});
+
 /* ---------- links (§14) ---------- */
 
 test("no href=\"#\" anywhere", () => {
@@ -251,6 +328,17 @@ test("the panel is a pre, reachable, and never aria-live", () => {
   const tag = html.match(/<pre class="con-body"[^>]*>/)[0];
   assert.doesNotMatch(tag, /aria-live/, `panel must not be a live region: ${tag}`);
   assert.match(js, /aria-busy/);
+});
+
+test("the hero has a single action and it is not a dead 'Run the detector'", () => {
+  // The console runs on load, so a "Run the detector" button only re-ran what had
+  // already run — pointless, and removed. The hero keeps one real CTA.
+  assert.doesNotMatch(html, /Run the detector/, "the pointless run button is gone");
+  assert.doesNotMatch(js, /runDetector|runTimer/, "and its JS with it");
+  const acts = html.match(/<div class="acts">([\s\S]*?)<\/div>/)[1];
+  const links = acts.match(/<a\b/g) || [];
+  assert.equal(links.length, 1, "one CTA in the hero actions");
+  assert.match(acts, /<a class="btn btn-pri" href="#notify">Get notified at launch<\/a>/);
 });
 
 test("the typer clears its interval before starting, or tabs interleave", () => {

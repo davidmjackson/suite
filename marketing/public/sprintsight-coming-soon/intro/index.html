@@ -124,7 +124,6 @@
     <p class="hero-lede">Sprintsight reads across Jira, Confluence, Slack and your RAID log, reconciles what each team claims against what its data actually shows, and names the teams reporting healthier than they are. Every verdict ships with its evidence.</p>
     <div class="acts">
       <a class="btn btn-pri" href="#notify">Get notified at launch</a>
-      <a class="btn btn-ghost" href="#detect">Run the detector</a>
     </div>
 
     <dl class="specs">
@@ -137,9 +136,9 @@
   </div>
 
   <!-- SIGNATURE: the detector console. WAI-ARIA tabs pattern, spec §11.4.
-       tabindex=-1 so the hero's "Run the detector" link moves FOCUS here, not
-       just the viewport; otherwise a keyboard user jumps the page but keeps
-       focus back on the button. -->
+       tabindex=-1 so the "Detector" nav link moves FOCUS here, not just the
+       viewport; otherwise a keyboard user jumps the page but keeps focus on the
+       nav link. -->
   <div class="console" id="detect" tabindex="-1">
     <div class="con-top">
       <span class="t">detector · sprint 15</span>
@@ -353,40 +352,44 @@
     </div>
   </div>
 
-  <div class="pipe">
-    <div class="pnode">
-      <div class="ph"><span class="lbl">Pass 01</span><span class="lbl pass-name">Retrieval</span></div>
-      <div class="pb">
-        <h3>Read the delivery record</h3>
-        <p>Status reports, RAID entries, ticket and burndown summaries, chat. Indexed together, each item keeping the source ID it will later be cited by.</p>
-        <div class="io">
-          <span>in <b>Jira · Confluence · Slack · RAID</b></span>
-          <span>out <b>indexed artifacts + ids</b></span>
-        </div>
+  <!-- Three-passes infographic (marketing/three-passes/three-passes.spec.md,
+       Direction A). One flat SVG per pass carries the explanation the old prose
+       paragraph used to. The section shell above (.blk/.sechd rail) is kept so
+       the header matches the four sibling sections; only the inner boxes swap.
+       SVGs are <img> from a bare page-relative filename — they live in THIS dir
+       (served by this page's own Apache Alias), NEVER /illos/… which the hub
+       serves in prod and would 404. Loose here, not a subdir, so no new
+       directory-listing surface appears under the alias. -->
+  <div class="tp-grid">
+    <article class="tp-card">
+      <p class="tp-pass">Pass 01 · Retrieval</p>
+      <h3 class="tp-title">Read the delivery record</h3>
+      <div class="tp-illo"><img src="pass-01-retrieval.svg" width="340" height="220" alt="Jira, Confluence, Slack and the RAID log converge into one indexed stack, each artifact keeping the id it will be cited by."></div>
+      <div class="tp-io">
+        <div class="tp-io-row"><span class="tp-key">in</span><span class="tp-val"><b>Jira · Confluence · Slack · RAID</b></span></div>
+        <div class="tp-io-row"><span class="tp-key">out</span><span class="tp-val">indexed artifacts + ids</span></div>
       </div>
-    </div>
-    <div class="pnode">
-      <div class="ph"><span class="lbl">Pass 02</span><span class="lbl pass-name">Reconciliation</span></div>
-      <div class="pb">
-        <h3>Check the story against the data</h3>
-        <p>Burn ratio, velocity delta and carry-over growth are computed deterministically as facts. Published reference thresholds cue the judgement, they never decide it alone.</p>
-        <div class="io">
-          <span>in <b>indexed artifacts</b></span>
-          <span>out <b>signals + divergences</b></span>
-        </div>
+    </article>
+
+    <article class="tp-card">
+      <p class="tp-pass">Pass 02 · Reconciliation</p>
+      <h3 class="tp-title">Check the story against the data</h3>
+      <div class="tp-illo"><img src="pass-02-reconciliation.svg" width="340" height="220" alt="A flat green reported line held level over a declining red actual line, with the amber gap between them marked as the divergence."></div>
+      <div class="tp-io">
+        <div class="tp-io-row"><span class="tp-key">in</span><span class="tp-val">indexed artifacts</span></div>
+        <div class="tp-io-row"><span class="tp-key">out</span><span class="tp-val"><b>signals + divergences</b></span></div>
       </div>
-    </div>
-    <div class="pnode">
-      <div class="ph"><span class="lbl">Pass 03</span><span class="lbl pass-name">Report writer</span></div>
-      <div class="pb">
-        <h3>Write it for the room</h3>
-        <p>Exec (~150 words, outcome and decision), programme (~400 words, governance), or team (granular). Same evidence, different altitude. Thin data returns "insufficient evidence" rather than a guess.</p>
-        <div class="io">
-          <span>in <b>signals + audience</b></span>
-          <span>out <b>cited report (JSON)</b></span>
-        </div>
+    </article>
+
+    <article class="tp-card">
+      <p class="tp-pass">Pass 03 · Report writer</p>
+      <h3 class="tp-title">Write it for the room</h3>
+      <div class="tp-illo"><img src="pass-03-report-writer.svg" width="340" height="220" alt="One evidence core fans out into exec, programme and team reports of increasing size: same evidence, different altitude."></div>
+      <div class="tp-io">
+        <div class="tp-io-row"><span class="tp-key">in</span><span class="tp-val">signals + audience</span></div>
+        <div class="tp-io-row"><span class="tp-key">out</span><span class="tp-val"><b>cited report (JSON)</b></span></div>
       </div>
-    </div>
+    </article>
   </div>
 </section>
 

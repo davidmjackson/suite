@@ -1,0 +1,33 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 340 220" role="img" aria-label="One evidence core fans out into three reports — exec, programme and team — at increasing size. Same cited evidence, written at a different altitude for each audience.">
+  <style>
+    svg{
+      --ink:oklch(0.235 0.013 250); --soft:oklch(0.455 0.012 250); --faint:oklch(0.6 0.01 250);
+      --line:oklch(0.9 0.006 250); --line2:oklch(0.84 0.008 250);
+      --panel:oklch(0.996 0.002 240); --bone:oklch(0.964 0.004 240);
+      --accent:oklch(0.5 0.1 262); --teal:oklch(0.58 0.088 206);
+    }
+    .p{fill:var(--panel)} .ink{fill:var(--ink)} .ac{fill:var(--accent)} .tl{fill:var(--teal)} .so{fill:var(--soft)} .fn{fill:var(--faint)}
+    .gr{fill:var(--line)} .mut{fill:var(--faint)}
+    .sl{stroke:var(--line2)} .sf{stroke:var(--faint)}
+    text{font-family:'IBM Plex Mono',ui-monospace,monospace;fill:var(--faint)}
+  </style>
+  <rect class="ink" x="24" y="82" width="58" height="58" rx="12"/>
+  <circle class="ac" cx="41" cy="101" r="4.5"/><circle class="tl" cx="65" cy="101" r="4.5"/>
+  <circle class="so" cx="41" cy="122" r="4.5"/><circle class="fn" cx="65" cy="122" r="4.5"/>
+  <text x="24" y="158" font-size="10">evidence</text>
+  <g fill="none" class="sf" stroke-width="1.4" opacity="0.7">
+    <path d="M82 100 C120 100 130 52 176 52"/><path d="M82 111 C128 111 140 111 176 111"/><path d="M82 122 C120 122 130 170 176 170"/>
+  </g>
+  <rect class="p sl" x="176" y="34" width="60" height="40" rx="7" stroke-width="1"/>
+  <rect class="ac" x="176" y="34" width="60" height="9" rx="4.5"/>
+  <rect class="gr" x="184" y="52" width="30" height="4" rx="2"/><rect class="gr" x="184" y="61" width="42" height="4" rx="2"/>
+  <text x="244" y="58" font-size="10">exec</text>
+  <rect class="p sl" x="176" y="90" width="72" height="44" rx="7" stroke-width="1"/>
+  <rect class="ac" x="176" y="90" width="72" height="9" rx="4.5"/>
+  <rect class="gr" x="184" y="108" width="42" height="4" rx="2"/><rect class="gr" x="184" y="117" width="54" height="4" rx="2"/>
+  <text x="256" y="116" font-size="10">prog</text>
+  <rect class="p sl" x="176" y="150" width="86" height="50" rx="7" stroke-width="1"/>
+  <rect class="ac" x="176" y="150" width="86" height="9" rx="4.5"/>
+  <rect class="gr" x="184" y="168" width="52" height="4" rx="2"/><rect class="gr" x="184" y="177" width="66" height="4" rx="2"/><rect class="gr" x="184" y="186" width="40" height="4" rx="2"/>
+  <text x="270" y="180" font-size="10">team</text>
+</svg>

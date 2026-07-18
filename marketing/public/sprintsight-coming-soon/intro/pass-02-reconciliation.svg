@@ -1,0 +1,29 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 340 220" role="img" aria-label="A flat green reported line held level while the red actual line declines. The amber marker between them is the divergence — burn ratio and velocity contradicting the status.">
+  <style>
+    svg{
+      --ink:oklch(0.235 0.013 250); --soft:oklch(0.455 0.012 250); --faint:oklch(0.6 0.01 250);
+      --line:oklch(0.9 0.006 250); --line2:oklch(0.84 0.008 250);
+      --panel:oklch(0.996 0.002 240);
+      --rag-green:oklch(0.55 0.12 150); --rag-red:oklch(0.55 0.19 25); --rag-amber:oklch(0.7 0.13 70);
+    }
+    .p{fill:var(--panel)} .fg{fill:var(--rag-green)} .fr{fill:var(--rag-red)} .fa{fill:var(--rag-amber)} .mut{fill:var(--faint)}
+    .sl{stroke:var(--line2)} .sgrid{stroke:var(--line)} .sg{stroke:var(--rag-green)} .sr{stroke:var(--rag-red)} .sa{stroke:var(--rag-amber)}
+    text{font-family:'IBM Plex Mono',ui-monospace,monospace}
+  </style>
+  <rect class="p sl" x="22" y="26" width="296" height="150" rx="10" stroke-width="1"/>
+  <g class="sgrid" stroke-width="1" opacity="0.6">
+    <line x1="40" y1="60" x2="300" y2="60"/><line x1="40" y1="100" x2="300" y2="100"/><line x1="40" y1="140" x2="300" y2="140"/>
+  </g>
+  <line class="sl" x1="40" y1="158" x2="300" y2="158" stroke-width="1.4"/>
+  <path d="M46 66 L300 64" fill="none" class="sg" stroke-width="3" stroke-linecap="round"/>
+  <circle class="fg" cx="46" cy="66" r="4"/><circle class="fg" cx="300" cy="64" r="4"/>
+  <path d="M46 70 C120 78 190 116 300 150" fill="none" class="sr" stroke-width="3" stroke-linecap="round"/>
+  <circle class="fr" cx="46" cy="70" r="4"/><circle class="fr" cx="300" cy="150" r="4"/>
+  <line x1="258" y1="63" x2="258" y2="134" class="sa" stroke-width="1.6" stroke-dasharray="3 3"/>
+  <circle class="fa" cx="258" cy="98" r="5"/>
+  <g font-size="10">
+    <text class="fg" x="46" y="52">reported · green</text>
+    <text class="fr" x="212" y="170">actual</text>
+    <text class="mut" x="266" y="92">divergence</text>
+  </g>
+</svg>
