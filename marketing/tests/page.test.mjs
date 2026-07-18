@@ -350,6 +350,15 @@ test("the hero has a single action and it is not a dead 'Run the detector'", () 
   assert.match(acts, /<a class="btn btn-pri" href="#notify">Get notified at launch<\/a>/);
 });
 
+test("the console body wraps long lines instead of scrolling horizontally", () => {
+  // The verdict line ("▲ WATERMELON · raise with the Atlas delivery lead before
+  // the portfolio review") is longer than the console; a bare <pre> forces a
+  // horizontal scrollbar. pre-wrap keeps the manual JSON newlines/indent but
+  // wraps that line at a space.
+  const rule = css.match(/\.con-body \{[^}]*\}/)[0];
+  assert.match(rule, /white-space: pre-wrap/, "con-body must wrap, not scroll horizontally");
+});
+
 test("the typer clears its interval before starting, or tabs interleave", () => {
   const render = js.slice(js.indexOf("function render"), js.indexOf("function select"));
   assert.match(render, /clearInterval\(typer\)/);

@@ -237,7 +237,12 @@
 .ins[data-app="sight"] .con-body {
   padding: 18px; margin: 0;
   font-family: 'IBM Plex Mono', monospace; font-size: 12.5px; line-height: 1.75;
-  color: var(--con-text); min-height: 352px; overflow-x: auto;
+  color: var(--con-text); min-height: 352px;
+  /* pre-wrap, not pre: keep the manual newlines + indent of the JSON, but let an
+     over-long line (the verdict, e.g. "▲ WATERMELON · raise with the Atlas…")
+     wrap at a space instead of forcing a horizontal scrollbar. overflow-x stays
+     as a backstop for any unbreakable token. */
+  white-space: pre-wrap; overflow-x: auto;
 }
 .ins[data-app="sight"] .con-body .k   { color: var(--con-key); }
 .ins[data-app="sight"] .con-body .s   { color: var(--con-str); }
