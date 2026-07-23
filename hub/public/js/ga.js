@@ -32,8 +32,56 @@ function gtagFor(win) {
   return win.gtag;
 }
 
+// Google's documented opt-out flag. gtag.js checks it on every hit, which is the
+// only way to stop analytics mid-page: once the script has been fetched it cannot
+// be unloaded, so "stop sending" is the strongest guarantee available.
+const disableKey = (measurementId) => `ga-disable-${measurementId}`;
+
+// GA writes _ga on the registrable domain, not the host, so a host-only delete
+// leaves the identifier sitting there. Clear the host and every parent level.
+function cookieScopes(hostname) {
+  const parts = hostname.split(".");
+  const scopes = [""];
+  for (let i = 0; i < parts.length - 1; i++) {
+    scopes.push(`; Domain=.${parts.slice(i).join(".")}`);
+  }
+  return scopes;
+}
+
+function clearGaCookies(measurementId, win) {
+  const names = ["_ga", `_ga_${measurementId.replace(/^G-/, "")}`];
+  for (const name of names) {
+    for (const scope of cookieScopes(win.location.hostname)) {
+      win.document.cookie = `${name}=; Path=/; Max-Age=0${scope}`;
+    }
+  }
+}
+
+// Withdrawal. PECR requires this to be as easy as granting, which means it has to
+// actually take effect — writing the choice to a cookie and hiding the bar is not
+// withdrawal, it is bookkeeping.
+export function revokeGa(measurementId, win = globalThis) {
+  if (!measurementId) return;
+  win[disableKey(measurementId)] = true;
+  if (win[STARTED]) {
+    gtagFor(win)("consent", "update", { analytics_storage: "denied" });
+  }
+  clearGaCookies(measurementId, win);
+}
+
 export function initGa(measurementId, win = globalThis) {
-  if (!measurementId || win[STARTED]) return;
+  if (!measurementId) return;
+
+  if (win[STARTED]) {
+    // Already loaded. If consent was withdrawn and is now given again, lift the
+    // opt-out and re-grant — gtag.js cannot be fetched twice, so returning early
+    // here (as this did before) left re-consent silently doing nothing.
+    if (win[disableKey(measurementId)]) {
+      win[disableKey(measurementId)] = false;
+      gtagFor(win)("consent", "update", { analytics_storage: "granted" });
+    }
+    return;
+  }
   win[STARTED] = true;
 
   const gtag = gtagFor(win);

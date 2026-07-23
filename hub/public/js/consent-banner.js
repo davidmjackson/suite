@@ -20,7 +20,7 @@
 //
 // Deliberately NOT a focus-trapping modal like confirm-modal.js: this bar must not
 // block the page, and Esc must not dismiss it — dismissal is not a decision.
-import { initGa } from "./ga.js";
+import { initGa, revokeGa } from "./ga.js";
 
 const COOKIE = "ss_consent";
 const MAX_AGE = 180 * 24 * 60 * 60; // keep in sync with CONSENT_MAX_AGE_SEC in lib/consent.js
@@ -33,10 +33,19 @@ function writeConsent(value) {
   document.cookie = COOKIE + "=" + value + "; Path=/; Max-Age=" + MAX_AGE + "; SameSite=Lax" + secure;
 }
 
+// The consent decision, separated from the DOM that collects it: "granted" starts
+// analytics, anything else stops them. Exported so the decision can be tested
+// without a browser — the branch that was wrong here was untestable before.
+export function applyConsent(value, measurementId, win = globalThis) {
+  if (!measurementId) return;
+  if (value === "granted") initGa(measurementId, win);
+  else revokeGa(measurementId, win);
+}
+
 function choose(value) {
   writeConsent(value);
   if (bar) bar.hidden = true;
-  if (value === "granted") initGa(gaId);
+  applyConsent(value, gaId);
 }
 
 function build() {
@@ -77,7 +86,7 @@ function start() {
   if (!gaId) return;
 
   const consent = tag.getAttribute("data-consent") || "";
-  if (consent === "granted") initGa(gaId);
+  if (consent === "granted") applyConsent(consent, gaId);
   else if (consent !== "denied") open();
 
   // Withdraw / re-consent, from the landing footer and the /privacy note.

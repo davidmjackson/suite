@@ -27,11 +27,14 @@ test("ga.js is the only place that reaches googletagmanager", () => {
   assert.doesNotMatch(bannerSrc, /googletagmanager/, "the banner must go through initGa()");
 });
 
-test("the banner loads GA only in the granted branch", () => {
-  // Exactly one initGa call site per branch: page-load-granted and accept.
-  const calls = bannerSrc.match(/initGa\(/g) || [];
-  assert.equal(calls.length, 2, "initGa is called on granted-at-load and on accept, nowhere else");
-  assert.match(bannerSrc, /consent === "granted"/, "granted is matched exactly");
+test("the banner matches the granted state exactly, never loosely", () => {
+  // A prefix or truthiness check here would load GA for a tampered cookie value.
+  // The old form of this test also counted initGa( call sites, which pinned the
+  // shape of the implementation rather than its behaviour and went stale the
+  // moment the decision moved into applyConsent(). What it was really guarding —
+  // GA starts on accept, never on reject — is asserted executably in
+  // tests/consent-runtime.test.js against the real module.
+  assert.match(bannerSrc, /=== "granted"/);
 });
 
 test("the banner writes the agreed cookie attributes", () => {
