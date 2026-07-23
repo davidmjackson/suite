@@ -27,13 +27,6 @@ test("ga.js is the only place that reaches googletagmanager", () => {
   assert.doesNotMatch(bannerSrc, /googletagmanager/, "the banner must go through initGa()");
 });
 
-test("ga.js enforces the published 'never used for advertising' promise, not just a GA console setting", () => {
-  // Guards a legal claim made in views/privacy.eta §§2/5/6 and views/landing.eta's
-  // FAQ, not a style preference — if this regresses, the copy is lying.
-  assert.match(gaSrc, /allow_google_signals:\s*false/);
-  assert.match(gaSrc, /allow_ad_personalization_signals:\s*false/);
-});
-
 test("the banner loads GA only in the granted branch", () => {
   // Exactly one initGa call site per branch: page-load-granted and accept.
   const calls = bannerSrc.match(/initGa\(/g) || [];
@@ -70,30 +63,17 @@ test("the banner styles are hub-only, not in the synced foundation", () => {
   assert.doesNotMatch(core, /\.consent/, "instrument-core.css is synced across all five surfaces");
 });
 
-// --- Ads-denied consent defaults -------------------------------------------
-// From 2026-06-15 Google narrowed `allow_google_signals` to analytics-internal
-// use: whether GA4 data may reach Google Ads is now decided by Consent Mode's
-// ad_storage state. Undeclared reads as granted, so the flags above no longer
-// carry the "never used for advertising" promise on their own.
-
-test("ga.js denies every ads-related consent signal", () => {
-  for (const k of ["ad_storage", "ad_user_data", "ad_personalization"]) {
-    assert.match(
-      gaSrc,
-      new RegExp(`${k}:\\s*"denied"`),
-      `${k} must be denied — /privacy §§2/5/6 and the landing FAQ promise analytics are never used for advertising`
-    );
-  }
-});
-
-test("ga.js grants analytics_storage (initGa only runs after explicit consent)", () => {
-  assert.match(gaSrc, /analytics_storage:\s*"granted"/);
-});
-
-test("consent defaults are queued before config, or gtag applies them too late", () => {
-  const consentAt = gaSrc.indexOf('gtag("consent", "default"');
-  const configAt = gaSrc.indexOf('gtag("config"');
-  assert.ok(consentAt > -1, "consent default is set");
-  assert.ok(configAt > -1, "config is called");
-  assert.ok(consentAt < configAt, "consent default must precede config in the dataLayer");
-});
+// --- What used to be asserted here -----------------------------------------
+// Four tests that regex-matched ga.js's SOURCE now live in tests/consent-runtime.js
+// as executable assertions against the real module:
+//
+//   ad_storage / ad_user_data / ad_personalization denied  (the /privacy §§2/5/6
+//     and landing-FAQ "never used for advertising" promise)
+//   analytics_storage granted
+//   allow_google_signals / allow_ad_personalization_signals false
+//   consent default queued before config
+//
+// They are not dropped — they are strictly stronger there, because they check the
+// values gtag actually receives rather than the characters in the file, and so
+// still hold if a value is ever computed instead of written as a literal. The
+// source-level checks that remain above are the ones with no runtime equivalent.

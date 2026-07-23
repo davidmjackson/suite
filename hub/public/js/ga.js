@@ -10,18 +10,33 @@
 // pasted inline. The hub's CSP is `script-src 'self'` with no 'unsafe-inline'
 // (middleware/securityHeaders.js), so an inline block would be blocked outright.
 // The fix for that is never to add 'unsafe-inline' — it is this file.
+//
+// The window is injected rather than reached for, so the module can be exercised
+// without a DOM (tests/consent-runtime.test.js). Every browser caller omits the
+// argument and gets the real window, so behaviour there is unchanged.
 
-let started = false;
+// "Has GA been started on this window?" — kept on the window rather than in module
+// scope because that is precisely what it describes, and it keeps the flag
+// injectable alongside everything else it guards.
+const STARTED = "__ssGaStarted";
 
-export function initGa(measurementId) {
-  if (started || !measurementId) return;
-  started = true;
+function gtagFor(win) {
+  win.dataLayer = win.dataLayer || [];
+  if (!win.gtag) {
+    // Must be a real `arguments`-using function, not an arrow: gtag relies on the
+    // arguments object being pushed, not an array.
+    win.gtag = function gtag() {
+      win.dataLayer.push(arguments);
+    };
+  }
+  return win.gtag;
+}
 
-  window.dataLayer = window.dataLayer || [];
-  // Must be a real `arguments`-using function, not an arrow: gtag relies on the
-  // arguments object being pushed, not an array.
-  function gtag() { window.dataLayer.push(arguments); }
-  window.gtag = gtag;
+export function initGa(measurementId, win = globalThis) {
+  if (!measurementId || win[STARTED]) return;
+  win[STARTED] = true;
+
+  const gtag = gtagFor(win);
 
   // Declared BEFORE the tag is appended below, so the command is queued in the
   // dataLayer before gtag.js can process anything — a consent default applied
@@ -44,10 +59,10 @@ export function initGa(measurementId) {
     analytics_storage: "granted",
   });
 
-  const s = document.createElement("script");
+  const s = win.document.createElement("script");
   s.async = true;
   s.src = "https://www.googletagmanager.com/gtag/js?id=" + encodeURIComponent(measurementId);
-  document.head.appendChild(s);
+  win.document.head.appendChild(s);
 
   gtag("js", new Date());
   // Belt-and-braces alongside the ad_storage denial above: still current and
