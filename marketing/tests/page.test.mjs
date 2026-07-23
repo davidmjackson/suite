@@ -8,7 +8,8 @@ import { readFileSync, existsSync } from "node:fs";
 import { join, dirname } from "node:path";
 import { fileURLToPath } from "node:url";
 
-const ROOT = join(dirname(fileURLToPath(import.meta.url)), "..");
+const HERE = dirname(fileURLToPath(import.meta.url));
+const ROOT = join(HERE, "..");
 const PUBLIC = join(ROOT, "public");
 const html = readFileSync(join(PUBLIC, "sprintsight-coming-soon/intro/index.html"), "utf8");
 const css = readFileSync(join(PUBLIC, "sprintsight-coming-soon/intro/sight.css"), "utf8");
@@ -374,11 +375,33 @@ test("the typer re-balances spans, so markup never breaks mid-tag", () => {
 
 /* ---------- evidence ids (§15 coupling) ---------- */
 
-test("Atlas's evidence ids match data-strategy.md, the source of truth", () => {
-  const strategy = readFileSync("/var/www/sight/docs/data/data-strategy.md", "utf8");
-  for (const id of ["burndown-atlas-s15", "slack-atlas-s15-msg-dep", "status-atlas-s15"]) {
-    assert.ok(strategy.includes(id), `${id} is in data-strategy.md`);
+/* The upstream source of truth for these ids is data-strategy.md §6 in the sight
+   repo — a SEPARATE repo, so reading it by absolute path made this whole suite
+   unrunnable on a runner, and worse, made it assert against whatever happened to
+   be checked out in someone else's working tree. The contract is pinned in
+   fixtures/evidence-ids.json instead, so the gate runs everywhere; the live
+   cross-check below still runs wherever the sight repo is actually present. */
+const SIGHT_DOC = "/var/www/sight/docs/data/data-strategy.md";
+const { ids: EVIDENCE_IDS } = JSON.parse(
+  readFileSync(join(HERE, "fixtures/evidence-ids.json"), "utf8")
+);
+
+test("the console cites Atlas's pinned evidence ids", () => {
+  assert.equal(EVIDENCE_IDS.length, 3, "§6 records exactly three Atlas ids");
+  for (const id of EVIDENCE_IDS) {
     assert.ok(js.includes(id), `${id} is cited by the console`);
+  }
+});
+
+test("the pinned ids still match data-strategy.md, the upstream source of truth", {
+  // Skipped rather than failed where the sibling repo is absent (CI, a fresh
+  // clone). The assertion above is the gate that always runs; this one catches
+  // upstream drift on the boxes that have both repos.
+  skip: existsSync(SIGHT_DOC) ? false : `sight repo not present at ${SIGHT_DOC}`,
+}, () => {
+  const strategy = readFileSync(SIGHT_DOC, "utf8");
+  for (const id of EVIDENCE_IDS) {
+    assert.ok(strategy.includes(id), `${id} is in data-strategy.md §6`);
   }
 });
 

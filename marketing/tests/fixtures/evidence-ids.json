@@ -1,0 +1,19 @@
+{
+  "_comment": [
+    "Pinned copy of the Atlas evidence ids that the SprintSight promo console cites.",
+    "Upstream source of truth: the sight repo, docs/data/data-strategy.md section 6",
+    "('Example:'), which is a SEPARATE git repo and therefore cannot be read by this",
+    "test suite on a runner, a container or a fresh clone.",
+    "",
+    "Pinning them here gives the contract a gate that runs everywhere. The live",
+    "cross-repo check in page.test.mjs still runs wherever the sight repo is present",
+    "(ORAC, prod) and will fail if upstream drifts from this file -- at which point",
+    "update this fixture in the same commit as the page copy, so the diff is the",
+    "review record.",
+    "",
+    "Only Atlas has ids recorded in section 6. Boreas/Cygnus/Draco are covered by the",
+    "convention-conformance test instead; see the note above it in page.test.mjs."
+  ],
+  "source": "sight repo, docs/data/data-strategy.md section 6 (Example)",
+  "ids": ["burndown-atlas-s15", "slack-atlas-s15-msg-dep", "status-atlas-s15"]
+}
