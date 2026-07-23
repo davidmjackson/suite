@@ -11,7 +11,7 @@ import { dirname, join } from "node:path";
 
 const HUB = join(dirname(fileURLToPath(import.meta.url)), "..");
 const landing = readFileSync(join(HUB, "public/css/landing.css"), "utf8");
-const theme = readFileSync("/var/www/suite/shared/theme/instrument-core.css", "utf8");
+const theme = readFileSync(join(HUB, "../shared/theme/instrument-core.css"), "utf8");
 
 const token = (name) => {
   const m = theme.match(new RegExp(`--${name}:\\s*(oklch\\([^)]*\\))`));

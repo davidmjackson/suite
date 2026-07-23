@@ -5,7 +5,7 @@
   "description": "sprintsuite.uk marketing surface — static pages, no runtime deps",
   "type": "module",
   "scripts": {
-    "drift": "node /var/www/suite/shared/theme/check-theme-drift.mjs /var/www/suite/marketing",
+    "drift": "node ../shared/theme/check-theme-drift.mjs .",
     "og": "bash tools/build-og.sh",
     "test": "npm run drift && node --test tests/"
   },

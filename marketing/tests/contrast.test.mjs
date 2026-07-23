@@ -14,8 +14,9 @@ import { readFileSync } from "node:fs";
 import { join, dirname } from "node:path";
 import { fileURLToPath } from "node:url";
 
-const THEME = "/var/www/suite/shared/theme/instrument-core.css";
-const SIGHT = join(dirname(fileURLToPath(import.meta.url)), "../public/sprintsight-coming-soon/intro/sight.css");
+const HERE = dirname(fileURLToPath(import.meta.url));
+const THEME = join(HERE, "../../shared/theme/instrument-core.css");
+const SIGHT = join(HERE, "../public/sprintsight-coming-soon/intro/sight.css");
 
 /* ---------- colour maths ---------- */
 
