@@ -4,16 +4,18 @@
 (function () {
   var INTERVAL_MS = 60000;
   function ping() {
-    fetch("/api/heartbeat", { method: "POST", credentials: "same-origin" })
+    fetch('/api/heartbeat', { method: 'POST', credentials: 'same-origin' })
       .then(function (r) {
         if (r.status === 401) {
           window.location.reload();
         }
       })
-      .catch(function () { /* transient network error; try again next interval */ });
+      .catch(function () {
+        /* transient network error; try again next interval */
+      });
   }
   setInterval(ping, INTERVAL_MS);
-  document.addEventListener("visibilitychange", function () {
-    if (document.visibilityState === "visible") ping();
+  document.addEventListener('visibilitychange', function () {
+    if (document.visibilityState === 'visible') ping();
   });
 })();

@@ -1,5 +1,5 @@
 // handlers/logout.js
-const { parseCookies, clearSessionCookie } = require("../lib/cookies.js");
+const { parseCookies, clearSessionCookie } = require('../lib/cookies.js');
 
 function createLogoutHandler(ctx) {
   return async function handleLogout(req, res) {
