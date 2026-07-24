@@ -110,18 +110,8 @@ test("content below the hero is visible with JS off", () => {
   assert.match(ns[1], /\.bar i \{ width: 100%; \}/);
 });
 
-test("the console shows its default payload with JS off, and it matches sight.js", () => {
-  // The panel is filled by JS, so without this it is a blank 352px dark box.
-  // Embedded via <noscript> so that with JS on it is not rendered at all and the
-  // typer still starts from empty — no flash of content.
-  const panel = html.match(/<pre class="con-body"[^>]*>([\s\S]*?)<\/pre>/)[1];
-  const fallback = panel.match(/<noscript>([\s\S]*)<\/noscript>/);
-  assert.ok(fallback, "the panel carries a noscript fallback");
-  // It is duplicated from sight.js, so pin it: this is the only thing stopping drift.
-  const atlas = js.match(/^\s{4}atlas: \{\n\s+foot: "[^"]+",\n\s+body: `([\s\S]*?)`,\n\s{4}\},$/m);
-  assert.ok(atlas, "the atlas payload is readable from sight.js");
-  assert.equal(fallback[1], atlas[1], "the no-JS fallback must be the ATLAS payload verbatim");
-});
+/* The no-JS console fallback is guarded in tests/sight-runtime.test.mjs, which
+   runs sight.js and compares the markup against what the page really renders. */
 
 /* ---------- semantics (§11.3) ---------- */
 
@@ -369,9 +359,8 @@ test("the typer clears its interval before starting, or tabs interleave", () => 
   );
 });
 
-test("the typer re-balances spans, so markup never breaks mid-tag", () => {
-  assert.match(js, /<\/span>"\.repeat\(Math\.max\(0, open - close\)\)/);
-});
+/* The typer's span re-balancing is guarded in tests/sight-runtime.test.mjs,
+   which runs the real tick over every cut of every payload. */
 
 /* ---------- evidence ids (§15 coupling) ---------- */
 
@@ -427,15 +416,8 @@ test("CSS restores the end state when motion is off, hiding nothing", () => {
   assert.match(block, /\.bar i \{ width: 100%; \}/);
 });
 
-test("JS branches on reduced motion too, since CSS cannot stop a setInterval", () => {
-  assert.match(js, /matchMedia\("\(prefers-reduced-motion: reduce\)"\)\.matches/);
-  // the console must still be fully populated, not left empty
-  assert.match(js, /if \(reduce\) \{\s*panel\.innerHTML = full;/);
-});
-
-test("the dashed connector is skipped by the line-draw, or its dashes are destroyed", () => {
-  assert.match(js, /if \(p\.getAttribute\("stroke-dasharray"\)\) return;/);
-});
+/* The JS reduced-motion branch and the dashed-connector skip are guarded in
+   tests/sight-runtime.test.mjs, which runs sight.js under both preferences. */
 
 /* ---------- form (§7.10) ---------- */
 
@@ -457,22 +439,8 @@ test("all five form states exist", () => {
   assert.match(js, /btn\.disabled = true/, "pending disables submit");
 });
 
-test("the error path fully restores the form, leaving nothing stuck", () => {
-  // The endpoint is null, so EVERY submit lands here. If the catch block forgets
-  // any of these the button stays disabled and aria-busy stays true forever, and
-  // the form is dead until reload. Assert the recovery, not just the disable.
-  const cat = js.slice(js.indexOf("} catch {"), js.indexOf("});", js.indexOf("} catch {")));
-  assert.match(cat, /btn\.disabled = false/, "re-enables the button");
-  assert.match(cat, /btn\.textContent = label/, "restores the button label");
-  assert.match(cat, /form\.removeAttribute\("aria-busy"\)/, "clears aria-busy");
-  assert.match(cat, /say\(/, "tells the user what happened");
-});
-
-test("submit never silently no-ops while the endpoint is unset", () => {
-  assert.match(js, /const NOTIFY_ENDPOINT = null/);
-  assert.match(js, /console\.warn/);
-  assert.match(js, /throw new Error\("NOTIFY_ENDPOINT not configured"\)/);
-});
+/* The error path's recovery and the "never silently no-op" honesty guard are in
+   tests/sight-runtime.test.mjs, which drives the real submit handler. */
 
 test("success removes the form, leaving no live form behind a result", () => {
   assert.match(js, /form\.remove\(\)/);

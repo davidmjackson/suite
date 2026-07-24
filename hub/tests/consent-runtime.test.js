@@ -213,6 +213,56 @@ test("choosing Accept starts analytics", () => {
   assert.equal(win.__appended.length, 1);
 });
 
+test("only the exact string \"granted\" starts analytics, never a near miss", () => {
+  // The single gate in front of GA on the public pages: the server hands the
+  // client the ss_consent cookie as data-consent, and only the exact string
+  // "granted" may start GA. A cookie value that is not exactly the granted state
+  // must leave the visitor with no contact with Google — a prefix, case-folding,
+  // trimming or truthiness check would load gtag.js for a tampered ss_consent,
+  // breaking the UK-PECR design and the published /privacy + landing-FAQ promise
+  // that "nothing runs unless you accept".
+  //
+  // This used to be `assert.match(bannerSrc, /=== "granted"/)` over in
+  // tests/consent-banner.test.js — a grep for characters, which said nothing
+  // about what those characters do (and broke on a re-quote). applyConsent() is
+  // the exported gate in front of initGa(), so drive the real module instead and
+  // watch whether it reaches for Google.
+  const tampered = [
+    "granted-ish",
+    "grantedx",
+    "granted ",
+    " granted",
+    "granted; ok",
+    "Granted",
+    "GRANTED",
+    "gr",
+    "true",
+    "1",
+    "yes",
+    "denied",
+    "",
+  ];
+
+  for (const value of tampered) {
+    const win = stubWin();
+    const shown = JSON.stringify(value);
+
+    applyConsent(value, GA_ID, win);
+
+    assert.equal(win.__appended.length, 0, `${shown} must not load gtag.js`);
+    assert.equal(win.dataLayer, undefined, `${shown} must queue no gtag command`);
+    assert.equal(win[`ga-disable-${GA_ID}`], true, `${shown} must leave GA disabled`);
+  }
+
+  // Positive control. Without it every assertion above is satisfied by an
+  // applyConsent() gutted into a no-op, and the guard would report a safety it
+  // no longer provides.
+  const accepted = stubWin();
+  applyConsent("granted", GA_ID, accepted);
+  assert.equal(accepted.__appended.length, 1, "an exact accept still starts GA");
+  assert.notEqual(accepted[`ga-disable-${GA_ID}`], true, "an exact accept is not disabled");
+});
+
 test("choosing Reject never loads gtag in the first place", () => {
   // The design's central promise: a visitor who does not accept has no contact
   // with Google at all, so the rejecting path must never append the script.

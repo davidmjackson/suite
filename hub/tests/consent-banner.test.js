@@ -14,6 +14,30 @@ const pub = join(__dirname, "..", "public");
 const bannerSrc = readFileSync(join(pub, "js", "consent-banner.js"), "utf8");
 const gaSrc = readFileSync(join(pub, "js", "ga.js"), "utf8");
 
+// A formatting-agnostic view of a JS source, for the few invariants that live in
+// code no test can execute. Whole-line comments are dropped (so prose can never
+// satisfy an assertion), single-quoted string literals are rewritten with double
+// quotes, and runs of whitespace collapse to one space. Nothing meaningful is
+// removed: every token is still present, in order. This normalises what the
+// assertions READ; it does not soften what they DEMAND.
+function normalise(src) {
+  return src
+    .replace(/^[ \t]*\/\/.*$/gm, "")
+    .replace(/\/\*[\s\S]*?\*\//g, "")
+    .replace(/"(?:[^"\\\n]|\\.)*"|'((?:[^'\\\n]|\\.)*)'/g, (whole, single) =>
+      single === undefined ? whole : `"${single.replace(/"/g, '\\"')}"`,
+    )
+    .replace(/\s+/g, " ")
+    .trim();
+}
+const bannerCode = normalise(bannerSrc);
+
+// Slices of normalised source surrounding each mention of `word`.
+const near = (code, word, span = 40) =>
+  [...code.matchAll(new RegExp(word, "g"))].map((m) =>
+    code.slice(Math.max(0, m.index - span), m.index + word.length + span),
+  );
+
 for (const asset of ["/js/consent-banner.js", "/js/ga.js", "/css/consent.css"]) {
   test(`GET ${asset} serves 200`, async () => {
     const { app } = await buildTestApp();
@@ -27,14 +51,35 @@ test("ga.js is the only place that reaches googletagmanager", () => {
   assert.doesNotMatch(bannerSrc, /googletagmanager/, "the banner must go through initGa()");
 });
 
-test("the banner matches the granted state exactly, never loosely", () => {
-  // A prefix or truthiness check here would load GA for a tampered cookie value.
-  // The old form of this test also counted initGa( call sites, which pinned the
-  // shape of the implementation rather than its behaviour and went stale the
-  // moment the decision moved into applyConsent(). What it was really guarding —
-  // GA starts on accept, never on reject — is asserted executably in
-  // tests/consent-runtime.test.js against the real module.
-  assert.match(bannerSrc, /=== "granted"/);
+test("the banner never compares the consent state loosely", () => {
+  // A prefix, case-folding, trimming or truthiness check here would load GA for a
+  // tampered ss_consent cookie. That the gate REJECTS every near miss is asserted
+  // executably against the real module in tests/consent-runtime.test.js — "only
+  // the exact string granted starts analytics". Two gaps remain that no runtime
+  // test can reach, and they are what this test covers — read over the normalised
+  // source rather than the raw file, so re-quoting or reflowing cannot break it:
+  //
+  //  1. `==` instead of `===` is indistinguishable at runtime for two strings,
+  //     so no input can expose it — but it is exactly the coercion this guard
+  //     exists to forbid.
+  //  2. start() reads the data-consent attribute and dispatches on it. It
+  //     touches document, so it is not exported and not executable here.
+  assert.match(bannerCode, /===\s*"granted"/, "the granted state is compared strictly");
+
+  const loose = /(?<![=!])==(?!=)|(?:startsWith|endsWith|includes|indexOf|search|match|test)\s*\(/;
+  for (const context of near(bannerCode, "granted")) {
+    assert.doesNotMatch(context, loose, `loose handling of the granted state near: ${context}`);
+  }
+
+  // And the state that is acted on must be the state that was read: passing a
+  // hard-coded "granted" on into a call would load GA for whatever the cookie
+  // actually said. (choose("granted"), a single literal argument from the
+  // Accept button, is deliberately not caught by this.)
+  assert.doesNotMatch(
+    bannerCode,
+    /\(\s*"granted"\s*,/,
+    "the granted state is read from the page, never hard-coded into a call",
+  );
 });
 
 test("the banner writes the agreed cookie attributes", () => {
