@@ -5,11 +5,16 @@ import { createAuditLogger } from "../lib/audit.js";
 import { validate } from "../lib/validate.js";
 import { magicPostSchema } from "../schemas/magic.js";
 
+// Every domain the hub accepts as a return_to must appear here, or a sign-in that
+// asked for that app silently lands on /dashboard instead. sprintplan.uk was
+// missing: it is an allowed return domain and a launched app (see launch.js and
+// the dashboard tile), so a Sprintplan magic link dropped its destination.
 const APP_BY_DOMAIN = {
   "sprintraid.uk": "raid",
   "sprintsignal.uk": "signal",
   "sprintretro.uk": "retro",
   "sprintpoker.uk": "poker",
+  "sprintplan.uk": "plan",
 };
 
 const expiredError = (res) =>

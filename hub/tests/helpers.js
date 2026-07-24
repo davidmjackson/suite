@@ -9,13 +9,25 @@ import { analyticsLocals } from "../middleware/analytics.js";
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 
+// All five launched apps. This had drifted to four (no sprintplan.uk), which is
+// what blinded the suite to a Sprintplan magic link landing on /dashboard: the
+// return-domain guard in magic.test.js walks THIS list, so a domain missing here
+// is a domain nothing checks.
+const APP_DOMAINS = [
+  "https://sprintraid.uk",
+  "https://sprintsignal.uk",
+  "https://sprintretro.uk",
+  "https://sprintpoker.uk",
+  "https://sprintplan.uk",
+].join(",");
+
 export async function buildTestApp({ env = {} } = {}) {
   process.env.BASE_URL ??= "https://test";
   process.env.DB_PATH ??= ":memory:";
   process.env.RESEND_API_KEY ??= "test";
   process.env.FROM_EMAIL ??= "login@test";
   process.env.COOKIE_SECRET ??= "x";
-  process.env.ALLOWED_APP_DOMAINS ??= "https://sprintraid.uk,https://sprintsignal.uk,https://sprintretro.uk,https://sprintpoker.uk";
+  process.env.ALLOWED_APP_DOMAINS ??= APP_DOMAINS;
   process.env.HUB_API_KEY_RAID ??= "k-raid";
   process.env.HUB_API_KEY_SIGNAL ??= "k-signal";
   process.env.HUB_API_KEY_RETRO ??= "k-retro";
