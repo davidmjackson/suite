@@ -48,7 +48,8 @@ const TEAMS = ['atlas', 'boreas', 'cygnus', 'draco'];
    --------------------------------------------------------------------------- */
 
 // src[i] opens a quote; returns the index just past its closing quote.
-function skipQuoted(src, i, q) {
+function skipQuoted(src, i) {
+  const q = src[i];
   for (i++; i < src.length; i++) {
     if (src[i] === '\\') i++;
     else if (src[i] === q) return i + 1;
@@ -66,23 +67,33 @@ function skipTemplate(src, i) {
   throw new Error('sight.js: unterminated template literal inside the payload table');
 }
 
+// src[i] === "/"; returns the index just past the comment it opens, -1 if that
+// comment is unterminated, or null when it opened no comment at all.
+function skipComment(src, i) {
+  if (src[i + 1] === '/') {
+    const nl = src.indexOf('\n', i);
+    return nl === -1 ? -1 : nl + 1;
+  }
+  if (src[i + 1] !== '*') return null; // a lone "/" is division, not a comment
+  const end = src.indexOf('*/', i + 2);
+  return end === -1 ? -1 : end + 2;
+}
+
+/* The constructs that may hold a brace which is not structural, keyed by the
+   character that opens them. Each takes (src, i) and answers the same three
+   ways — an index just past itself, -1 unterminated, or null for "not one of
+   mine after all" — so the scanner below can dispatch instead of branching. */
+const SKIPPERS = { "'": skipQuoted, '"': skipQuoted, '`': skipTemplate, '/': skipComment };
+
 // src[open] === "{"; returns the index just past its matching "}".
 function skipBraces(src, open) {
   for (let i = open + 1; i < src.length; i++) {
-    const c = src[i];
-    const d = src[i + 1];
-    if (c === '/' && d === '/') {
-      const nl = src.indexOf('\n', i);
-      if (nl === -1) break;
-      i = nl;
-    } else if (c === '/' && d === '*') {
-      const end = src.indexOf('*/', i + 2);
-      if (end === -1) break;
-      i = end + 1;
-    } else if (c === "'" || c === '"') i = skipQuoted(src, i, c) - 1;
-    else if (c === '`') i = skipTemplate(src, i) - 1;
-    else if (c === '{') i = skipBraces(src, i) - 1;
-    else if (c === '}') return i + 1;
+    const skipper = SKIPPERS[src[i]];
+    const past = skipper ? skipper(src, i) : null;
+    if (past === -1) break; // unterminated, so there is no closing brace to find
+    if (past !== null) i = past - 1;
+    else if (src[i] === '{') i = skipBraces(src, i) - 1;
+    else if (src[i] === '}') return i + 1;
   }
   throw new Error('sight.js: unbalanced braces — the payload table has no end');
 }
@@ -204,9 +215,10 @@ function stubEl(id) {
   return el;
 }
 
-// Runs the shipped sight.js and returns, per team, the payload render() actually
-// used and every innerHTML it wrote while typing it.
-function runShippedTyper(source, teams) {
+/* The DOM render() writes to. The panel's innerHTML is the observable, so it is
+   an accessor that RECORDS every write in order — the resting value alone would
+   be satisfied by a typer that jumped straight to the finished payload. */
+function stubTyperDom(teams) {
   const els = new Map();
   const el = (id) => els.get(id) || (els.set(id, stubEl(id)), els.get(id));
 
@@ -215,21 +227,49 @@ function runShippedTyper(source, teams) {
   let html = '';
   Object.defineProperty(panel, 'innerHTML', {
     get: () => html,
-    set: (v) => void (writes.push(v), (html = v)),
+    set(v) {
+      writes.push(v);
+      html = v;
+    },
   });
-  const footL = el('footL');
-  const tabs = teams.map((t) => Object.assign(stubEl(`tab-${t}`), { dataset: { t } }));
+  return {
+    el,
+    writes,
+    panel,
+    footL: el('footL'),
+    tabs: teams.map((t) => Object.assign(stubEl(`tab-${t}`), { dataset: { t } })),
+  };
+}
 
+/* The typer's clock. Nothing fires on its own: `drain()` runs the interval
+   render() most recently started until it clears itself, so the frames come out
+   in the order a browser would have produced them, and a typer that never
+   cleared its interval fails the test instead of hanging it. */
+function fakeTimers() {
+  const timers = new Map();
   let nextId = 1;
   let liveId = 0;
-  const timers = new Map();
+  return {
+    setInterval: (fn) => (timers.set((liveId = nextId++), fn), liveId),
+    clearInterval: (id) => void timers.delete(id),
+    drain() {
+      const id = liveId;
+      for (let guard = 0; timers.has(id); guard++) {
+        assert.ok(guard < 50000, 'the typer interval never cleared itself');
+        timers.get(id)();
+      }
+    },
+  };
+}
 
-  const sandbox = {
+// The browser globals sight.js reaches for on load, over that DOM and that clock.
+function typerSandbox({ el, tabs }, timers) {
+  return {
     console: { warn() {}, log() {}, error() {} },
     // reduced motion OFF, or render() short-circuits and never types at all
     matchMedia: () => ({ matches: false }),
-    setInterval: (fn) => (timers.set((liveId = nextId++), fn), liveId),
-    clearInterval: (id) => void timers.delete(id),
+    setInterval: timers.setInterval,
+    clearInterval: timers.clearInterval,
     setTimeout: () => 0,
     clearTimeout() {},
     IntersectionObserver: class {
@@ -242,25 +282,24 @@ function runShippedTyper(source, teams) {
       querySelectorAll: (sel) => (sel.includes('role="tab"') ? tabs : []),
     },
   };
+}
+
+// Runs the shipped sight.js and returns, per team, the payload render() actually
+// used and every innerHTML it wrote while typing it.
+function runShippedTyper(source, teams) {
+  const dom = stubTyperDom(teams);
+  const timers = fakeTimers();
+  const sandbox = typerSandbox(dom, timers);
   createContext(sandbox);
   runInContext(source, sandbox, { filename: 'sight.js' });
-
-  // Drain the interval render() just started; it clears itself on the last tick.
-  const drain = () => {
-    const id = liveId;
-    for (let guard = 0; timers.has(id); guard++) {
-      assert.ok(guard < 50000, 'the typer interval never cleared itself');
-      timers.get(id)();
-    }
-  };
 
   const out = {};
   let cursor = 0;
   teams.forEach((team, n) => {
-    if (n > 0) tabs[n].fire('click'); // tab 0 is rendered by sight.js on load
-    drain();
-    out[team] = { foot: footL.textContent, frames: writes.slice(cursor) };
-    cursor = writes.length;
+    if (n > 0) dom.tabs[n].fire('click'); // tab 0 is rendered by sight.js on load
+    timers.drain();
+    out[team] = { foot: dom.footL.textContent, frames: dom.writes.slice(cursor) };
+    cursor = dom.writes.length;
   });
   return out;
 }
@@ -335,6 +374,36 @@ const P = payloads();
    all pass while checking nothing. So this asserts the RECOVERED DATA, not just
    its key names, and re-extracts independently of module scope so it fails on its
    own terms rather than relying on P having been built correctly. */
+/* Everything one recovered payload must satisfy on its own terms: its shape, the
+   footer contract the evidence-count test parses a number out of, that the body
+   really is THIS team's, and that it is the WHOLE body. */
+function assertPayloadIsWholeAndOwn(team, p) {
+  assert.deepEqual(Object.getOwnPropertyNames(p).sort(), ['body', 'foot'], `${team} payload shape`);
+  assert.match(p.foot, /^verdict · \d+ evidence ids$/, `${team} foot`);
+
+  // A scrape that mis-paired key and body would satisfy a key-set check, and is
+  // caught here instead.
+  const Team = team[0].toUpperCase() + team.slice(1);
+  assert.ok(
+    p.body.startsWith(
+      `<span class="p">$</span> sprintsight detect <span class="s">--team ${Team} --sprint 15</span>\n`,
+    ),
+    `${team} body must be ${Team}'s payload, opening on its own invocation line`,
+  );
+
+  // A truncated body still balances at every tick, so the balancing tests would
+  // happily pass over a fragment. These three clauses are what rule that out.
+  const spans = (p.body.match(/<span/g) || []).length;
+  assert.ok(spans >= 15, `${team} body looks truncated: only ${spans} spans`);
+  assert.ok(
+    p.body.includes('<span class="k">"explanation"</span>') && p.body.includes('\n}'),
+    `${team} body must run through to the closing brace of the JSON object`,
+  );
+  assert.ok(p.body.trimEnd().endsWith('</span>'), `${team} body must end on a closed span`);
+  // Nothing from the surrounding source may leak in: an over-run would.
+  assert.doesNotMatch(p.body, /`/, `${team} body must not carry source delimiters`);
+}
+
 test('all four payloads are recoverable from the shipped source', () => {
   const V = payloads();
 
@@ -344,40 +413,10 @@ test('all four payloads are recoverable from the shipped source', () => {
 
   const seen = new Map();
   for (const team of TEAMS) {
-    const p = V[team];
-    assert.deepEqual(
-      Object.getOwnPropertyNames(p).sort(),
-      ['body', 'foot'],
-      `${team} payload shape`,
-    );
-
-    // The footer contract the evidence-count test below parses a number out of.
-    assert.match(p.foot, /^verdict · \d+ evidence ids$/, `${team} foot`);
-
-    // The body must be THIS team's payload — a scrape that mis-pairs key and
-    // body would satisfy a key-set check but is caught here.
-    const Team = team[0].toUpperCase() + team.slice(1);
-    assert.ok(
-      p.body.startsWith(
-        `<span class="p">$</span> sprintsight detect <span class="s">--team ${Team} --sprint 15</span>\n`,
-      ),
-      `${team} body must be ${Team}'s payload, opening on its own invocation line`,
-    );
-
-    // ...and it must be the WHOLE payload. A truncated body still balances at
-    // every tick, so the balancing tests would happily pass over a fragment.
-    const spans = (p.body.match(/<span/g) || []).length;
-    assert.ok(spans >= 15, `${team} body looks truncated: only ${spans} spans`);
-    assert.ok(
-      p.body.includes('<span class="k">"explanation"</span>') && p.body.includes('\n}'),
-      `${team} body must run through to the closing brace of the JSON object`,
-    );
-    assert.ok(p.body.trimEnd().endsWith('</span>'), `${team} body must end on a closed span`);
-    // Nothing from the surrounding source may leak in: an over-run would.
-    assert.doesNotMatch(p.body, /`/, `${team} body must not carry source delimiters`);
-
-    assert.ok(!seen.has(p.body), `${team} body is a duplicate of ${seen.get(p.body)}`);
-    seen.set(p.body, team);
+    assertPayloadIsWholeAndOwn(team, V[team]);
+    const { body } = V[team];
+    assert.ok(!seen.has(body), `${team} body is a duplicate of ${seen.get(body)}`);
+    seen.set(body, team);
   }
 
   // And the shared P the rest of the file iterates is the same four.
@@ -481,12 +520,29 @@ test('payload JSON matches the detector contract field for field', () => {
   }
 });
 
+/* One team's verdict, asserted twice over, because the page makes the claim
+   twice: once as the JSON VALUE a reader could copy out, and once as the COLOUR
+   they actually see. The swatch pattern lives inside a template literal, which a
+   formatter must never rewrite, so it stays pinned character for character. */
+function assertVerdict(team, body, flagged) {
+  const colour = flagged ? 'red' : 'grn'; // red = flagged, grn = cleared
+  const json = payloadJson(body);
+  assert.equal(
+    typeof json.is_watermelon,
+    'boolean',
+    `${team} is_watermelon must be a JSON boolean, not a string`,
+  );
+  assert.equal(json.is_watermelon, flagged, `${team} is_watermelon`);
+  assert.match(
+    body,
+    new RegExp(`"is_watermelon"</span>: <span class="${colour}">${flagged}</span>`),
+    `${team} verdict must render as class="${colour}">${flagged}`,
+  );
+}
+
 test('only Atlas is a watermelon; the three guards are not flagged', () => {
   // The whole credibility claim: honest amber and the decoy must never flag.
-  // Asserted twice over, because the page makes the claim twice: once as the
-  // JSON VALUE a reader could copy out, once as the COLOUR they actually see.
   const VERDICT = { atlas: true, boreas: false, cygnus: false, draco: false };
-  const COLOUR = { true: 'red', false: 'grn' }; // red = flagged, grn = cleared
 
   assert.deepEqual(
     Object.keys(P).sort(),
@@ -494,25 +550,7 @@ test('only Atlas is a watermelon; the three guards are not flagged', () => {
     'all four payloads must be recoverable, or the claim below guards nothing',
   );
 
-  for (const [team, flagged] of Object.entries(VERDICT)) {
-    const json = payloadJson(P[team].body);
-    assert.equal(
-      typeof json.is_watermelon,
-      'boolean',
-      `${team} is_watermelon must be a JSON boolean, not a string`,
-    );
-    assert.equal(json.is_watermelon, flagged, `${team} is_watermelon`);
-    // ...and the swatch must say the same thing as the value it wraps. This
-    // lives inside a template literal, which a formatter must never rewrite, so
-    // it stays pinned character for character exactly as the original had it.
-    assert.match(
-      P[team].body,
-      new RegExp(
-        `"is_watermelon"</span>: <span class="${COLOUR[String(flagged)]}">${flagged}</span>`,
-      ),
-      `${team} verdict must render as class="${COLOUR[String(flagged)]}">${flagged}`,
-    );
-  }
+  for (const [team, flagged] of Object.entries(VERDICT)) assertVerdict(team, P[team].body, flagged);
 
   // Exactly one team is flagged, and it is Atlas.
   const flaggedTeams = Object.keys(P)

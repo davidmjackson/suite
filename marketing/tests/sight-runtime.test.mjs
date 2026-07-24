@@ -1,5 +1,5 @@
 // tests/sight-runtime.test.mjs
-// Executable tests for the Sprintsight promo page's runtime (sight.js).
+// Executable tests for the Sprintsight promo page runtime (sight.js).
 //
 // The rest of the promo suite (tests/page.test.mjs) greps the source, because
 // sight.js is an IIFE against the DOM and there is no jsdom here. Those greps
@@ -8,9 +8,9 @@
 // passes for a file that never runs, and fails for a working one whose quotes
 // changed. Six of them were exactly that shape.
 //
-// So sight.js is RUN here instead: executed in a vm over ONE stub browser that
-// records what it did, and the assertions are about what the page does. No
-// jsdom, and nothing mocks the unit under test.
+// So sight.js is RUN here instead, in the stub browser from ./sight-stub.mjs,
+// and the assertions are about what the page DOES. No jsdom, and nothing mocks
+// the unit under test.
 //
 // These live in their own file because page.test.mjs is already a god-file
 // asserting across HTML, CSS, JS, SVG, PNG and an external doc. These six are
@@ -20,273 +20,7 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
 import vm from "node:vm";
-import { readFileSync } from "node:fs";
-import { join, dirname } from "node:path";
-import { fileURLToPath } from "node:url";
-
-const HERE = dirname(fileURLToPath(import.meta.url));
-const PUBLIC = join(HERE, "..", "public");
-const INTRO = join(PUBLIC, "sprintsight-coming-soon/intro");
-const html = readFileSync(join(INTRO, "index.html"), "utf8");
-const js = readFileSync(join(INTRO, "sight.js"), "utf8");
-
-// The real tab buttons — ids and payload keys — straight from the page, so the
-// harness drives the tablist the page actually ships rather than a fixture of it.
-const TABS = [...html.matchAll(/<button[^>]*role="tab"[^>]*>/g)].map((m) => ({
-  id: (m[0].match(/id="([^"]+)"/) || [])[1],
-  key: (m[0].match(/data-t="([^"]+)"/) || [])[1],
-}));
-
-/* Seeded from the copy the page actually ships, not a constant that can drift
-   away from it — and overridable, because "restores the label" must mean the
-   button's OWN label. A handler that re-assigns today's literal instead of the
-   value it captured is invisible to a stub seeded with that same literal, and is
-   a live bug the day the button's copy changes. */
-const SHIPPED_LABEL = (html.match(/<button[^>]*type="submit"[^>]*>([^<]+)<\/button>/) || [])[1];
-
-/* ---------- the stub browser -----------------------------------------------
-   sight.js is an IIFE with no exports, so it cannot be imported — but it can be
-   RUN. One node factory serves every node the page touches; each node keeps a
-   write log, so a test can assert the whole pending -> error -> restored
-   SEQUENCE rather than a resting state that a handler which never ran would also
-   satisfy. Selectors route by substring and timers are fake and hand-driven, so
-   adding DOM code to sight.js degrades to a no-op here rather than a false pass. */
-
-function stubNode(opts = {}) {
-  const attrs = new Map(Object.entries(opts.attrs || {}));
-  // Seeded through the backing fields, never the setters: a seed must not show
-  // up in the log as though the page had written it.
-  let textContent = opts.textContent ?? "";
-  let innerHTML = "";
-  let disabled = false;
-
-  const log = { text: [], html: [], disabled: [], attrs: [], asked: [], animated: [], measured: 0 };
-  const n = {
-    log,
-    id: opts.id || "",
-    dataset: { ...(opts.dataset || {}) },
-    outerHTML: opts.outerHTML || "",
-    kids: opts.kids || {},
-    style: {},
-    className: "",
-    value: opts.value ?? "",
-    tabIndex: 0,
-    removed: false,
-    classes: new Set(),
-    listeners: Object.create(null),
-
-    get textContent() {
-      return textContent;
-    },
-    set textContent(v) {
-      textContent = v;
-      log.text.push(v);
-    },
-    get innerHTML() {
-      return innerHTML;
-    },
-    set innerHTML(v) {
-      innerHTML = v;
-      log.html.push(v);
-    },
-    get disabled() {
-      return disabled;
-    },
-    set disabled(v) {
-      disabled = v;
-      log.disabled.push(v);
-    },
-
-    setAttribute(k, v) {
-      attrs.set(k, String(v));
-      log.attrs.push(`+${k}=${v}`);
-    },
-    getAttribute(k) {
-      log.asked.push(k);
-      return attrs.has(k) ? attrs.get(k) : null;
-    },
-    removeAttribute(k) {
-      attrs.delete(k);
-      log.attrs.push(`-${k}`);
-    },
-
-    addEventListener(type, fn) {
-      (n.listeners[type] ||= []).push(fn);
-    },
-    dispatch(type, ev = {}) {
-      for (const fn of n.listeners[type] || []) fn({ preventDefault() {}, ...ev });
-    },
-
-    querySelector: (sel) => n.querySelectorAll(sel)[0] || null,
-    querySelectorAll(sel) {
-      for (const [key, val] of Object.entries(n.kids)) if (sel.includes(key)) return val;
-      return [];
-    },
-
-    focus() {},
-    remove() {
-      n.removed = true;
-    },
-    checkValidity: () => opts.valid !== false,
-    getTotalLength() {
-      log.measured++;
-      return 120;
-    },
-    animate(frames, options) {
-      log.animated.push({ frames, opts: options });
-    },
-  };
-  n.classList = {
-    add: (c) => n.classes.add(c),
-    remove: (c) => n.classes.delete(c),
-    contains: (c) => n.classes.has(c),
-  };
-  return n;
-}
-
-function runSight({ reducedMotion = false, valid = true, fetchImpl, label = SHIPPED_LABEL } = {}) {
-  // Without this an extraction that silently returned nothing would seed the
-  // button with undefined, and every label assertion would pass vacuously.
-  assert.ok(label, "the submit button has a label to restore");
-  assert.ok(TABS.length > 0 && TABS.every((t) => t.id && t.key), "the page ships a wired tablist");
-
-  const mediaQueries = [];
-  const warned = [];
-  const sent = [];
-  const live = new Map();
-  const timeouts = [];
-  let nextId = 1;
-  let intervalsStarted = 0;
-
-  const tabNodes = TABS.map((t) => stubNode({ id: t.id, dataset: { t: t.key } }));
-
-  // The reveal block: counter with its suffix markup, a bar, and two .ln paths —
-  // one already dashed (the chat connector, tell 02) and one plain.
-  const suffix = stubNode({ outerHTML: '<span class="suffix">/4</span>' });
-  const counter = stubNode({ dataset: { n: "4" }, kids: { span: [suffix] } });
-  const bar = stubNode({ dataset: { w: "100" } });
-  const dashedPath = stubNode({ attrs: { "stroke-dasharray": "3 3" } });
-  const solidPath = stubNode();
-  const reveal = stubNode({
-    kids: { "[data-n]": [counter], ".bar i": [bar], ".ln": [dashedPath, solidPath] },
-  });
-
-  // The notify form. `label` seeds the button so that "restores the label" is
-  // testable against a label the handler cannot have hard-coded.
-  const btn = stubNode({ textContent: label });
-  const form = stubNode({ kids: { button: [btn] } });
-  const input = stubNode({ value: "someone@example.com", valid });
-  // starts empty on purpose: "the user was told something" must not pass by default
-  const msg = stubNode();
-
-  const byId = { conPanel: null, footL: null, notifyForm: form, notifyEmail: input, notifyMsg: msg };
-  const doc = {
-    getElementById(id) {
-      if (!(id in byId) || byId[id] === null) byId[id] = stubNode({ id });
-      return byId[id];
-    },
-    querySelectorAll(sel) {
-      if (/role=["']tab["']/.test(sel)) return tabNodes;
-      if (sel.includes(".rv")) return [reveal];
-      return [];
-    },
-    querySelector: (sel) => doc.querySelectorAll(sel)[0] || null,
-  };
-
-  let ioCallback = null;
-  const sandbox = {
-    document: doc,
-    console: { ...console, warn: (...a) => warned.push(a.join(" ")) },
-    matchMedia(q) {
-      mediaQueries.push(q);
-      // only the reduce query flips; anything else this page asks about is false
-      return { media: q, matches: reducedMotion && /prefers-reduced-motion\s*:\s*reduce/.test(q) };
-    },
-    IntersectionObserver: class {
-      constructor(cb) {
-        ioCallback = cb;
-      }
-      observe() {}
-      unobserve() {}
-    },
-    setInterval(fn) {
-      intervalsStarted++;
-      const id = nextId++;
-      live.set(id, fn);
-      return id;
-    },
-    clearInterval: (id) => void live.delete(id),
-    setTimeout(fn) {
-      timeouts.push(fn);
-      return nextId++;
-    },
-    // Rejects by default, so the catch block is reached whether or not an
-    // endpoint is configured; pass fetchImpl to observe the call or to succeed.
-    fetch: (...args) => {
-      sent.push(args);
-      return fetchImpl ? fetchImpl(...args) : Promise.reject(new Error("network down"));
-    },
-  };
-  sandbox.window = sandbox;
-  sandbox.globalThis = sandbox;
-  vm.createContext(sandbox);
-  vm.runInContext(js, sandbox, { filename: "sight.js" });
-
-  const api = {
-    mediaQueries,
-    warned,
-    sent,
-    label,
-    tabNodes,
-    counter,
-    bar,
-    dashedPath,
-    solidPath,
-    form,
-    btn,
-    msg,
-    panel: doc.getElementById("conPanel"),
-    foot: doc.getElementById("footL"),
-    get intervalsStarted() {
-      return intervalsStarted;
-    },
-    ariaBusy: () => form.getAttribute("aria-busy"),
-    busyLog: () => form.log.attrs.filter((a) => a.includes("aria-busy")),
-    /* Fires the IntersectionObserver for the reveal block, as scrolling would. */
-    scrollIntoView() {
-      assert.ok(ioCallback, "sight.js observes the reveal blocks");
-      ioCallback([{ isIntersecting: true, target: reveal }]);
-      return api;
-    },
-    clickTab(i) {
-      tabNodes[i].dispatch("click");
-      return api;
-    },
-    /* Drives every pending timer to exhaustion. Bounded, so a runaway animation
-       fails the test rather than hanging it. */
-    drainTimers(limit = 50000) {
-      let ticks = 0;
-      do {
-        for (const fn of timeouts.splice(0)) fn();
-        for (const [id, fn] of [...live]) if (live.has(id)) fn();
-        if (++ticks > limit) throw new Error("timers never settled");
-      } while (live.size || timeouts.length);
-      return api;
-    },
-    prevented: 0,
-    async submit() {
-      const handlers = form.listeners.submit || [];
-      assert.equal(handlers.length, 1, "sight.js binds a submit handler to #notifyForm");
-      await handlers[0]({
-        preventDefault() {
-          api.prevented++;
-        },
-      });
-      return api;
-    },
-  };
-  return api;
-}
+import { html, js, TABS, runSight } from "./sight-stub.mjs";
 
 /* ---------- the no-JS console ---------------------------------------------- */
 
@@ -338,77 +72,83 @@ test("the console shows its default payload with JS off, and it matches sight.js
 
 /* ---------- the typer ------------------------------------------------------- */
 
-test("the typer re-balances spans, so markup never breaks mid-tag", () => {
-  /* This used to grep sight.js for the literal `"</span>".repeat(...)` call, which
-     said nothing about whether the markup actually survives a tick — and broke the
-     moment a formatter changed the quotes. The typewriter tick is a pure
-     string->string function of (full, i), so lift THAT out of the file and run it.
-     The assertions below are behavioural: every possible cut of every real payload
-     must yield parseable, balanced markup whose visible text is an untruncated
-     prefix of the payload's. */
-
-  // Lift the tick body: from the slice that starts it to the setInterval's closer.
-  // Both anchors are code, not formatting; if either moves the test throws rather
-  // than silently passing, so a refactor can never quietly disarm this guard.
+/* Lifts the typewriter tick out of sight.js as a callable: from the slice that
+   starts it to the setInterval's closer. Both anchors are code, not formatting,
+   and if either moves this THROWS rather than silently passing, so a refactor can
+   never quietly disarm the guard. Repo-owned source only — `js` is read from our
+   own public/ tree, never user input — and compiled once, so the whole sweep
+   below costs a single context. */
+function liftTypewriterTick() {
   const from = js.search(/let s = full\.slice\(0, i\);/);
   const rest = from < 0 ? -1 : js.slice(from).search(/\n\s*\},\s*\d+\);/);
   assert.ok(from >= 0 && rest > 0, "typewriter tick not found in sight.js — guard is blind");
   const tickBody = js.slice(from, from + rest);
   assert.match(tickBody, /panel\.innerHTML\s*=/, "the tick must write the panel");
-
-  // Repo-owned source only; `js` is read from our own public/ tree, never user
-  // input. Compiled once into a callable so the whole sweep costs one context.
-  const tick = new vm.Script(
+  return new vm.Script(
     `(function (full, i) { const panel = {}; ${tickBody}\n return panel.innerHTML; })`
   ).runInNewContext({});
+}
+
+const TAG = /<\/?[a-zA-Z][^<>]*>/g;
+const textOf = (s) => s.replace(TAG, "");
+
+/* Every possible cut of one payload must yield parseable, balanced markup whose
+   visible text is an untruncated prefix of the payload's. */
+function assertEveryCutIsBalanced(tick, full) {
+  const wanted = textOf(full);
+  let shown = 0;
+  for (let i = 1; i <= full.length; i++) {
+    const out = tick(full, i);
+    const bare = textOf(out);
+
+    // 1. Nothing may be left that is not a complete tag: a cut inside
+    //    `<span class="p` leaves a stray angle bracket here, and its
+    //    unterminated quote would swallow the next chunk of text as an
+    //    attribute in a real browser.
+    assert.ok(!/[<>]/.test(bare), `i=${i}: markup cut mid-tag, residue near ${residue(bare)}`);
+
+    // 2. Every <span opened in the emitted string is closed again.
+    const open = (out.match(/<span\b/g) || []).length;
+    const close = (out.match(/<\/span>/g) || []).length;
+    assert.equal(close, open, `i=${i}: ${open} <span> vs ${close} </span> — unbalanced`);
+
+    // 3. What the reader sees is genuinely the start of the payload, not text
+    //    mangled or eaten by a broken tag.
+    assert.ok(wanted.startsWith(bare), `i=${i}: rendered text is not a prefix of the payload`);
+
+    // 4. The console never goes backwards mid-type.
+    assert.ok(bare.length >= shown, `i=${i}: text shrank from ${shown} to ${bare.length}`);
+    shown = bare.length;
+  }
+  // 5. Backing off a partial tag costs text for at most one tick: by the last
+  //    tick before the payload completes, every visible character has arrived.
+  assert.equal(
+    textOf(tick(full, full.length - 1)).length,
+    wanted.length,
+    "the final tick must have revealed the whole payload"
+  );
+}
+
+// The 80 characters around the first stray angle bracket, for a failure message.
+function residue(bare) {
+  const at = bare.search(/[<>]/);
+  return JSON.stringify(bare.slice(Math.max(0, at - 40), at + 40));
+}
+
+test("the typer re-balances spans, so markup never breaks mid-tag", () => {
+  /* This used to grep sight.js for the literal `"</span>".repeat(...)` call, which
+     said nothing about whether the markup actually survives a tick — and broke the
+     moment a formatter changed the quotes. The typewriter tick is a pure
+     string->string function of (full, i), so lift THAT out of the file and run it.
+     The assertions are then behavioural, not textual. */
+  const tick = liftTypewriterTick();
 
   // The real payloads, taken from the page as it renders them.
   const page = runSight({ reducedMotion: true });
   const payloads = TABS.map((_, i) => page.clickTab(i).panel.innerHTML);
   assert.equal(payloads.length, 4, "four console payloads to type out");
 
-  const TAG = /<\/?[a-zA-Z][^<>]*>/g;
-  const textOf = (s) => s.replace(TAG, "");
-
-  for (const full of payloads) {
-    const wanted = textOf(full);
-    let shown = 0;
-    for (let i = 1; i <= full.length; i++) {
-      const out = tick(full, i);
-      const bare = textOf(out);
-
-      // 1. Nothing may be left that is not a complete tag: a cut inside
-      //    `<span class="p` leaves a stray angle bracket here, and its
-      //    unterminated quote would swallow the next chunk of text as an
-      //    attribute in a real browser.
-      assert.ok(
-        !/[<>]/.test(bare),
-        `i=${i}: markup cut mid-tag, residue near ${JSON.stringify(
-          bare.slice(Math.max(0, bare.search(/[<>]/) - 40), bare.search(/[<>]/) + 40)
-        )}`
-      );
-
-      // 2. Every <span opened in the emitted string is closed again.
-      const open = (out.match(/<span\b/g) || []).length;
-      const close = (out.match(/<\/span>/g) || []).length;
-      assert.equal(close, open, `i=${i}: ${open} <span> vs ${close} </span> — unbalanced`);
-
-      // 3. What the reader sees is genuinely the start of the payload, not text
-      //    mangled or eaten by a broken tag.
-      assert.ok(wanted.startsWith(bare), `i=${i}: rendered text is not a prefix of the payload`);
-
-      // 4. The console never goes backwards mid-type.
-      assert.ok(bare.length >= shown, `i=${i}: text shrank from ${shown} to ${bare.length}`);
-      shown = bare.length;
-    }
-    // 5. Backing off a partial tag costs text for at most one tick: by the last
-    //    tick before the payload completes, every visible character has arrived.
-    assert.equal(
-      textOf(tick(full, full.length - 1)).length,
-      wanted.length,
-      "the final tick must have revealed the whole payload"
-    );
-  }
+  for (const full of payloads) assertEveryCutIsBalanced(tick, full);
 });
 
 /* ---------- reduced motion (§8) --------------------------------------------- */
