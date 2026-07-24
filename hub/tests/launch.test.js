@@ -4,9 +4,13 @@ import assert from 'node:assert/strict';
 import request from 'supertest';
 import { buildTestApp } from './helpers.js';
 import { now, randomToken } from '../lib/tokens.js';
+import { APP_ORIGIN, APP_BY_HOST } from '../lib/apps.js';
 
 // All five launched apps. `plan` was missing, so /launch/plan had no test at all —
 // the same four-of-five drift that let a Sprintplan magic link land on /dashboard.
+// This table is written out longhand on purpose: it is the independent spec the
+// registry is checked against. Deriving it from lib/apps.js would make the whole
+// file tautological — it would assert the registry equals itself.
 const APP_DOMAIN = {
   raid: 'https://sprintraid.uk',
   signal: 'https://sprintsignal.uk',
@@ -14,6 +18,26 @@ const APP_DOMAIN = {
   poker: 'https://sprintpoker.uk',
   plan: 'https://sprintplan.uk',
 };
+
+test('the app registry matches the expected key→origin table exactly', async () => {
+  assert.deepEqual(APP_ORIGIN, APP_DOMAIN);
+});
+
+/* magic.js used to keep its own hand-written inverse of this table and fell a domain
+   behind it. It now derives from the same list, so what is left to guard is that the
+   derivation really is an exact inverse: every origin's host maps back to its key,
+   and no two apps share a host (which would silently drop one of them). */
+test('the host→key map is the exact inverse of key→origin', async () => {
+  const expected = Object.fromEntries(
+    Object.entries(APP_DOMAIN).map(([key, origin]) => [new URL(origin).host, key]),
+  );
+  assert.deepEqual(APP_BY_HOST, expected);
+  assert.equal(
+    Object.keys(APP_BY_HOST).length,
+    Object.keys(APP_DOMAIN).length,
+    'two apps share a host, so one of them is unreachable via return_to',
+  );
+});
 
 async function buildWithLaunch() {
   const { app, db, config } = await buildTestApp();

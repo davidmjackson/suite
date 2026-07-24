@@ -4,18 +4,11 @@ import { setSessionCookie } from '../lib/cookies.js';
 import { createAuditLogger } from '../lib/audit.js';
 import { validate } from '../lib/validate.js';
 import { magicPostSchema } from '../schemas/magic.js';
-
-// Every domain the hub accepts as a return_to must appear here, or a sign-in that
-// asked for that app silently lands on /dashboard instead. sprintplan.uk was
-// missing: it is an allowed return domain and a launched app (see launch.js and
-// the dashboard tile), so a Sprintplan magic link dropped its destination.
-const APP_BY_DOMAIN = {
-  'sprintraid.uk': 'raid',
-  'sprintsignal.uk': 'signal',
-  'sprintretro.uk': 'retro',
-  'sprintpoker.uk': 'poker',
-  'sprintplan.uk': 'plan',
-};
+// Every domain the hub accepts as a return_to must resolve to an app here, or a
+// sign-in that asked for that app silently lands on /dashboard instead —
+// sprintplan.uk once did exactly that. The map is derived from lib/apps.js so it
+// can no longer fall behind the launch registry.
+import { APP_BY_HOST } from '../lib/apps.js';
 
 const expiredError = (res) =>
   res.status(400).render('error', {
@@ -96,7 +89,7 @@ export function mountMagic(app) {
     if (tokRow.return_to) {
       try {
         const host = new URL(tokRow.return_to).host;
-        const appName = APP_BY_DOMAIN[host];
+        const appName = APP_BY_HOST[host];
         if (appName) {
           return res.redirect(
             `/launch/${appName}?return_to=${encodeURIComponent(tokRow.return_to)}`,

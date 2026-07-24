@@ -6,7 +6,6 @@ import { Writable } from 'node:stream';
 import { buildTestApp } from './helpers.js';
 import { mountLogin } from '../routes/login.js';
 import { createLogger } from '../lib/logger.js';
-import { makeRequestLogger } from '../middleware/requestLogger.js';
 import { mountRequest } from '../routes/request.js';
 
 // A throwing email sender exercises the catch block (best-effort logging path).
@@ -54,13 +53,16 @@ const tick = () => new Promise((r) => setImmediate(r));
 
 test('login logs a structured error (via req.log) when the email send throws', async () => {
   const cap = capture();
-  const { app, db } = await buildTestApp();
+  // The capture logger goes into the shell: it IS the app's request logger, not a
+  // second one layered on top (pino-http keeps the first req.log it finds).
+  const { app, db } = await buildTestApp({
+    logger: createLogger({ level: 'info', stream: cap.stream }),
+  });
   db.prepare('INSERT INTO users (id, email, created_at) VALUES (?,?,?)').run(
     'u2',
     'k2@test.com',
     Date.now(),
   );
-  app.use(makeRequestLogger(createLogger({ level: 'info', stream: cap.stream })));
   mountLogin(app, { emailSender: throwingSender });
   await request(app).post('/login').type('form').send({ email: 'k2@test.com' });
   await tick();
@@ -69,8 +71,10 @@ test('login logs a structured error (via req.log) when the email send throws', a
 
 test('request route logs a structured error when the notification email throws', async () => {
   const cap = capture();
-  const { app } = await buildTestApp({ env: { ADMIN_EMAIL: 'op@test' } });
-  app.use(makeRequestLogger(createLogger({ level: 'info', stream: cap.stream })));
+  const { app } = await buildTestApp({
+    env: { ADMIN_EMAIL: 'op@test' },
+    logger: createLogger({ level: 'info', stream: cap.stream }),
+  });
   const sender = {
     async sendAccessRequestNotification() {
       throw new Error('smtp down');

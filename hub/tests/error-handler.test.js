@@ -32,8 +32,9 @@ const tick = () => new Promise((r) => setImmediate(r));
 async function appWithBoom({ nodeEnv = 'production' } = {}) {
   const cap = capture();
   const logger = createLogger({ level: 'info', stream: cap.stream });
-  const { app } = await buildTestApp();
-  app.use(makeRequestLogger(logger));
+  // The capture logger goes into the shell: it IS the app's request logger, not a
+  // second one layered on top (pino-http keeps the first req.log it finds).
+  const { app } = await buildTestApp({ logger });
   app.get('/boom', () => {
     throw new Error('kaboom-secret-detail');
   });

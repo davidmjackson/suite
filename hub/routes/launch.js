@@ -2,14 +2,7 @@
 import { randomToken, now } from '../lib/tokens.js';
 import { createRequireSession } from '../middleware/requireSession.js';
 import { createAuditLogger } from '../lib/audit.js';
-
-const APP_DOMAIN = {
-  raid: 'https://sprintraid.uk',
-  signal: 'https://sprintsignal.uk',
-  retro: 'https://sprintretro.uk',
-  poker: 'https://sprintpoker.uk',
-  plan: 'https://sprintplan.uk',
-};
+import { APP_ORIGIN } from '../lib/apps.js';
 
 export function mountLaunch(app) {
   const db = app.locals.db;
@@ -19,7 +12,7 @@ export function mountLaunch(app) {
 
   function handle(req, res) {
     const appName = req.params.app;
-    const domain = APP_DOMAIN[appName];
+    const domain = APP_ORIGIN[appName];
     if (!domain)
       return res.status(404).render('error', { title: 'Unknown app', message: 'No such app.' });
 
