@@ -122,3 +122,55 @@ test("POST with return_to bounces to the launch flow", async () => {
   assert.equal(res.status, 302);
   assert.match(res.headers.location, /\/launch\/raid\?return_to=/);
 });
+
+test("POST with a Sprintplan return_to bounces to the launch flow, not the dashboard", async () => {
+  const { app, db } = await buildWithMagic();
+  insertUser(db);
+  const tok = randomToken();
+  insertToken(db, tok, { returnTo: "https://sprintplan.uk/board/42" });
+
+  const res = await request(app).post("/auth/magic").type("form").send({ token: tok });
+  assert.equal(res.status, 302);
+  assert.match(res.headers.location, /^\/launch\/plan\?return_to=/);
+});
+
+/* The invariant that actually broke. login.js accepts a return_to for ANY domain
+   in config.allowedAppDomains and stores it on the token; magic.js is what turns
+   it back into a launch. So every domain the hub ACCEPTS must resolve to an app,
+   or the user is silently dropped on /dashboard having asked for somewhere else —
+   no error, nothing logged, nothing to see. sprintplan.uk was exactly that: an
+   allowed return domain, absent from magic.js's own table.
+
+   The domains are derived from config rather than listed here on purpose. A list
+   in this file would be another copy of the same fact and could be just as wrong
+   — the copy in launch.test.js is, which is why no test saw this. */
+test("every allowed app domain resolves to a launch, so no accepted return_to is dropped", async () => {
+  const { app, db, config } = await buildWithMagic();
+  const domains = config.allowedAppDomains;
+  assert.ok(domains.length >= 2, "the allowlist fixture must hold the real domains to guard anything");
+
+  const resolved = new Map();
+  for (const [i, domain] of domains.entries()) {
+    const email = `u${i}@b.c`;
+    insertUser(db, `u${i}`, email);
+    const tok = randomToken();
+    insertToken(db, tok, { email, returnTo: `${domain}/deep/link` });
+
+    const res = await request(app).post("/auth/magic").type("form").send({ token: tok });
+    assert.equal(res.status, 302);
+    const launched = res.headers.location.match(/^\/launch\/([a-z]+)\?return_to=/);
+    assert.ok(
+      launched,
+      `${domain} is an allowed return_to, but magic.js dropped it to ${res.headers.location}`
+    );
+    resolved.set(domain, launched[1]);
+  }
+
+  // ...and no two domains may resolve to the same app, which is what a mis-paired
+  // entry looks like from out here — spotted without a registry to compare against.
+  assert.equal(
+    new Set(resolved.values()).size,
+    resolved.size,
+    `two domains resolve to one app: ${JSON.stringify([...resolved])}`
+  );
+});
