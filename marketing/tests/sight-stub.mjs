@@ -18,17 +18,17 @@
 // because it is a second thing that file would otherwise be doing, and because
 // the harness changes when the PAGE changes while the tests change when the
 // CLAIMS do.
-import assert from "node:assert/strict";
-import vm from "node:vm";
-import { readFileSync } from "node:fs";
-import { join, dirname } from "node:path";
-import { fileURLToPath } from "node:url";
+import assert from 'node:assert/strict';
+import vm from 'node:vm';
+import { readFileSync } from 'node:fs';
+import { join, dirname } from 'node:path';
+import { fileURLToPath } from 'node:url';
 
 const HERE = dirname(fileURLToPath(import.meta.url));
-const PUBLIC = join(HERE, "..", "public");
-const INTRO = join(PUBLIC, "sprintsight-coming-soon/intro");
-const html = readFileSync(join(INTRO, "index.html"), "utf8");
-const js = readFileSync(join(INTRO, "sight.js"), "utf8");
+const PUBLIC = join(HERE, '..', 'public');
+const INTRO = join(PUBLIC, 'sprintsight-coming-soon/intro');
+const html = readFileSync(join(INTRO, 'index.html'), 'utf8');
+const js = readFileSync(join(INTRO, 'sight.js'), 'utf8');
 
 // The real tab buttons — ids and payload keys — straight from the page, so the
 // harness drives the tablist the page actually ships rather than a fixture of it.
@@ -72,13 +72,13 @@ function defineLogged(n, name, seed, record) {
    or overwrite without that being an observation worth recording. */
 function seedFields(opts) {
   return {
-    id: opts.id || "",
+    id: opts.id || '',
     dataset: { ...(opts.dataset || {}) },
-    outerHTML: opts.outerHTML || "",
+    outerHTML: opts.outerHTML || '',
     kids: opts.kids || {},
     style: {},
-    className: "",
-    value: opts.value ?? "",
+    className: '',
+    value: opts.value ?? '',
     tabIndex: 0,
     removed: false,
     classes: new Set(),
@@ -169,9 +169,9 @@ function stubNode(opts = {}) {
     contains: (c) => n.classes.has(c),
   };
 
-  defineLogged(n, "textContent", opts.textContent ?? "", (v) => log.text.push(v));
-  defineLogged(n, "innerHTML", "", (v) => log.html.push(v));
-  defineLogged(n, "disabled", false, (v) => log.disabled.push(v));
+  defineLogged(n, 'textContent', opts.textContent ?? '', (v) => log.text.push(v));
+  defineLogged(n, 'innerHTML', '', (v) => log.html.push(v));
+  defineLogged(n, 'disabled', false, (v) => log.disabled.push(v));
   return n;
 }
 
@@ -180,12 +180,12 @@ function stubNode(opts = {}) {
    line-draw's skip can be shown to be conditional rather than blanket. */
 function revealBlock() {
   const suffix = stubNode({ outerHTML: '<span class="suffix">/4</span>' });
-  const counter = stubNode({ dataset: { n: "4" }, kids: { span: [suffix] } });
-  const bar = stubNode({ dataset: { w: "100" } });
-  const dashedPath = stubNode({ attrs: { "stroke-dasharray": "3 3" } });
+  const counter = stubNode({ dataset: { n: '4' }, kids: { span: [suffix] } });
+  const bar = stubNode({ dataset: { w: '100' } });
+  const dashedPath = stubNode({ attrs: { 'stroke-dasharray': '3 3' } });
   const solidPath = stubNode();
   const reveal = stubNode({
-    kids: { "[data-n]": [counter], ".bar i": [bar], ".ln": [dashedPath, solidPath] },
+    kids: { '[data-n]': [counter], '.bar i': [bar], '.ln': [dashedPath, solidPath] },
   });
   return { reveal, counter, bar, dashedPath, solidPath };
 }
@@ -198,7 +198,7 @@ function notifyForm(label, valid) {
   return {
     btn,
     form: stubNode({ kids: { button: [btn] } }),
-    input: stubNode({ value: "someone@example.com", valid }),
+    input: stubNode({ value: 'someone@example.com', valid }),
     msg: stubNode(),
   };
 }
@@ -221,7 +221,7 @@ function stubDocument({ tabNodes, reveal, notify }) {
     },
     querySelectorAll(sel) {
       if (/role=["']tab["']/.test(sel)) return tabNodes;
-      if (sel.includes(".rv")) return [reveal];
+      if (sel.includes('.rv')) return [reveal];
       return [];
     },
     querySelector: (sel) => doc.querySelectorAll(sel)[0] || null,
@@ -284,14 +284,14 @@ function timerGlobals(rec) {
 function sightSandbox({ doc, reducedMotion, fetchImpl }, rec) {
   const sandbox = {
     document: doc,
-    console: { ...console, warn: (...a) => rec.warned.push(a.join(" ")) },
+    console: { ...console, warn: (...a) => rec.warned.push(a.join(' ')) },
     ...motionGlobals(rec, reducedMotion),
     ...timerGlobals(rec),
     // Rejects by default, so the catch block is reached whether or not an
     // endpoint is configured; pass fetchImpl to observe the call or to succeed.
     fetch: (...args) => {
       rec.sent.push(args);
-      return fetchImpl ? fetchImpl(...args) : Promise.reject(new Error("network down"));
+      return fetchImpl ? fetchImpl(...args) : Promise.reject(new Error('network down'));
     },
   };
   sandbox.window = sandbox;
@@ -306,7 +306,7 @@ function runTimers(rec, limit) {
   do {
     for (const fn of rec.timeouts.splice(0)) fn();
     for (const [id, fn] of [...rec.live]) if (rec.live.has(id)) fn();
-    if (++ticks > limit) throw new Error("timers never settled");
+    if (++ticks > limit) throw new Error('timers never settled');
   } while (rec.live.size || rec.timeouts.length);
 }
 
@@ -315,7 +315,7 @@ function runTimers(rec, limit) {
    leaving the button in its untouched initial state. */
 async function submitForm(api) {
   const handlers = api.form.listeners.submit || [];
-  assert.equal(handlers.length, 1, "sight.js binds a submit handler to #notifyForm");
+  assert.equal(handlers.length, 1, 'sight.js binds a submit handler to #notifyForm');
   await handlers[0]({
     preventDefault() {
       api.prevented++;
@@ -340,8 +340,8 @@ function sightNodes({ doc, rec, tabNodes, rv, notify, label }) {
     form: notify.form,
     btn: notify.btn,
     msg: notify.msg,
-    panel: doc.getElementById("conPanel"),
-    foot: doc.getElementById("footL"),
+    panel: doc.getElementById('conPanel'),
+    foot: doc.getElementById('footL'),
   };
 }
 
@@ -349,16 +349,16 @@ function sightNodes({ doc, rec, tabNodes, rv, notify, label }) {
    api so a test can state its sequence in one line.  */
 function sightDrivers(api, rec, reveal) {
   return {
-    ariaBusy: () => api.form.getAttribute("aria-busy"),
-    busyLog: () => api.form.log.attrs.filter((a) => a.includes("aria-busy")),
+    ariaBusy: () => api.form.getAttribute('aria-busy'),
+    busyLog: () => api.form.log.attrs.filter((a) => a.includes('aria-busy')),
     /* Fires the IntersectionObserver for the reveal block, as scrolling would. */
     scrollIntoView() {
-      assert.ok(rec.ioCallback, "sight.js observes the reveal blocks");
+      assert.ok(rec.ioCallback, 'sight.js observes the reveal blocks');
       rec.ioCallback([{ isIntersecting: true, target: reveal }]);
       return api;
     },
     clickTab(i) {
-      api.tabNodes[i].dispatch("click");
+      api.tabNodes[i].dispatch('click');
       return api;
     },
     drainTimers(limit = 50000) {
@@ -373,8 +373,8 @@ function sightDrivers(api, rec, reveal) {
 function runSight({ reducedMotion = false, valid = true, fetchImpl, label = SHIPPED_LABEL } = {}) {
   // Without this an extraction that silently returned nothing would seed the
   // button with undefined, and every label assertion would pass vacuously.
-  assert.ok(label, "the submit button has a label to restore");
-  assert.ok(TABS.length > 0 && TABS.every((t) => t.id && t.key), "the page ships a wired tablist");
+  assert.ok(label, 'the submit button has a label to restore');
+  assert.ok(TABS.length > 0 && TABS.every((t) => t.id && t.key), 'the page ships a wired tablist');
 
   const rec = recorder();
   const tabNodes = TABS.map((t) => stubNode({ id: t.id, dataset: { t: t.key } }));
@@ -384,7 +384,7 @@ function runSight({ reducedMotion = false, valid = true, fetchImpl, label = SHIP
 
   const sandbox = sightSandbox({ doc, reducedMotion, fetchImpl }, rec);
   vm.createContext(sandbox);
-  vm.runInContext(js, sandbox, { filename: "sight.js" });
+  vm.runInContext(js, sandbox, { filename: 'sight.js' });
 
   const api = {
     ...sightNodes({ doc, rec, tabNodes, rv, notify, label }),

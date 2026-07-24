@@ -1,0 +1,18 @@
+# Theme-synced foundation assets — DO NOT FORMAT from inside this repo.
+#
+# shared/theme/manifest.mjs syncs these byte-for-byte into SEVEN surfaces and
+# check-theme-drift.mjs compares them by sha256. Five of those surfaces live in
+# OTHER repos (/var/www/signal, /var/www/retrospective, /var/www/scrumpoker,
+# /var/www/raid, /var/www/plan), so reformatting the source here changes its hash
+# and silently puts all five out of sync — each then needing its own commit and
+# deploy to catch up. All eight copies are currently identical; keep them that way.
+#
+# Formatting these is a deliberate cross-repo exercise: format the source, run
+# sync-theme, then commit and deploy every surface together. Until that happens
+# they stay exactly as hand-written, and `--check` skips them rather than failing.
+shared/theme/oscilloscope.js
+hub/public/js/oscilloscope.js
+marketing/public/js/oscilloscope.js
+shared/theme/instrument-core.css
+hub/public/css/instrument-core.css
+marketing/public/css/instrument-core.css

@@ -1,19 +1,23 @@
 // lib/factory.js
-const { createHubApi } = require("./hub-api.js");
-const { createSessionsStore } = require("./sessions-db.js");
-const { createRequireAuth } = require("../middleware.js");
-const { createLaunchHandler } = require("../handlers/launch.js");
-const { createLogoutHandler } = require("../handlers/logout.js");
-const { createHeartbeatHandler } = require("../handlers/heartbeat.js");
-const { createWhoamiHandler } = require("../handlers/whoami.js");
-const { createVerifySession } = require("./verify-session.js");
+const { createHubApi } = require('./hub-api.js');
+const { createSessionsStore } = require('./sessions-db.js');
+const { createRequireAuth } = require('../middleware.js');
+const { createLaunchHandler } = require('../handlers/launch.js');
+const { createLogoutHandler } = require('../handlers/logout.js');
+const { createHeartbeatHandler } = require('../handlers/heartbeat.js');
+const { createWhoamiHandler } = require('../handlers/whoami.js');
+const { createVerifySession } = require('./verify-session.js');
 
 function createAuthClient(options) {
-  const required = ["appName", "hubBaseUrl", "hubApiKey", "cookieName", "dbPath"];
+  const required = ['appName', 'hubBaseUrl', 'hubApiKey', 'cookieName', 'dbPath'];
   for (const k of required) if (!options[k]) throw new Error(`createAuthClient: missing ${k}`);
 
   const store = createSessionsStore(options.dbPath);
-  const hubApi = createHubApi({ baseUrl: options.hubBaseUrl, apiKey: options.hubApiKey, appName: options.appName });
+  const hubApi = createHubApi({
+    baseUrl: options.hubBaseUrl,
+    apiKey: options.hubApiKey,
+    appName: options.appName,
+  });
   const ctx = {
     ...options,
     store,

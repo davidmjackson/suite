@@ -1,5 +1,5 @@
 // middleware.js
-const { parseCookies, clearSessionCookie } = require("./lib/cookies.js");
+const { parseCookies, clearSessionCookie } = require('./lib/cookies.js');
 
 function createRequireAuth(ctx) {
   const { store, hubApi, cookieName, cookieDomain, hubBaseUrl, cacheTtlMs, graceMs } = ctx;
@@ -19,12 +19,12 @@ function createRequireAuth(ctx) {
     }
 
     const result = await hubApi.heartbeat(sess.central_session_id);
-    if (result === "ok") {
+    if (result === 'ok') {
       store.touch(cookieVal);
       attachUser(req, sess);
       return next();
     }
-    if (result === "expired") {
+    if (result === 'expired') {
       store.delete(cookieVal);
       clearSessionCookie(res, { name: cookieName, domain: cookieDomain });
       return bounceToHub(req, res);
@@ -39,14 +39,19 @@ function createRequireAuth(ctx) {
   };
 
   function bounceToHub(req, res) {
-    const proto = req.headers["x-forwarded-proto"] || "https";
+    const proto = req.headers['x-forwarded-proto'] || 'https';
     const host = req.headers.host;
-    const returnTo = encodeURIComponent(`${proto}://${host}${req.originalUrl || req.url || "/"}`);
+    const returnTo = encodeURIComponent(`${proto}://${host}${req.originalUrl || req.url || '/'}`);
     res.redirect(302, `${hubBaseUrl}/login?return_to=${returnTo}`);
   }
 
   function attachUser(req, sess) {
-    req.user = { id: sess.user_id, entitled: !!sess.entitled, teams: sess.teams || [], company: sess.company ?? null };
+    req.user = {
+      id: sess.user_id,
+      entitled: !!sess.entitled,
+      teams: sess.teams || [],
+      company: sess.company ?? null,
+    };
     req.appSessionId = sess.id;
     req.centralSessionId = sess.central_session_id;
   }

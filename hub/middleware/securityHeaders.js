@@ -13,7 +13,7 @@ export const DEFAULT_CSP = [
   "base-uri 'self'",
   "form-action 'self'",
   "object-src 'none'",
-].join("; ");
+].join('; ');
 
 // The public marketing pages (/, /request, /privacy) may load Google Analytics —
 // but only once the visitor has explicitly accepted (lib/consent.js). CSP is a
@@ -30,12 +30,17 @@ export const DEFAULT_CSP = [
 // never reaches Google and the property stays empty. Google's own docs
 // prescribe the `https://*.google-analytics.com` / `https://*.googletagmanager.com`
 // wildcards for exactly this reason — do not "tidy" these back to exact hosts.
-export const MARKETING_CSP = DEFAULT_CSP
-  .replace("script-src 'self'", "script-src 'self' https://*.googletagmanager.com")
-  .replace("img-src 'self' data:", "img-src 'self' data: https://*.google-analytics.com https://*.googletagmanager.com")
+export const MARKETING_CSP = DEFAULT_CSP.replace(
+  "script-src 'self'",
+  "script-src 'self' https://*.googletagmanager.com",
+)
+  .replace(
+    "img-src 'self' data:",
+    "img-src 'self' data: https://*.google-analytics.com https://*.googletagmanager.com",
+  )
   .replace(
     "connect-src 'self'",
-    "connect-src 'self' https://*.google-analytics.com https://*.googletagmanager.com"
+    "connect-src 'self' https://*.google-analytics.com https://*.googletagmanager.com",
   );
 
 // CSP form-action is enforced against redirect TARGETS, not just the initial
@@ -43,17 +48,17 @@ export const MARKETING_CSP = DEFAULT_CSP
 // so both policies must carry the app origins or those posts break. Deriving both
 // through this one helper is what stops them drifting apart.
 export function withAppDomains(csp, appDomains) {
-  return csp.replace("form-action 'self'", `form-action 'self' ${appDomains.join(" ")}`);
+  return csp.replace("form-action 'self'", `form-action 'self' ${appDomains.join(' ')}`);
 }
 
 export function makeSecurityHeaders({ contentSecurityPolicy = DEFAULT_CSP } = {}) {
   return function securityHeaders(_req, res, next) {
-    res.setHeader("Content-Security-Policy", contentSecurityPolicy);
-    res.setHeader("Strict-Transport-Security", "max-age=31536000; includeSubDomains");
-    res.setHeader("X-Frame-Options", "DENY");
-    res.setHeader("X-Content-Type-Options", "nosniff");
-    res.setHeader("Referrer-Policy", "strict-origin-when-cross-origin");
-    res.setHeader("Permissions-Policy", "geolocation=(), camera=(), microphone=(), payment=()");
+    res.setHeader('Content-Security-Policy', contentSecurityPolicy);
+    res.setHeader('Strict-Transport-Security', 'max-age=31536000; includeSubDomains');
+    res.setHeader('X-Frame-Options', 'DENY');
+    res.setHeader('X-Content-Type-Options', 'nosniff');
+    res.setHeader('Referrer-Policy', 'strict-origin-when-cross-origin');
+    res.setHeader('Permissions-Policy', 'geolocation=(), camera=(), microphone=(), payment=()');
     next();
   };
 }

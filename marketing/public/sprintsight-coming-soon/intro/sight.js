@@ -2,7 +2,7 @@
    Spec: marketing/docs/sprintsight-promo-BUILD-SPEC.md §8 (motion), §10 (open
    items), §11.4 (tab a11y). */
 (() => {
-  "use strict";
+  'use strict';
 
   /* ---------------------------------------------------------------------
      OPEN ITEM 1 (spec §10). No backend exists in marketing/ yet.
@@ -14,7 +14,7 @@
      --------------------------------------------------------------------- */
   const NOTIFY_ENDPOINT = null;
 
-  const reduce = matchMedia("(prefers-reduced-motion: reduce)").matches;
+  const reduce = matchMedia('(prefers-reduced-motion: reduce)').matches;
 
   /* =====================================================================
      Detector console
@@ -25,7 +25,7 @@
      ===================================================================== */
   const V = {
     atlas: {
-      foot: "verdict · 3 evidence ids",
+      foot: 'verdict · 3 evidence ids',
       body: `<span class="p">$</span> sprintsight detect <span class="s">--team Atlas --sprint 15</span>
 <span class="cmt">// reading 4 sources · 61 artifacts · 2 sprints</span>
 
@@ -50,7 +50,7 @@
     },
 
     boreas: {
-      foot: "verdict · 2 evidence ids",
+      foot: 'verdict · 2 evidence ids',
       body: `<span class="p">$</span> sprintsight detect <span class="s">--team Boreas --sprint 15</span>
 <span class="cmt">// reading 4 sources · 48 artifacts · 2 sprints</span>
 
@@ -73,7 +73,7 @@
     },
 
     cygnus: {
-      foot: "verdict · 2 evidence ids",
+      foot: 'verdict · 2 evidence ids',
       body: `<span class="p">$</span> sprintsight detect <span class="s">--team Cygnus --sprint 15</span>
 <span class="cmt">// reading 4 sources · 52 artifacts · 2 sprints</span>
 
@@ -97,7 +97,7 @@
     },
 
     draco: {
-      foot: "verdict · 2 evidence ids",
+      foot: 'verdict · 2 evidence ids',
       body: `<span class="p">$</span> sprintsight detect <span class="s">--team Draco --sprint 15</span>
 <span class="cmt">// reading 4 sources · 57 artifacts · 2 sprints</span>
 
@@ -125,8 +125,8 @@
      nothing user-supplied or fetched ever reaches it, and the form's message
      element uses textContent. If these payloads ever become dynamic — served by
      a real detector, say — this must switch to building nodes or sanitising. */
-  const panel = document.getElementById("conPanel");
-  const footL = document.getElementById("footL");
+  const panel = document.getElementById('conPanel');
+  const footL = document.getElementById('footL');
   const tabs = Array.from(document.querySelectorAll('.picker [role="tab"]'));
   let typer = null;
 
@@ -135,22 +135,22 @@
     clearInterval(typer);
     const full = V[key].body;
     footL.textContent = V[key].foot;
-    panel.setAttribute("aria-labelledby", tabId);
+    panel.setAttribute('aria-labelledby', tabId);
 
     if (reduce) {
       panel.innerHTML = full;
-      panel.setAttribute("aria-busy", "false");
+      panel.setAttribute('aria-busy', 'false');
       return;
     }
 
     let i = 0;
-    panel.innerHTML = "";
-    panel.setAttribute("aria-busy", "true");
+    panel.innerHTML = '';
+    panel.setAttribute('aria-busy', 'true');
     typer = setInterval(() => {
       i += 14;
       if (i >= full.length) {
         panel.innerHTML = full;
-        panel.setAttribute("aria-busy", "false");
+        panel.setAttribute('aria-busy', 'false');
         clearInterval(typer);
         return;
       }
@@ -165,19 +165,19 @@
       // 2. The cut lands after a complete <span> but before its </span>. That IS
       //    a balancing job: close the stragglers so the markup parses.
       let s = full.slice(0, i);
-      const lt = s.lastIndexOf("<");
-      if (lt > s.lastIndexOf(">")) s = s.slice(0, lt);
+      const lt = s.lastIndexOf('<');
+      if (lt > s.lastIndexOf('>')) s = s.slice(0, lt);
       const open = (s.match(/<span/g) || []).length;
       const close = (s.match(/<\/span>/g) || []).length;
       panel.innerHTML =
-        s + "</span>".repeat(Math.max(0, open - close)) + '<span class="caret"></span>';
+        s + '</span>'.repeat(Math.max(0, open - close)) + '<span class="caret"></span>';
     }, 12);
   }
 
   function select(tab, focus) {
     tabs.forEach((t) => {
       const on = t === tab;
-      t.setAttribute("aria-selected", String(on));
+      t.setAttribute('aria-selected', String(on));
       t.tabIndex = on ? 0 : -1; // roving tabindex
     });
     if (focus) tab.focus();
@@ -185,14 +185,14 @@
   }
 
   tabs.forEach((tab) => {
-    tab.addEventListener("click", () => select(tab, false));
-    tab.addEventListener("keydown", (e) => {
+    tab.addEventListener('click', () => select(tab, false));
+    tab.addEventListener('keydown', (e) => {
       const i = tabs.indexOf(tab);
       let next = null;
-      if (e.key === "ArrowRight") next = tabs[(i + 1) % tabs.length];
-      else if (e.key === "ArrowLeft") next = tabs[(i - 1 + tabs.length) % tabs.length];
-      else if (e.key === "Home") next = tabs[0];
-      else if (e.key === "End") next = tabs[tabs.length - 1];
+      if (e.key === 'ArrowRight') next = tabs[(i + 1) % tabs.length];
+      else if (e.key === 'ArrowLeft') next = tabs[(i - 1 + tabs.length) % tabs.length];
+      else if (e.key === 'Home') next = tabs[0];
+      else if (e.key === 'End') next = tabs[tabs.length - 1];
       if (!next) return;
       e.preventDefault();
       select(next, true);
@@ -208,16 +208,16 @@
     (entries) => {
       entries.forEach((e) => {
         if (!e.isIntersecting) return;
-        e.target.classList.add("in");
+        e.target.classList.add('in');
 
-        e.target.querySelectorAll(".bar i").forEach((b) => {
-          setTimeout(() => (b.style.width = b.dataset.w + "%"), 120);
+        e.target.querySelectorAll('.bar i').forEach((b) => {
+          setTimeout(() => (b.style.width = b.dataset.w + '%'), 120);
         });
 
-        e.target.querySelectorAll("[data-n]").forEach((el) => {
+        e.target.querySelectorAll('[data-n]').forEach((el) => {
           const to = Number(el.dataset.n);
           // keep the suffix markup ("/4") intact on every tick
-          const tail = el.querySelector("span")?.outerHTML || "";
+          const tail = el.querySelector('span')?.outerHTML || '';
           if (reduce) {
             el.innerHTML = to + tail;
             return;
@@ -230,82 +230,83 @@
           }, 130);
         });
 
-        e.target.querySelectorAll(".ln").forEach((p) => {
+        e.target.querySelectorAll('.ln').forEach((p) => {
           if (reduce) return;
           // A path that already carries stroke-dasharray (the dashed chat
           // connector, tell 02) must be skipped or the dash pattern is destroyed.
-          if (p.getAttribute("stroke-dasharray")) return;
+          if (p.getAttribute('stroke-dasharray')) return;
           const L = p.getTotalLength();
           p.style.strokeDasharray = L;
           p.style.strokeDashoffset = L;
-          p.animate(
-            [{ strokeDashoffset: L }, { strokeDashoffset: 0 }],
-            { duration: 900, fill: "forwards", easing: "ease-out" }
-          );
+          p.animate([{ strokeDashoffset: L }, { strokeDashoffset: 0 }], {
+            duration: 900,
+            fill: 'forwards',
+            easing: 'ease-out',
+          });
         });
 
         io.unobserve(e.target);
       });
     },
-    { threshold: 0.15 }
+    { threshold: 0.15 },
   );
-  document.querySelectorAll(".rv").forEach((el) => io.observe(el));
+  document.querySelectorAll('.rv').forEach((el) => io.observe(el));
 
   /* =====================================================================
      Notify form — five states: idle, invalid, pending, success, error.
      Errors never apologise and always say what to do next.
      ===================================================================== */
-  const form = document.getElementById("notifyForm");
-  const input = document.getElementById("notifyEmail");
-  const msg = document.getElementById("notifyMsg");
+  const form = document.getElementById('notifyForm');
+  const input = document.getElementById('notifyEmail');
+  const msg = document.getElementById('notifyMsg');
 
   function say(text, kind) {
     msg.textContent = text;
-    msg.className = "formmsg" + (kind ? " " + kind : "");
+    msg.className = 'formmsg' + (kind ? ' ' + kind : '');
   }
 
   if (form) {
-    form.addEventListener("submit", async (e) => {
+    form.addEventListener('submit', async (e) => {
       e.preventDefault();
-      form.classList.add("attempted"); // only style :invalid after a real attempt
+      form.classList.add('attempted'); // only style :invalid after a real attempt
 
       if (!input.checkValidity()) {
-        say("That email doesn't look right. Check and try again.", "err");
+        say("That email doesn't look right. Check and try again.", 'err');
         input.focus();
         return;
       }
 
-      const btn = form.querySelector("button[type=submit]");
+      const btn = form.querySelector('button[type=submit]');
       const label = btn.textContent;
       btn.disabled = true;
-      btn.textContent = "Sending…";
-      form.setAttribute("aria-busy", "true");
-      say("", null);
+      btn.textContent = 'Sending…';
+      form.setAttribute('aria-busy', 'true');
+      say('', null);
 
       try {
         if (!NOTIFY_ENDPOINT) {
           // Open item 1. Never let this look like it worked.
           console.warn(
-            "[sprintsight] NOTIFY_ENDPOINT is not set — the signup form cannot " +
-              "deliver. See sight.js and BUILD-SPEC §10 item 1."
+            '[sprintsight] NOTIFY_ENDPOINT is not set — the signup form cannot ' +
+              'deliver. See sight.js and BUILD-SPEC §10 item 1.',
           );
-          throw new Error("NOTIFY_ENDPOINT not configured");
+          throw new Error('NOTIFY_ENDPOINT not configured');
         }
         const res = await fetch(NOTIFY_ENDPOINT, {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ email: input.value }),
         });
-        if (!res.ok) throw new Error("HTTP " + res.status);
+        if (!res.ok) throw new Error('HTTP ' + res.status);
 
         // On success the form goes: never leave a live form behind a result.
         form.remove();
-        say("You're on the list. We'll email you once, the day Sprintsight opens.", "ok");
+        say("You're on the list. We'll email you once, the day Sprintsight opens.", 'ok');
       } catch {
         btn.disabled = false;
         btn.textContent = label;
-        form.removeAttribute("aria-busy");
-        say("That didn't send. Try again in a moment.", "err");
+        form.removeAttribute('aria-busy');
+        say("That didn't send. Try again in a moment.", 'err');
       }
     });
   }

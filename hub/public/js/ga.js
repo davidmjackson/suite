@@ -18,7 +18,7 @@
 // "Has GA been started on this window?" — kept on the window rather than in module
 // scope because that is precisely what it describes, and it keeps the flag
 // injectable alongside everything else it guards.
-const STARTED = "__ssGaStarted";
+const STARTED = '__ssGaStarted';
 
 function gtagFor(win) {
   win.dataLayer = win.dataLayer || [];
@@ -40,16 +40,16 @@ const disableKey = (measurementId) => `ga-disable-${measurementId}`;
 // GA writes _ga on the registrable domain, not the host, so a host-only delete
 // leaves the identifier sitting there. Clear the host and every parent level.
 function cookieScopes(hostname) {
-  const parts = hostname.split(".");
-  const scopes = [""];
+  const parts = hostname.split('.');
+  const scopes = [''];
   for (let i = 0; i < parts.length - 1; i++) {
-    scopes.push(`; Domain=.${parts.slice(i).join(".")}`);
+    scopes.push(`; Domain=.${parts.slice(i).join('.')}`);
   }
   return scopes;
 }
 
 function clearGaCookies(measurementId, win) {
-  const names = ["_ga", `_ga_${measurementId.replace(/^G-/, "")}`];
+  const names = ['_ga', `_ga_${measurementId.replace(/^G-/, '')}`];
   for (const name of names) {
     for (const scope of cookieScopes(win.location.hostname)) {
       win.document.cookie = `${name}=; Path=/; Max-Age=0${scope}`;
@@ -64,7 +64,7 @@ export function revokeGa(measurementId, win = globalThis) {
   if (!measurementId) return;
   win[disableKey(measurementId)] = true;
   if (win[STARTED]) {
-    gtagFor(win)("consent", "update", { analytics_storage: "denied" });
+    gtagFor(win)('consent', 'update', { analytics_storage: 'denied' });
   }
   clearGaCookies(measurementId, win);
 }
@@ -78,7 +78,7 @@ export function initGa(measurementId, win = globalThis) {
     // here (as this did before) left re-consent silently doing nothing.
     if (win[disableKey(measurementId)]) {
       win[disableKey(measurementId)] = false;
-      gtagFor(win)("consent", "update", { analytics_storage: "granted" });
+      gtagFor(win)('consent', 'update', { analytics_storage: 'granted' });
     }
     return;
   }
@@ -100,22 +100,22 @@ export function initGa(measurementId, win = globalThis) {
   // This is NOT the denied-by-default Consent Mode pattern the design rejected
   // (see the spec): that one loads gtag for every visitor and pings Google even
   // for rejecters. We still only get here after an explicit Accept.
-  gtag("consent", "default", {
-    ad_storage: "denied",
-    ad_user_data: "denied",
-    ad_personalization: "denied",
-    analytics_storage: "granted",
+  gtag('consent', 'default', {
+    ad_storage: 'denied',
+    ad_user_data: 'denied',
+    ad_personalization: 'denied',
+    analytics_storage: 'granted',
   });
 
-  const s = win.document.createElement("script");
+  const s = win.document.createElement('script');
   s.async = true;
-  s.src = "https://www.googletagmanager.com/gtag/js?id=" + encodeURIComponent(measurementId);
+  s.src = 'https://www.googletagmanager.com/gtag/js?id=' + encodeURIComponent(measurementId);
   win.document.head.appendChild(s);
 
-  gtag("js", new Date());
+  gtag('js', new Date());
   // Belt-and-braces alongside the ad_storage denial above: still current and
   // undeprecated, and they keep signals off for analytics-internal use too.
-  gtag("config", measurementId, {
+  gtag('config', measurementId, {
     allow_google_signals: false,
     allow_ad_personalization_signals: false,
   });

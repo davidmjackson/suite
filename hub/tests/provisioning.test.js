@@ -1,108 +1,174 @@
 // tests/provisioning.test.js
-import { test } from "node:test";
-import assert from "node:assert/strict";
-import { buildTestApp } from "./helpers.js";
-import { createAccessRequests } from "../lib/access-requests.js";
-import { createProvisioner, slugify } from "../lib/provisioning.js";
+import { test } from 'node:test';
+import assert from 'node:assert/strict';
+import { buildTestApp } from './helpers.js';
+import { createAccessRequests } from '../lib/access-requests.js';
+import { createProvisioner, slugify } from '../lib/provisioning.js';
 
-test("slugify produces clean kebab slugs", () => {
-  assert.equal(slugify("IBM"), "ibm");
-  assert.equal(slugify("  Acme & Co!! "), "acme-co");
-  assert.equal(slugify(""), "company");
+test('slugify produces clean kebab slugs', () => {
+  assert.equal(slugify('IBM'), 'ibm');
+  assert.equal(slugify('  Acme & Co!! '), 'acme-co');
+  assert.equal(slugify(''), 'company');
 });
 
 async function pendingRequest(db, over = {}) {
   const reqs = createAccessRequests(db);
   return reqs.createRequest({
-    companyName: "IBM", contactName: "James", email: "james@ibm.com", ...over,
+    companyName: 'IBM',
+    contactName: 'James',
+    email: 'james@ibm.com',
+    ...over,
   });
 }
 
-test("approve provisions company + owner + company poker/retro + owner signal/raid + invite token", async () => {
+test('approve provisions company + owner + company poker/retro + owner signal/raid + invite token', async () => {
   const { db } = await buildTestApp();
-  db.prepare("INSERT INTO users (id,email,created_at) VALUES (?,?,?)").run("op1", "op1@test", Date.now());
+  db.prepare('INSERT INTO users (id,email,created_at) VALUES (?,?,?)').run(
+    'op1',
+    'op1@test',
+    Date.now(),
+  );
   const r = await pendingRequest(db);
   const prov = createProvisioner(db, { inviteTtlMs: 1000 });
-  const res = prov.approve({ requestId: r.id, grantedBy: "op1" });
+  const res = prov.approve({ requestId: r.id, grantedBy: 'op1' });
   assert.equal(res.ok, true);
 
-  const company = db.prepare("SELECT * FROM companies WHERE id = ?").get(res.company.id);
-  assert.equal(company.name, "IBM");
-  assert.equal(company.slug, "ibm");
+  const company = db.prepare('SELECT * FROM companies WHERE id = ?').get(res.company.id);
+  assert.equal(company.name, 'IBM');
+  assert.equal(company.slug, 'ibm');
 
-  const member = db.prepare("SELECT role FROM company_members WHERE company_id=? AND user_id=?")
+  const member = db
+    .prepare('SELECT role FROM company_members WHERE company_id=? AND user_id=?')
     .get(company.id, res.user.id);
-  assert.equal(member.role, "owner");
+  assert.equal(member.role, 'owner');
 
   // Poker + Retro at COMPANY level
-  const compEnts = db.prepare("SELECT app FROM app_entitlements WHERE principal_type='company' AND principal_id=? AND status='active' ORDER BY app").all(company.id);
-  assert.deepEqual(compEnts.map((e) => e.app), ["poker", "retro"]);
+  const compEnts = db
+    .prepare(
+      "SELECT app FROM app_entitlements WHERE principal_type='company' AND principal_id=? AND status='active' ORDER BY app",
+    )
+    .all(company.id);
+  assert.deepEqual(
+    compEnts.map((e) => e.app),
+    ['poker', 'retro'],
+  );
   // Signal + RAID at USER level, granted to the new owner
-  const userEnts = db.prepare("SELECT app, quota_limit, quota_period FROM app_entitlements WHERE principal_type='user' AND principal_id=? AND status='active' ORDER BY app").all(res.user.id);
-  assert.deepEqual(userEnts.map((e) => e.app), ["raid", "signal"]);
-  const raid = userEnts.find((e) => e.app === "raid");
+  const userEnts = db
+    .prepare(
+      "SELECT app, quota_limit, quota_period FROM app_entitlements WHERE principal_type='user' AND principal_id=? AND status='active' ORDER BY app",
+    )
+    .all(res.user.id);
+  assert.deepEqual(
+    userEnts.map((e) => e.app),
+    ['raid', 'signal'],
+  );
+  const raid = userEnts.find((e) => e.app === 'raid');
   assert.equal(raid.quota_limit, 25);
-  assert.equal(raid.quota_period, "month");
+  assert.equal(raid.quota_period, 'month');
 
-  const tok = db.prepare("SELECT * FROM magic_link_tokens WHERE email = ?").get("james@ibm.com");
-  assert.ok(tok, "an invite token row exists");
+  const tok = db.prepare('SELECT * FROM magic_link_tokens WHERE email = ?').get('james@ibm.com');
+  assert.ok(tok, 'an invite token row exists');
   assert.equal(res.token, tok.token);
 
   const updated = createAccessRequests(db).getRequest(r.id);
-  assert.equal(updated.status, "approved");
+  assert.equal(updated.status, 'approved');
   assert.equal(updated.company_id, company.id);
 });
 
-test("approve is a no-op on an already-handled request", async () => {
+test('approve is a no-op on an already-handled request', async () => {
   const { db } = await buildTestApp();
-  db.prepare("INSERT INTO users (id,email,created_at) VALUES (?,?,?)").run("op1", "op1@test", Date.now());
+  db.prepare('INSERT INTO users (id,email,created_at) VALUES (?,?,?)').run(
+    'op1',
+    'op1@test',
+    Date.now(),
+  );
   const r = await pendingRequest(db);
   const prov = createProvisioner(db, { inviteTtlMs: 1000 });
-  prov.approve({ requestId: r.id, grantedBy: "op1" });
-  const second = prov.approve({ requestId: r.id, grantedBy: "op1" });
+  prov.approve({ requestId: r.id, grantedBy: 'op1' });
+  const second = prov.approve({ requestId: r.id, grantedBy: 'op1' });
   assert.equal(second.ok, false);
-  assert.equal(second.reason, "not_pending");
-  assert.equal(db.prepare("SELECT COUNT(*) AS n FROM companies").get().n, 1);
+  assert.equal(second.reason, 'not_pending');
+  assert.equal(db.prepare('SELECT COUNT(*) AS n FROM companies').get().n, 1);
 });
 
-test("approve reuses an existing user row for a known email", async () => {
+test('approve reuses an existing user row for a known email', async () => {
   const { db } = await buildTestApp();
-  db.prepare("INSERT INTO users (id,email,created_at) VALUES (?,?,?)").run("op1", "op1@test", Date.now());
-  db.prepare("INSERT INTO users (id,email,created_at) VALUES (?,?,?)").run("existing", "james@ibm.com", Date.now());
+  db.prepare('INSERT INTO users (id,email,created_at) VALUES (?,?,?)').run(
+    'op1',
+    'op1@test',
+    Date.now(),
+  );
+  db.prepare('INSERT INTO users (id,email,created_at) VALUES (?,?,?)').run(
+    'existing',
+    'james@ibm.com',
+    Date.now(),
+  );
   const r = await pendingRequest(db);
   const prov = createProvisioner(db, { inviteTtlMs: 1000 });
-  const res = prov.approve({ requestId: r.id, grantedBy: "op1" });
-  assert.equal(res.user.id, "existing");
-  assert.equal(db.prepare("SELECT COUNT(*) AS n FROM users WHERE email=?").get("james@ibm.com").n, 1);
+  const res = prov.approve({ requestId: r.id, grantedBy: 'op1' });
+  assert.equal(res.user.id, 'existing');
+  assert.equal(
+    db.prepare('SELECT COUNT(*) AS n FROM users WHERE email=?').get('james@ibm.com').n,
+    1,
+  );
 });
 
-test("approve gives a unique slug when the base slug is taken", async () => {
+test('approve gives a unique slug when the base slug is taken', async () => {
   const { db } = await buildTestApp();
-  db.prepare("INSERT INTO users (id,email,created_at) VALUES (?,?,?)").run("op1", "op1@test", Date.now());
+  db.prepare('INSERT INTO users (id,email,created_at) VALUES (?,?,?)').run(
+    'op1',
+    'op1@test',
+    Date.now(),
+  );
   const prov = createProvisioner(db, { inviteTtlMs: 1000 });
-  prov.approve({ requestId: (await pendingRequest(db)).id, grantedBy: "op1" });
-  prov.approve({ requestId: (await pendingRequest(db, { email: "j2@ibm.com" })).id, grantedBy: "op1" });
-  const slugs = db.prepare("SELECT slug FROM companies ORDER BY slug").all().map((c) => c.slug);
-  assert.deepEqual(slugs, ["ibm", "ibm-2"]);
+  prov.approve({ requestId: (await pendingRequest(db)).id, grantedBy: 'op1' });
+  prov.approve({
+    requestId: (await pendingRequest(db, { email: 'j2@ibm.com' })).id,
+    grantedBy: 'op1',
+  });
+  const slugs = db
+    .prepare('SELECT slug FROM companies ORDER BY slug')
+    .all()
+    .map((c) => c.slug);
+  assert.deepEqual(slugs, ['ibm', 'ibm-2']);
 });
 
-test("approve of an unknown request returns not_found", async () => {
+test('approve of an unknown request returns not_found', async () => {
   const { db } = await buildTestApp();
-  db.prepare("INSERT INTO users (id,email,created_at) VALUES (?,?,?)").run("op1", "op1@test", Date.now());
+  db.prepare('INSERT INTO users (id,email,created_at) VALUES (?,?,?)').run(
+    'op1',
+    'op1@test',
+    Date.now(),
+  );
   const prov = createProvisioner(db, { inviteTtlMs: 1000 });
-  const res = prov.approve({ requestId: "nope", grantedBy: "op1" });
+  const res = prov.approve({ requestId: 'nope', grantedBy: 'op1' });
   assert.equal(res.ok, false);
-  assert.equal(res.reason, "not_found");
+  assert.equal(res.reason, 'not_found');
 });
 
-test("approve matches an existing user case-insensitively", async () => {
+test('approve matches an existing user case-insensitively', async () => {
   const { db } = await buildTestApp();
-  db.prepare("INSERT INTO users (id,email,created_at) VALUES (?,?,?)").run("op1", "op1@test", Date.now());
-  db.prepare("INSERT INTO users (id,email,created_at) VALUES (?,?,?)").run("lower", "james@ibm.com", Date.now());
+  db.prepare('INSERT INTO users (id,email,created_at) VALUES (?,?,?)').run(
+    'op1',
+    'op1@test',
+    Date.now(),
+  );
+  db.prepare('INSERT INTO users (id,email,created_at) VALUES (?,?,?)').run(
+    'lower',
+    'james@ibm.com',
+    Date.now(),
+  );
   const reqs = createAccessRequests(db);
-  const r = reqs.createRequest({ companyName: "IBM", contactName: "James", email: "James@IBM.COM" });
+  const r = reqs.createRequest({
+    companyName: 'IBM',
+    contactName: 'James',
+    email: 'James@IBM.COM',
+  });
   const prov = createProvisioner(db, { inviteTtlMs: 1000 });
-  const res = prov.approve({ requestId: r.id, grantedBy: "op1" });
-  assert.equal(res.user.id, "lower");
-  assert.equal(db.prepare("SELECT COUNT(*) AS n FROM users WHERE LOWER(email)=?").get("james@ibm.com").n, 1);
+  const res = prov.approve({ requestId: r.id, grantedBy: 'op1' });
+  assert.equal(res.user.id, 'lower');
+  assert.equal(
+    db.prepare('SELECT COUNT(*) AS n FROM users WHERE LOWER(email)=?').get('james@ibm.com').n,
+    1,
+  );
 });

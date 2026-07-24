@@ -1,20 +1,20 @@
 // handlers/launch.js
-const { setSessionCookie } = require("../lib/cookies.js");
-const { randomBytes } = require("node:crypto");
+const { setSessionCookie } = require('../lib/cookies.js');
+const { randomBytes } = require('node:crypto');
 
 function createLaunchHandler(ctx) {
   return async function handleLaunch(req, res) {
     const token = req.query?.token;
-    if (!token || typeof token !== "string") {
-      return res.status(400).send("Missing launch token");
+    if (!token || typeof token !== 'string') {
+      return res.status(400).send('Missing launch token');
     }
     let info;
     try {
       info = await ctx.hubApi.exchange(token);
     } catch {
-      return res.status(400).send("Sign-in link expired or invalid. Please try again.");
+      return res.status(400).send('Sign-in link expired or invalid. Please try again.');
     }
-    const sessionId = randomBytes(32).toString("hex");
+    const sessionId = randomBytes(32).toString('hex');
     ctx.store.create({
       id: sessionId,
       userId: info.user.id,
@@ -25,7 +25,7 @@ function createLaunchHandler(ctx) {
       company: info.company || null,
     });
     setSessionCookie(res, { name: ctx.cookieName, value: sessionId, domain: ctx.cookieDomain });
-    let dest = "/";
+    let dest = '/';
     if (req.query.return_to) {
       try {
         const u = new URL(req.query.return_to);
