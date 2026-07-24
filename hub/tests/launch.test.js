@@ -5,7 +5,15 @@ import request from "supertest";
 import { buildTestApp } from "./helpers.js";
 import { now, randomToken } from "../lib/tokens.js";
 
-const APP_DOMAIN = { raid: "https://sprintraid.uk", signal: "https://sprintsignal.uk", retro: "https://sprintretro.uk", poker: "https://sprintpoker.uk" };
+// All five launched apps. `plan` was missing, so /launch/plan had no test at all —
+// the same four-of-five drift that let a Sprintplan magic link land on /dashboard.
+const APP_DOMAIN = {
+  raid: "https://sprintraid.uk",
+  signal: "https://sprintsignal.uk",
+  retro: "https://sprintretro.uk",
+  poker: "https://sprintpoker.uk",
+  plan: "https://sprintplan.uk",
+};
 
 async function buildWithLaunch() {
   const { app, db, config } = await buildTestApp();
@@ -22,7 +30,7 @@ async function loggedInCookie(db) {
   return sid;
 }
 
-for (const appName of ["raid", "signal", "retro", "poker"]) {
+for (const appName of Object.keys(APP_DOMAIN)) {
   test(`POST /launch/${appName} generates token and 302s to app domain`, async () => {
     const { app, db } = await buildWithLaunch();
     const sid = await loggedInCookie(db);
