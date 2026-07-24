@@ -21,18 +21,22 @@
 //
 // Everything runs in a single transaction so a partial failure leaves no
 // half-deleted state.
-import { deleteCentralSessionsForUser } from "./sessions.js";
+import { deleteCentralSessionsForUser } from './sessions.js';
 
 export function deleteUser(db, userId) {
   const tx = db.transaction(() => {
     deleteCentralSessionsForUser(db, userId);
-    db.prepare("DELETE FROM company_members WHERE user_id = ?").run(userId);
-    db.prepare("DELETE FROM team_members WHERE user_id = ?").run(userId);
-    db.prepare("UPDATE app_entitlements SET granted_by = NULL WHERE granted_by = ?").run(userId);
-    db.prepare("UPDATE access_requests SET reviewed_by = NULL WHERE reviewed_by = ?").run(userId);
-    db.prepare("DELETE FROM app_entitlements WHERE principal_type = 'user' AND principal_id = ?").run(userId);
-    db.prepare("DELETE FROM app_usage WHERE principal_type = 'user' AND principal_id = ?").run(userId);
-    return db.prepare("DELETE FROM users WHERE id = ?").run(userId);
+    db.prepare('DELETE FROM company_members WHERE user_id = ?').run(userId);
+    db.prepare('DELETE FROM team_members WHERE user_id = ?').run(userId);
+    db.prepare('UPDATE app_entitlements SET granted_by = NULL WHERE granted_by = ?').run(userId);
+    db.prepare('UPDATE access_requests SET reviewed_by = NULL WHERE reviewed_by = ?').run(userId);
+    db.prepare(
+      "DELETE FROM app_entitlements WHERE principal_type = 'user' AND principal_id = ?",
+    ).run(userId);
+    db.prepare("DELETE FROM app_usage WHERE principal_type = 'user' AND principal_id = ?").run(
+      userId,
+    );
+    return db.prepare('DELETE FROM users WHERE id = ?').run(userId);
   });
   return tx();
 }

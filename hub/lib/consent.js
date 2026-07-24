@@ -8,11 +8,11 @@
 // The one hard rule: anything that is not exactly "granted" or "denied" — absent,
 // empty, tampered, or an unknown value — reads as null, meaning "ask again".
 // This must never fail open to "granted".
-import { parseCookies } from "./cookies.js";
+import { parseCookies } from './cookies.js';
 
-export const CONSENT_COOKIE = "ss_consent";
-export const CONSENT_GRANTED = "granted";
-export const CONSENT_DENIED = "denied";
+export const CONSENT_COOKIE = 'ss_consent';
+export const CONSENT_GRANTED = 'granted';
+export const CONSENT_DENIED = 'denied';
 
 // 180 days. Consent is not indefinite; this re-asks roughly twice a year.
 // Kept in sync with MAX_AGE in public/js/consent-banner.js.

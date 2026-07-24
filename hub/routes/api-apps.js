@@ -1,8 +1,8 @@
 // routes/api-apps.js
-import { createRequireApiKey } from "../middleware/requireApiKey.js";
-import { createEntitlements } from "../lib/entitlements.js";
-import { createAuditLogger } from "../lib/audit.js";
-import { consumeSchema } from "../schemas/api.js";
+import { createRequireApiKey } from '../middleware/requireApiKey.js';
+import { createEntitlements } from '../lib/entitlements.js';
+import { createAuditLogger } from '../lib/audit.js';
+import { consumeSchema } from '../schemas/api.js';
 
 export function mountApiApps(app) {
   const db = app.locals.db;
@@ -11,21 +11,24 @@ export function mountApiApps(app) {
   const entitlements = createEntitlements(db);
   const audit = createAuditLogger(db);
 
-  app.post("/api/apps/:app/consume", requireApiKey, (req, res) => {
+  app.post('/api/apps/:app/consume', requireApiKey, (req, res) => {
     const appName = req.params.app;
-    if (appName !== req.callingApp) return res.status(403).json({ ok: false, reason: "wrong_app" });
+    if (appName !== req.callingApp) return res.status(403).json({ ok: false, reason: 'wrong_app' });
     const parsed = consumeSchema.safeParse(req.body || {});
-    if (!parsed.success) return res.status(400).json({ ok: false, reason: "missing_central_session_id" });
+    if (!parsed.success)
+      return res.status(400).json({ ok: false, reason: 'missing_central_session_id' });
     const { central_session_id } = parsed.data;
-    const sess = db.prepare("SELECT user_id FROM central_sessions WHERE id = ?").get(central_session_id);
-    if (!sess) return res.status(404).json({ ok: false, reason: "session_not_found" });
+    const sess = db
+      .prepare('SELECT user_id FROM central_sessions WHERE id = ?')
+      .get(central_session_id);
+    if (!sess) return res.status(404).json({ ok: false, reason: 'session_not_found' });
 
     const result = entitlements.consume(sess.user_id, appName);
     if (result.ok) {
-      audit.log({ userId: sess.user_id, eventType: "app_consume", app: appName, ip: req.ip });
+      audit.log({ userId: sess.user_id, eventType: 'app_consume', app: appName, ip: req.ip });
       return res.status(200).json({ ok: true, remaining: result.remaining });
     }
-    if (result.reason === "quota_exceeded") return res.status(402).json(result);
+    if (result.reason === 'quota_exceeded') return res.status(402).json(result);
     return res.status(403).json(result); // not_entitled
   });
 }

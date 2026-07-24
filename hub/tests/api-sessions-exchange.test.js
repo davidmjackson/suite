@@ -1,122 +1,144 @@
 // tests/api-sessions-exchange.test.js
-import { test } from "node:test";
-import assert from "node:assert/strict";
-import request from "supertest";
-import { buildTestApp } from "./helpers.js";
-import { now, randomToken } from "../lib/tokens.js";
+import { test } from 'node:test';
+import assert from 'node:assert/strict';
+import request from 'supertest';
+import { buildTestApp } from './helpers.js';
+import { now, randomToken } from '../lib/tokens.js';
 
 async function buildWithApi() {
   const { app, db, config } = await buildTestApp();
-  const { mountApiSessions } = await import("../routes/api-sessions.js?t=" + Date.now());
+  const { mountApiSessions } = await import('../routes/api-sessions.js?t=' + Date.now());
   mountApiSessions(app);
   return { app, db, config };
 }
 
-test("rejects request without bearer key", async () => {
+test('rejects request without bearer key', async () => {
   const { app } = await buildWithApi();
-  const res = await request(app).post("/api/sessions/exchange").send({ launch_token: "x" });
+  const res = await request(app).post('/api/sessions/exchange').send({ launch_token: 'x' });
   assert.equal(res.status, 401);
 });
 
-test("exchanges valid launch token for session info", async () => {
+test('exchanges valid launch token for session info', async () => {
   const { app, db } = await buildWithApi();
-  db.prepare("INSERT INTO users (id,email,display_name,created_at) VALUES (?,?,?,?)")
-    .run("u1", "a@b.c", "Alice", now());
+  db.prepare('INSERT INTO users (id,email,display_name,created_at) VALUES (?,?,?,?)').run(
+    'u1',
+    'a@b.c',
+    'Alice',
+    now(),
+  );
   const sid = randomToken();
-  db.prepare("INSERT INTO central_sessions (id,user_id,created_at,last_heartbeat_at,expires_at) VALUES (?,?,?,?,?)")
-    .run(sid, "u1", now(), now(), now() + 60_000);
+  db.prepare(
+    'INSERT INTO central_sessions (id,user_id,created_at,last_heartbeat_at,expires_at) VALUES (?,?,?,?,?)',
+  ).run(sid, 'u1', now(), now(), now() + 60_000);
   const tok = randomToken();
-  db.prepare("INSERT INTO launch_tokens (token,central_session_id,target_app,created_at,expires_at) VALUES (?,?,?,?,?)")
-    .run(tok, sid, "raid", now(), now() + 30_000);
+  db.prepare(
+    'INSERT INTO launch_tokens (token,central_session_id,target_app,created_at,expires_at) VALUES (?,?,?,?,?)',
+  ).run(tok, sid, 'raid', now(), now() + 30_000);
 
   const res = await request(app)
-    .post("/api/sessions/exchange")
-    .set("Authorization", "Bearer k-raid")
+    .post('/api/sessions/exchange')
+    .set('Authorization', 'Bearer k-raid')
     .send({ launch_token: tok });
 
   assert.equal(res.status, 200);
-  assert.deepEqual(res.body.user, { id: "u1", email: "a@b.c", displayName: "Alice" });
+  assert.deepEqual(res.body.user, { id: 'u1', email: 'a@b.c', displayName: 'Alice' });
   assert.equal(res.body.central_session_id, sid);
 
-  const consumed = db.prepare("SELECT consumed_at FROM launch_tokens WHERE token = ?").get(tok);
+  const consumed = db.prepare('SELECT consumed_at FROM launch_tokens WHERE token = ?').get(tok);
   assert.ok(consumed.consumed_at);
 });
 
-test("rejects token addressed to a different app", async () => {
+test('rejects token addressed to a different app', async () => {
   const { app, db } = await buildWithApi();
-  db.prepare("INSERT INTO users (id,email,created_at) VALUES (?,?,?)").run("u1", "a@b.c", now());
+  db.prepare('INSERT INTO users (id,email,created_at) VALUES (?,?,?)').run('u1', 'a@b.c', now());
   const sid = randomToken();
-  db.prepare("INSERT INTO central_sessions (id,user_id,created_at,last_heartbeat_at,expires_at) VALUES (?,?,?,?,?)")
-    .run(sid, "u1", now(), now(), now() + 60_000);
+  db.prepare(
+    'INSERT INTO central_sessions (id,user_id,created_at,last_heartbeat_at,expires_at) VALUES (?,?,?,?,?)',
+  ).run(sid, 'u1', now(), now(), now() + 60_000);
   const tok = randomToken();
-  db.prepare("INSERT INTO launch_tokens (token,central_session_id,target_app,created_at,expires_at) VALUES (?,?,?,?,?)")
-    .run(tok, sid, "raid", now(), now() + 30_000);
+  db.prepare(
+    'INSERT INTO launch_tokens (token,central_session_id,target_app,created_at,expires_at) VALUES (?,?,?,?,?)',
+  ).run(tok, sid, 'raid', now(), now() + 30_000);
 
   const res = await request(app)
-    .post("/api/sessions/exchange")
-    .set("Authorization", "Bearer k-signal")
+    .post('/api/sessions/exchange')
+    .set('Authorization', 'Bearer k-signal')
     .send({ launch_token: tok });
 
   assert.equal(res.status, 403);
 });
 
-test("rejects already-consumed token", async () => {
+test('rejects already-consumed token', async () => {
   const { app, db } = await buildWithApi();
-  db.prepare("INSERT INTO users (id,email,created_at) VALUES (?,?,?)").run("u1", "a@b.c", now());
+  db.prepare('INSERT INTO users (id,email,created_at) VALUES (?,?,?)').run('u1', 'a@b.c', now());
   const sid = randomToken();
-  db.prepare("INSERT INTO central_sessions (id,user_id,created_at,last_heartbeat_at,expires_at) VALUES (?,?,?,?,?)")
-    .run(sid, "u1", now(), now(), now() + 60_000);
+  db.prepare(
+    'INSERT INTO central_sessions (id,user_id,created_at,last_heartbeat_at,expires_at) VALUES (?,?,?,?,?)',
+  ).run(sid, 'u1', now(), now(), now() + 60_000);
   const tok = randomToken();
-  db.prepare("INSERT INTO launch_tokens (token,central_session_id,target_app,created_at,expires_at,consumed_at) VALUES (?,?,?,?,?,?)")
-    .run(tok, sid, "raid", now(), now() + 30_000, now());
+  db.prepare(
+    'INSERT INTO launch_tokens (token,central_session_id,target_app,created_at,expires_at,consumed_at) VALUES (?,?,?,?,?,?)',
+  ).run(tok, sid, 'raid', now(), now() + 30_000, now());
 
   const res = await request(app)
-    .post("/api/sessions/exchange")
-    .set("Authorization", "Bearer k-raid")
+    .post('/api/sessions/exchange')
+    .set('Authorization', 'Bearer k-raid')
     .send({ launch_token: tok });
 
   assert.equal(res.status, 400);
 });
 
-test("exchange includes an entitlement block scoped to the target app", async () => {
+test('exchange includes an entitlement block scoped to the target app', async () => {
   const { app, db } = await buildWithApi();
-  db.prepare("INSERT INTO users (id,email,display_name,created_at) VALUES (?,?,?,?)")
-    .run("u1", "a@b.c", "Alice", now());
+  db.prepare('INSERT INTO users (id,email,display_name,created_at) VALUES (?,?,?,?)').run(
+    'u1',
+    'a@b.c',
+    'Alice',
+    now(),
+  );
   // grant raid to the user, unlimited
-  const { createEntitlements } = await import("../lib/entitlements.js?t=" + Date.now());
-  createEntitlements(db).grantEntitlement({ app: "raid", principalType: "user", principalId: "u1" });
+  const { createEntitlements } = await import('../lib/entitlements.js?t=' + Date.now());
+  createEntitlements(db).grantEntitlement({
+    app: 'raid',
+    principalType: 'user',
+    principalId: 'u1',
+  });
 
   const sid = randomToken();
-  db.prepare("INSERT INTO central_sessions (id,user_id,created_at,last_heartbeat_at,expires_at) VALUES (?,?,?,?,?)")
-    .run(sid, "u1", now(), now(), now() + 60_000);
+  db.prepare(
+    'INSERT INTO central_sessions (id,user_id,created_at,last_heartbeat_at,expires_at) VALUES (?,?,?,?,?)',
+  ).run(sid, 'u1', now(), now(), now() + 60_000);
   const tok = randomToken();
-  db.prepare("INSERT INTO launch_tokens (token,central_session_id,target_app,created_at,expires_at) VALUES (?,?,?,?,?)")
-    .run(tok, sid, "raid", now(), now() + 30_000);
+  db.prepare(
+    'INSERT INTO launch_tokens (token,central_session_id,target_app,created_at,expires_at) VALUES (?,?,?,?,?)',
+  ).run(tok, sid, 'raid', now(), now() + 30_000);
 
   const res = await request(app)
-    .post("/api/sessions/exchange")
-    .set("Authorization", "Bearer k-raid")
+    .post('/api/sessions/exchange')
+    .set('Authorization', 'Bearer k-raid')
     .send({ launch_token: tok });
 
   assert.equal(res.status, 200);
   assert.equal(res.body.entitlement.entitled, true);
-  assert.deepEqual(res.body.entitlement.principal, { type: "user", id: "u1" });
+  assert.deepEqual(res.body.entitlement.principal, { type: 'user', id: 'u1' });
   assert.equal(res.body.entitlement.quota, null);
 });
 
-test("exchange returns entitled:false when the user has no grant for the app", async () => {
+test('exchange returns entitled:false when the user has no grant for the app', async () => {
   const { app, db } = await buildWithApi();
-  db.prepare("INSERT INTO users (id,email,created_at) VALUES (?,?,?)").run("u1", "a@b.c", now());
+  db.prepare('INSERT INTO users (id,email,created_at) VALUES (?,?,?)').run('u1', 'a@b.c', now());
   const sid = randomToken();
-  db.prepare("INSERT INTO central_sessions (id,user_id,created_at,last_heartbeat_at,expires_at) VALUES (?,?,?,?,?)")
-    .run(sid, "u1", now(), now(), now() + 60_000);
+  db.prepare(
+    'INSERT INTO central_sessions (id,user_id,created_at,last_heartbeat_at,expires_at) VALUES (?,?,?,?,?)',
+  ).run(sid, 'u1', now(), now(), now() + 60_000);
   const tok = randomToken();
-  db.prepare("INSERT INTO launch_tokens (token,central_session_id,target_app,created_at,expires_at) VALUES (?,?,?,?,?)")
-    .run(tok, sid, "raid", now(), now() + 30_000);
+  db.prepare(
+    'INSERT INTO launch_tokens (token,central_session_id,target_app,created_at,expires_at) VALUES (?,?,?,?,?)',
+  ).run(tok, sid, 'raid', now(), now() + 30_000);
 
   const res = await request(app)
-    .post("/api/sessions/exchange")
-    .set("Authorization", "Bearer k-raid")
+    .post('/api/sessions/exchange')
+    .set('Authorization', 'Bearer k-raid')
     .send({ launch_token: tok });
 
   assert.equal(res.status, 200);
@@ -125,95 +147,142 @@ test("exchange returns entitled:false when the user has no grant for the app", a
 
 test("exchange returns the user's teams scoped to the per-company entitled app", async () => {
   const { app, db } = await buildWithApi();
-  db.prepare("INSERT INTO users (id,email,display_name,created_at) VALUES (?,?,?,?)")
-    .run("u1", "a@b.c", "Alice", now());
-  const { createEntitlements } = await import("../lib/entitlements.js?t=" + Date.now());
-  const { createOrg } = await import("../lib/org.js?t=" + Date.now());
+  db.prepare('INSERT INTO users (id,email,display_name,created_at) VALUES (?,?,?,?)').run(
+    'u1',
+    'a@b.c',
+    'Alice',
+    now(),
+  );
+  const { createEntitlements } = await import('../lib/entitlements.js?t=' + Date.now());
+  const { createOrg } = await import('../lib/org.js?t=' + Date.now());
   const org = createOrg(db);
-  const co = org.createCompany({ name: "Acme", slug: "acme" });
-  org.addCompanyMember({ userId: "u1", companyId: co.id, role: "owner" });
-  const team = org.createTeam({ companyId: co.id, name: "Alpha" });
-  org.addTeamMember({ userId: "u1", teamId: team.id, role: "lead" });
-  createEntitlements(db).grantEntitlement({ app: "poker", principalType: "company", principalId: co.id });
+  const co = org.createCompany({ name: 'Acme', slug: 'acme' });
+  org.addCompanyMember({ userId: 'u1', companyId: co.id, role: 'owner' });
+  const team = org.createTeam({ companyId: co.id, name: 'Alpha' });
+  org.addTeamMember({ userId: 'u1', teamId: team.id, role: 'lead' });
+  createEntitlements(db).grantEntitlement({
+    app: 'poker',
+    principalType: 'company',
+    principalId: co.id,
+  });
 
   const sid = randomToken();
-  db.prepare("INSERT INTO central_sessions (id,user_id,created_at,last_heartbeat_at,expires_at) VALUES (?,?,?,?,?)")
-    .run(sid, "u1", now(), now(), now() + 60_000);
+  db.prepare(
+    'INSERT INTO central_sessions (id,user_id,created_at,last_heartbeat_at,expires_at) VALUES (?,?,?,?,?)',
+  ).run(sid, 'u1', now(), now(), now() + 60_000);
   const tok = randomToken();
-  db.prepare("INSERT INTO launch_tokens (token,central_session_id,target_app,created_at,expires_at) VALUES (?,?,?,?,?)")
-    .run(tok, sid, "poker", now(), now() + 30_000);
+  db.prepare(
+    'INSERT INTO launch_tokens (token,central_session_id,target_app,created_at,expires_at) VALUES (?,?,?,?,?)',
+  ).run(tok, sid, 'poker', now(), now() + 30_000);
 
   const res = await request(app)
-    .post("/api/sessions/exchange")
-    .set("Authorization", "Bearer k-poker")
+    .post('/api/sessions/exchange')
+    .set('Authorization', 'Bearer k-poker')
     .send({ launch_token: tok });
 
   assert.equal(res.status, 200);
   assert.equal(res.body.entitlement.entitled, true);
-  assert.deepEqual(res.body.teams, [{ id: team.id, name: "Alpha", role: "lead", company: "Acme" }]);
+  assert.deepEqual(res.body.teams, [{ id: team.id, name: 'Alpha', role: 'lead', company: 'Acme' }]);
 });
 
-test("exchange returns company context for a user-typed entitlement (signal/raid)", async () => {
+test('exchange returns company context for a user-typed entitlement (signal/raid)', async () => {
   const { app, db } = await buildWithApi();
-  const { createOrg } = await import("../lib/org.js?t=" + Date.now());
-  const { createEntitlements } = await import("../lib/entitlements.js?t=" + Date.now());
+  const { createOrg } = await import('../lib/org.js?t=' + Date.now());
+  const { createEntitlements } = await import('../lib/entitlements.js?t=' + Date.now());
   const org = createOrg(db);
   const ent = createEntitlements(db);
-  db.prepare("INSERT INTO users (id,email,display_name,created_at) VALUES (?,?,?,?)").run("u1", "a@b.c", "Alice", now());
-  const c = org.createCompany({ name: "Acme", slug: "acme" });
-  org.addCompanyMember({ userId: "u1", companyId: c.id, role: "member" });
-  const team = org.createTeam({ companyId: c.id, name: "Squad" });
-  org.addTeamMember({ userId: "u1", teamId: team.id, role: "member" });
+  db.prepare('INSERT INTO users (id,email,display_name,created_at) VALUES (?,?,?,?)').run(
+    'u1',
+    'a@b.c',
+    'Alice',
+    now(),
+  );
+  const c = org.createCompany({ name: 'Acme', slug: 'acme' });
+  org.addCompanyMember({ userId: 'u1', companyId: c.id, role: 'member' });
+  const team = org.createTeam({ companyId: c.id, name: 'Squad' });
+  org.addTeamMember({ userId: 'u1', teamId: team.id, role: 'member' });
   // RAID granted at USER level only — no company-level RAID exists.
   // grantedBy: null (not "op") because granted_by has a FK to users(id) and foreign_keys = ON.
-  ent.grantEntitlement({ app: "raid", principalType: "user", principalId: "u1", quotaLimit: 25, quotaPeriod: "month", grantedBy: null });
+  ent.grantEntitlement({
+    app: 'raid',
+    principalType: 'user',
+    principalId: 'u1',
+    quotaLimit: 25,
+    quotaPeriod: 'month',
+    grantedBy: null,
+  });
   const sid = randomToken();
-  db.prepare("INSERT INTO central_sessions (id,user_id,created_at,last_heartbeat_at,expires_at) VALUES (?,?,?,?,?)").run(sid, "u1", now(), now(), now() + 60_000);
+  db.prepare(
+    'INSERT INTO central_sessions (id,user_id,created_at,last_heartbeat_at,expires_at) VALUES (?,?,?,?,?)',
+  ).run(sid, 'u1', now(), now(), now() + 60_000);
   const tok = randomToken();
-  db.prepare("INSERT INTO launch_tokens (token,central_session_id,target_app,created_at,expires_at) VALUES (?,?,?,?,?)").run(tok, sid, "raid", now(), now() + 30_000);
-
-  const res = await request(app).post("/api/sessions/exchange")
-    .set("Authorization", "Bearer k-raid").send({ launch_token: tok });
-  assert.equal(res.status, 200);
-  assert.equal(res.body.entitlement.entitled, true);
-  assert.equal(res.body.entitlement.principal.type, "user");
-  assert.equal(res.body.teams.length, 1);
-  assert.equal(res.body.teams[0].company, "Acme");
-});
-
-test("exchange returns top-level company {id,name} for a company member", async () => {
-  const { app, db } = await buildWithApi();
-  const { createOrg } = await import("../lib/org.js?t=" + Date.now());
-  const { createEntitlements } = await import("../lib/entitlements.js?t=" + Date.now());
-  const org = createOrg(db);
-  const ent = createEntitlements(db);
-  db.prepare("INSERT INTO users (id,email,display_name,created_at) VALUES (?,?,?,?)").run("u1", "a@b.c", "Alice", now());
-  const c = org.createCompany({ name: "Acme", slug: "acme" });
-  org.addCompanyMember({ userId: "u1", companyId: c.id, role: "member" });
-  ent.grantEntitlement({ app: "raid", principalType: "company", principalId: c.id, grantedBy: null });
-  const sid = randomToken();
-  db.prepare("INSERT INTO central_sessions (id,user_id,created_at,last_heartbeat_at,expires_at) VALUES (?,?,?,?,?)").run(sid, "u1", now(), now(), now() + 60_000);
-  const tok = randomToken();
-  db.prepare("INSERT INTO launch_tokens (token,central_session_id,target_app,created_at,expires_at) VALUES (?,?,?,?,?)").run(tok, sid, "raid", now(), now() + 30_000);
-
-  const res = await request(app).post("/api/sessions/exchange").set("Authorization", "Bearer k-raid").send({ launch_token: tok });
-  assert.equal(res.status, 200);
-  assert.deepEqual(res.body.company, { id: c.id, name: "Acme" });
-});
-
-test("exchange returns teams:[] when not entitled or principal is not a company", async () => {
-  const { app, db } = await buildWithApi();
-  db.prepare("INSERT INTO users (id,email,created_at) VALUES (?,?,?)").run("u1", "a@b.c", now());
-  const sid = randomToken();
-  db.prepare("INSERT INTO central_sessions (id,user_id,created_at,last_heartbeat_at,expires_at) VALUES (?,?,?,?,?)")
-    .run(sid, "u1", now(), now(), now() + 60_000);
-  const tok = randomToken();
-  db.prepare("INSERT INTO launch_tokens (token,central_session_id,target_app,created_at,expires_at) VALUES (?,?,?,?,?)")
-    .run(tok, sid, "poker", now(), now() + 30_000);
+  db.prepare(
+    'INSERT INTO launch_tokens (token,central_session_id,target_app,created_at,expires_at) VALUES (?,?,?,?,?)',
+  ).run(tok, sid, 'raid', now(), now() + 30_000);
 
   const res = await request(app)
-    .post("/api/sessions/exchange")
-    .set("Authorization", "Bearer k-poker")
+    .post('/api/sessions/exchange')
+    .set('Authorization', 'Bearer k-raid')
+    .send({ launch_token: tok });
+  assert.equal(res.status, 200);
+  assert.equal(res.body.entitlement.entitled, true);
+  assert.equal(res.body.entitlement.principal.type, 'user');
+  assert.equal(res.body.teams.length, 1);
+  assert.equal(res.body.teams[0].company, 'Acme');
+});
+
+test('exchange returns top-level company {id,name} for a company member', async () => {
+  const { app, db } = await buildWithApi();
+  const { createOrg } = await import('../lib/org.js?t=' + Date.now());
+  const { createEntitlements } = await import('../lib/entitlements.js?t=' + Date.now());
+  const org = createOrg(db);
+  const ent = createEntitlements(db);
+  db.prepare('INSERT INTO users (id,email,display_name,created_at) VALUES (?,?,?,?)').run(
+    'u1',
+    'a@b.c',
+    'Alice',
+    now(),
+  );
+  const c = org.createCompany({ name: 'Acme', slug: 'acme' });
+  org.addCompanyMember({ userId: 'u1', companyId: c.id, role: 'member' });
+  ent.grantEntitlement({
+    app: 'raid',
+    principalType: 'company',
+    principalId: c.id,
+    grantedBy: null,
+  });
+  const sid = randomToken();
+  db.prepare(
+    'INSERT INTO central_sessions (id,user_id,created_at,last_heartbeat_at,expires_at) VALUES (?,?,?,?,?)',
+  ).run(sid, 'u1', now(), now(), now() + 60_000);
+  const tok = randomToken();
+  db.prepare(
+    'INSERT INTO launch_tokens (token,central_session_id,target_app,created_at,expires_at) VALUES (?,?,?,?,?)',
+  ).run(tok, sid, 'raid', now(), now() + 30_000);
+
+  const res = await request(app)
+    .post('/api/sessions/exchange')
+    .set('Authorization', 'Bearer k-raid')
+    .send({ launch_token: tok });
+  assert.equal(res.status, 200);
+  assert.deepEqual(res.body.company, { id: c.id, name: 'Acme' });
+});
+
+test('exchange returns teams:[] when not entitled or principal is not a company', async () => {
+  const { app, db } = await buildWithApi();
+  db.prepare('INSERT INTO users (id,email,created_at) VALUES (?,?,?)').run('u1', 'a@b.c', now());
+  const sid = randomToken();
+  db.prepare(
+    'INSERT INTO central_sessions (id,user_id,created_at,last_heartbeat_at,expires_at) VALUES (?,?,?,?,?)',
+  ).run(sid, 'u1', now(), now(), now() + 60_000);
+  const tok = randomToken();
+  db.prepare(
+    'INSERT INTO launch_tokens (token,central_session_id,target_app,created_at,expires_at) VALUES (?,?,?,?,?)',
+  ).run(tok, sid, 'poker', now(), now() + 30_000);
+
+  const res = await request(app)
+    .post('/api/sessions/exchange')
+    .set('Authorization', 'Bearer k-poker')
     .send({ launch_token: tok });
 
   assert.equal(res.status, 200);

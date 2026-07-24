@@ -1,94 +1,104 @@
-import { test } from "node:test";
-import assert from "node:assert/strict";
-import express from "express";
-import request from "supertest";
-import { Writable } from "node:stream";
-import { createLogger } from "../lib/logger.js";
-import { makeRequestLogger } from "../middleware/requestLogger.js";
+import { test } from 'node:test';
+import assert from 'node:assert/strict';
+import express from 'express';
+import request from 'supertest';
+import { Writable } from 'node:stream';
+import { createLogger } from '../lib/logger.js';
+import { makeRequestLogger } from '../middleware/requestLogger.js';
 
 function capture() {
   const chunks = [];
-  const stream = new Writable({ write(c, _e, cb) { chunks.push(c.toString()); cb(); } });
+  const stream = new Writable({
+    write(c, _e, cb) {
+      chunks.push(c.toString());
+      cb();
+    },
+  });
   return {
     stream,
-    text: () => chunks.join(""),
-    records: () => chunks.join("").split("\n").filter(Boolean).map((l) => JSON.parse(l)),
+    text: () => chunks.join(''),
+    records: () =>
+      chunks
+        .join('')
+        .split('\n')
+        .filter(Boolean)
+        .map((l) => JSON.parse(l)),
   };
 }
 
 function buildApp() {
   const cap = capture();
-  const logger = createLogger({ level: "info", stream: cap.stream });
+  const logger = createLogger({ level: 'info', stream: cap.stream });
   const app = express();
   app.use(makeRequestLogger(logger));
-  app.get("/ok", (req, res) => res.json({ ok: true }));
-  app.get("/missing", (req, res) => res.status(404).json({ no: true }));
+  app.get('/ok', (req, res) => res.json({ ok: true }));
+  app.get('/missing', (req, res) => res.status(404).json({ no: true }));
   return { app, cap };
 }
 
 const tick = () => new Promise((r) => setImmediate(r));
 
-test("generates a request id and echoes it in the X-Request-Id header", async () => {
+test('generates a request id and echoes it in the X-Request-Id header', async () => {
   const { app } = buildApp();
-  const res = await request(app).get("/ok");
+  const res = await request(app).get('/ok');
   assert.equal(res.status, 200);
-  assert.ok(res.headers["x-request-id"]);
+  assert.ok(res.headers['x-request-id']);
 });
 
-test("honors an inbound X-Request-Id", async () => {
+test('honors an inbound X-Request-Id', async () => {
   const { app, cap } = buildApp();
-  const res = await request(app).get("/ok").set("X-Request-Id", "abc-123");
+  const res = await request(app).get('/ok').set('X-Request-Id', 'abc-123');
   await tick();
-  assert.equal(res.headers["x-request-id"], "abc-123");
-  assert.ok(cap.records().some((r) => r.req && r.req.id === "abc-123"));
+  assert.equal(res.headers['x-request-id'], 'abc-123');
+  assert.ok(cap.records().some((r) => r.req && r.req.id === 'abc-123'));
 });
 
-test("maps a 404 response to warn level", async () => {
+test('maps a 404 response to warn level', async () => {
   const { app, cap } = buildApp();
-  await request(app).get("/missing");
+  await request(app).get('/missing');
   await tick();
-  const rec = cap.records().find((r) => r.req && r.req.url === "/missing");
+  const rec = cap.records().find((r) => r.req && r.req.url === '/missing');
   assert.ok(rec);
   assert.equal(rec.level, 40); // pino warn
 });
 
-test("never logs request headers (cookie stays private)", async () => {
+test('never logs request headers (cookie stays private)', async () => {
   const { app, cap } = buildApp();
-  await request(app).get("/ok").set("Cookie", "hub_session=supersecretcookie");
+  await request(app).get('/ok').set('Cookie', 'hub_session=supersecretcookie');
   await tick();
-  assert.ok(!cap.text().includes("supersecretcookie"));
+  assert.ok(!cap.text().includes('supersecretcookie'));
 });
 
-test("masks sensitive query params in the logged url", async () => {
+test('masks sensitive query params in the logged url', async () => {
   const { app, cap } = buildApp();
-  await request(app).get("/ok?token=topsecretquery");
+  await request(app).get('/ok?token=topsecretquery');
   await tick();
-  assert.ok(!cap.text().includes("topsecretquery"));
-  assert.ok(cap.records().some((r) => r.req && r.req.url.startsWith("/ok")));
+  assert.ok(!cap.text().includes('topsecretquery'));
+  assert.ok(cap.records().some((r) => r.req && r.req.url.startsWith('/ok')));
 });
 
-test("ignores an over-long inbound X-Request-Id (generates its own)", async () => {
+test('ignores an over-long inbound X-Request-Id (generates its own)', async () => {
   const { app } = buildApp();
-  const huge = "a".repeat(5000);
-  const res = await request(app).get("/ok").set("X-Request-Id", huge);
-  assert.notEqual(res.headers["x-request-id"], huge);
-  assert.equal(res.headers["x-request-id"].length, 36); // generated uuid v4
+  const huge = 'a'.repeat(5000);
+  const res = await request(app).get('/ok').set('X-Request-Id', huge);
+  assert.notEqual(res.headers['x-request-id'], huge);
+  assert.equal(res.headers['x-request-id'].length, 36); // generated uuid v4
 });
 
-test("never logs response headers (Set-Cookie stays private)", async () => {
+test('never logs response headers (Set-Cookie stays private)', async () => {
   const cap = capture();
-  const logger = createLogger({ level: "info", stream: cap.stream });
+  const logger = createLogger({ level: 'info', stream: cap.stream });
   const app = express();
   app.use(makeRequestLogger(logger));
-  app.get("/setcookie", (req, res) => {
-    res.setHeader("Set-Cookie", "hub_session=supersecretsession; HttpOnly");
+  app.get('/setcookie', (req, res) => {
+    res.setHeader('Set-Cookie', 'hub_session=supersecretsession; HttpOnly');
     res.json({ ok: true });
   });
-  await request(app).get("/setcookie");
+  await request(app).get('/setcookie');
   await tick();
-  assert.ok(!cap.text().includes("supersecretsession"));
+  assert.ok(!cap.text().includes('supersecretsession'));
   // statusCode is still useful and should remain in the log record:
-  const rec = cap.records().find((r) => r.req && r.req.url === "/setcookie");
+  const rec = cap.records().find((r) => r.req && r.req.url === '/setcookie');
   assert.ok(rec);
   assert.equal(rec.res.statusCode, 200);
 });

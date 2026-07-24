@@ -6,27 +6,29 @@ const required = (name) => {
 };
 
 const config = {
-  port: parseInt(process.env.PORT || "3000", 10),
-  nodeEnv: process.env.NODE_ENV || "development",
-  baseUrl: required("BASE_URL"),
-  dbPath: required("DB_PATH"),
-  resendApiKey: required("RESEND_API_KEY"),
-  fromEmail: required("FROM_EMAIL"),
+  port: parseInt(process.env.PORT || '3000', 10),
+  nodeEnv: process.env.NODE_ENV || 'development',
+  baseUrl: required('BASE_URL'),
+  dbPath: required('DB_PATH'),
+  resendApiKey: required('RESEND_API_KEY'),
+  fromEmail: required('FROM_EMAIL'),
   // Optional: where new access-request notifications are sent. If unset, no
   // operator notification is sent (the request is still recorded as normal).
   adminEmail: process.env.ADMIN_EMAIL || null,
   // Optional: GA4 measurement id for the public pages. Unset ⇒ analytics are off
   // entirely (no tag, no consent bar), which is the default for dev and tests so
   // they never pollute the property. Prod sets GA_MEASUREMENT_ID=G-6FJLV7EE1X.
-  gaMeasurementId: (process.env.GA_MEASUREMENT_ID || "").trim() || null,
-  cookieSecret: required("COOKIE_SECRET"),
-  allowedAppDomains: required("ALLOWED_APP_DOMAINS").split(",").map(s => s.trim()),
+  gaMeasurementId: (process.env.GA_MEASUREMENT_ID || '').trim() || null,
+  cookieSecret: required('COOKIE_SECRET'),
+  allowedAppDomains: required('ALLOWED_APP_DOMAINS')
+    .split(',')
+    .map((s) => s.trim()),
   apiKeys: {
-    raid: required("HUB_API_KEY_RAID"),
-    signal: required("HUB_API_KEY_SIGNAL"),
-    retro: required("HUB_API_KEY_RETRO"),
-    poker: required("HUB_API_KEY_POKER"),
-    plan: required("HUB_API_KEY_PLAN"),
+    raid: required('HUB_API_KEY_RAID'),
+    signal: required('HUB_API_KEY_SIGNAL'),
+    retro: required('HUB_API_KEY_RETRO'),
+    poker: required('HUB_API_KEY_POKER'),
+    plan: required('HUB_API_KEY_PLAN'),
   },
   sessionIdleMs: 30 * 60 * 1000,
   sessionMaxMs: 30 * 24 * 60 * 60 * 1000,

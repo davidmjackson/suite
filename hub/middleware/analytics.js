@@ -10,7 +10,7 @@
 // call sites (GET, 400-invalid, honeypot, POST success). Express merges res.locals
 // into render options, so every site — including any added later — picks this up
 // without being threaded through by hand.
-import { readConsent } from "../lib/consent.js";
+import { readConsent } from '../lib/consent.js';
 
 export function analyticsLocals(config) {
   // Resolved once at mount: unset GA_MEASUREMENT_ID is the kill switch, and it

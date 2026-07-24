@@ -1,22 +1,22 @@
 // lib/email.js
-import { Eta } from "eta";
-import path from "node:path";
-import { fileURLToPath } from "node:url";
-import { Resend } from "resend";
+import { Eta } from 'eta';
+import path from 'node:path';
+import { fileURLToPath } from 'node:url';
+import { Resend } from 'resend';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
-const eta = new Eta({ views: path.join(__dirname, "../views"), cache: false });
+const eta = new Eta({ views: path.join(__dirname, '../views'), cache: false });
 
 export async function renderMagicLinkEmail({ url }) {
-  return await eta.renderAsync("emails/magic-link", { url });
+  return await eta.renderAsync('emails/magic-link', { url });
 }
 
 export async function renderAccessApprovedEmail({ url }) {
-  return await eta.renderAsync("emails/access-approved", { url });
+  return await eta.renderAsync('emails/access-approved', { url });
 }
 
 export async function renderAccessRequestNotificationEmail({ request, reviewUrl }) {
-  return await eta.renderAsync("emails/access-request-notification", { request, reviewUrl });
+  return await eta.renderAsync('emails/access-request-notification', { request, reviewUrl });
 }
 
 export function createEmailSender({ apiKey, from }) {
@@ -27,7 +27,7 @@ export function createEmailSender({ apiKey, from }) {
       return await resend.emails.send({
         from,
         to,
-        subject: "Your Sprint Suite sign-in link",
+        subject: 'Your Sprint Suite sign-in link',
         html,
       });
     },

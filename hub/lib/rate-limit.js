@@ -5,7 +5,10 @@ export function createLimiter({ max, windowMs }) {
     check(key) {
       const now = Date.now();
       let arr = buckets.get(key);
-      if (!arr) { arr = []; buckets.set(key, arr); }
+      if (!arr) {
+        arr = [];
+        buckets.set(key, arr);
+      }
       while (arr.length && arr[0] < now - windowMs) arr.shift();
       if (arr.length >= max) return false;
       arr.push(now);

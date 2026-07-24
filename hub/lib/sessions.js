@@ -9,15 +9,15 @@
 // the children are removed first. launch_tokens is currently the only table
 // referencing central_sessions.
 export function deleteCentralSession(db, sid) {
-  db.prepare("DELETE FROM launch_tokens WHERE central_session_id = ?").run(sid);
-  return db.prepare("DELETE FROM central_sessions WHERE id = ?").run(sid);
+  db.prepare('DELETE FROM launch_tokens WHERE central_session_id = ?').run(sid);
+  return db.prepare('DELETE FROM central_sessions WHERE id = ?').run(sid);
 }
 
 // Delete every central session for a user (admin disable / delete / "log out
 // everywhere"), removing their launch_tokens children first for the same reason.
 export function deleteCentralSessionsForUser(db, userId) {
   db.prepare(
-    "DELETE FROM launch_tokens WHERE central_session_id IN (SELECT id FROM central_sessions WHERE user_id = ?)"
+    'DELETE FROM launch_tokens WHERE central_session_id IN (SELECT id FROM central_sessions WHERE user_id = ?)',
   ).run(userId);
-  return db.prepare("DELETE FROM central_sessions WHERE user_id = ?").run(userId);
+  return db.prepare('DELETE FROM central_sessions WHERE user_id = ?').run(userId);
 }
