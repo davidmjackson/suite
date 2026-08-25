@@ -286,6 +286,9 @@
 .ins[data-app="sight"] .legend .sw { width: 14px; height: 14px; border-radius: 3px; margin-top: 4px; }
 /* pith is near-white, so it needs a border to read as a swatch at all */
 .ins[data-app="sight"] .legend .sw-pith { background: var(--pithcream); border: 1px solid var(--line2); }
+.ins[data-app="sight"] .legend .sw-rind  { background: var(--green); }
+.ins[data-app="sight"] .legend .sw-flesh { background: var(--melon); }
+.ins[data-app="sight"] .legend .sw-seed  { background: var(--seed); }
 .ins[data-app="sight"] .legend .nm {
   font-family: 'IBM Plex Mono', monospace; font-size: 10.5px; letter-spacing: 0.14em;
   text-transform: uppercase; color: var(--ink); font-weight: 500; padding-top: 3px;

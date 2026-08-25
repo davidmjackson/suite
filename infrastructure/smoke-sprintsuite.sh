@@ -39,6 +39,22 @@ contains () { # url  needle  description
   fi
 }
 
+header () { # url  header-name  expected-value  description
+  # EXACT match, not a substring. "strict-origin" is a substring of the weaker
+  # bare Referrer-Policy, and "sha256-" matches a STALE hash — both would pass a
+  # needle check while prod served something worse than the repo says.
+  local got
+  got=$(curl -s -o /dev/null -D - "$1" | grep -i "^$2:" | sed "s/^[^:]*: *//" | tr -d '\r')
+  if [ "$got" = "$3" ]; then
+    printf '  ok         %s\n' "$4"
+  else
+    printf '  FAIL       %s\n' "$4"
+    printf '             want: %s\n' "$3"
+    printf '             got:  %s\n' "${got:-<no $2 header at all>}"
+    fails=$((fails + 1))
+  fi
+}
+
 echo "hub:"
 check "$BASE/"       200 "landing page"
 check "$BASE/login"  200 "sign-in"
@@ -57,6 +73,33 @@ check "$BASE/sprintsight-coming-soon/intro/pass-03-report-writer.svg"  200 "thre
 contains "$BASE/sprintsight-coming-soon/intro/" 'src="pass-01-retrieval.svg"' "pipeline references the illustrations"
 # the parent must NOT be aliased: it would serve a directory listing
 check "$BASE/sprintsight-coming-soon/"                    404 "parent path does not list the directory"
+
+echo "promo page security headers (vhost <Directory> block — ZAP 2026-08-25):"
+# The expected values are READ FROM THE VHOST MIRROR beside this script, never
+# copied into it. That is the whole question this check answers: is the live
+# server serving what the repo says it should? A hardcoded copy here would be a
+# fourth place to drift, and it would go green against a stale prod.
+P="$BASE/sprintsight-coming-soon/intro/"
+VHOST="$(dirname "$0")/apache/sprintsuite.uk.conf"
+if [ ! -r "$VHOST" ]; then
+  echo "  FAIL       cannot read $VHOST — run this from the repo checkout"
+  fails=$((fails + 1))
+else
+  expected=0
+  while IFS='|' read -r name value; do
+    [ -z "$name" ] && continue
+    expected=$((expected + 1))
+    header "$P" "$name" "$value" "$name"
+  done <<EOF
+$(sed -n 's/^[[:space:]]*Header always set \([^[:space:]]*\) "\(.*\)"[[:space:]]*$/\1|\2/p' "$VHOST")
+EOF
+  if [ "$expected" -eq 0 ]; then
+    echo "  FAIL       no 'Header always set' lines found in $VHOST — nothing was checked"
+    fails=$((fails + 1))
+  fi
+  # assets under the alias inherit the block too — ZAP flagged these individually
+  header "${P}sight.css" X-Content-Type-Options "nosniff" "assets inherit the headers"
+fi
 
 echo "shared assets (served by the HUB, consumed by the promo page):"
 check "$BASE/css/instrument-core.css"          200 "theme stylesheet"
