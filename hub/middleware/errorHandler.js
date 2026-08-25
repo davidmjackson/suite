@@ -9,19 +9,30 @@ export function makeErrorHandler({ logger, nodeEnv }) {
       log.warn({ err, reqId }, 'error after headers sent');
       return next(err);
     }
-    log.error({ err, reqId }, 'unhandled error');
 
     const status =
       Number.isInteger(err.status) && err.status >= 400 && err.status < 600 ? err.status : 500;
+    // A refused request is not a crash. Logging every 4xx at ERROR under one
+    // message buries real 500s among routine rejections, and leaves on-call
+    // unable to tell a CSRF probe from a broken route.
+    const isServerError = status >= 500;
+    log[isServerError ? 'error' : 'warn'](
+      { err, reqId },
+      err.code || (isServerError ? 'unhandled error' : 'request refused'),
+    );
     res.status(status);
 
     const wantsJson =
       (typeof req.path === 'string' && req.path.startsWith('/api')) ||
       (typeof req.accepts === 'function' && req.accepts(['html', 'json']) === 'json');
 
+    // An error carrying `public` has copy written for the person who hit it, and
+    // is safe to show in prod. Everything else stays generic so internals never leak.
+    const publicMessage = err.public?.message;
+
     if (wantsJson) {
       const body = {
-        error: isProd ? STATUS_CODES[status] || 'Error' : err.message || 'Error',
+        error: publicMessage || (isProd ? STATUS_CODES[status] || 'Error' : err.message || 'Error'),
         reqId,
       };
       if (err.fields) body.fields = err.fields;
@@ -31,8 +42,9 @@ export function makeErrorHandler({ logger, nodeEnv }) {
       return res.render(
         'error',
         {
-          title: 'Something went wrong',
-          message: isProd ? 'An unexpected error occurred.' : err.stack || err.message || 'Error',
+          title: err.public?.title || 'Something went wrong',
+          message:
+            publicMessage || (isProd ? 'An unexpected error occurred.' : err.stack || err.message),
           reqId,
           backHref: '/',
         },

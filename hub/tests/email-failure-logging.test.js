@@ -3,7 +3,7 @@ import assert from 'node:assert/strict';
 import request from 'supertest';
 import express from 'express';
 import { Writable } from 'node:stream';
-import { buildTestApp } from './helpers.js';
+import { buildTestApp, post } from './helpers.js';
 import { mountLogin } from '../routes/login.js';
 import { createLogger } from '../lib/logger.js';
 import { mountRequest } from '../routes/request.js';
@@ -25,7 +25,7 @@ test('login still succeeds when the magic-link email send throws', async () => {
   );
   mountLogin(app, { emailSender: throwingSender });
   // The magic-link send only fires for an existing user, so this hits the catch.
-  const res = await request(app).post('/login').type('form').send({ email: 'known@test.com' });
+  const res = await post(app, '/login').type('form').send({ email: 'known@test.com' });
   // Existing behaviour: always render check-email (no user enumeration), 200.
   assert.equal(res.status, 200);
   assert.ok(res.text.length > 0);
@@ -64,7 +64,7 @@ test('login logs a structured error (via req.log) when the email send throws', a
     Date.now(),
   );
   mountLogin(app, { emailSender: throwingSender });
-  await request(app).post('/login').type('form').send({ email: 'k2@test.com' });
+  await post(app, '/login').type('form').send({ email: 'k2@test.com' });
   await tick();
   assert.ok(cap.records().some((r) => r.msg === 'magic link send failed'));
 });
@@ -82,7 +82,7 @@ test('request route logs a structured error when the notification email throws',
   };
   mountRequest(app, { emailSender: sender });
   // Fields use snake_case to match the real route handler. Honeypot (website) left absent.
-  const res = await request(app).post('/request').type('form').send({
+  const res = await post(app, '/request').type('form').send({
     company_name: 'Acme',
     contact_name: 'Jo',
     email: 'jo@acme.com',

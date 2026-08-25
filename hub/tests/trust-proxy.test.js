@@ -6,7 +6,7 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import request from 'supertest';
-import { buildTestApp } from './helpers.js';
+import { buildTestApp, post } from './helpers.js';
 
 async function buildWithLogin() {
   const { app, db, config } = await buildTestApp();
@@ -25,16 +25,14 @@ test('login per-IP limit keys off X-Forwarded-For, not a shared global bucket', 
 
   // 5 requests from ipA exhaust its bucket (max 5 / 60s).
   for (let i = 0; i < 5; i++) {
-    const res = await request(app)
-      .post('/login')
+    const res = await post(app, '/login')
       .type('form')
       .set('X-Forwarded-For', ipA)
       .send({ email: `a${i}@example.com` });
     assert.equal(res.status, 200, `ipA request ${i} should pass`);
   }
   // 6th from ipA is rate-limited.
-  const sixth = await request(app)
-    .post('/login')
+  const sixth = await post(app, '/login')
     .type('form')
     .set('X-Forwarded-For', ipA)
     .send({ email: 'a5@example.com' });
@@ -42,8 +40,7 @@ test('login per-IP limit keys off X-Forwarded-For, not a shared global bucket', 
 
   // A different client (ipB) still gets through — proves per-IP bucketing.
   // Without trust proxy this would be 429 too (everything shares 127.0.0.1).
-  const other = await request(app)
-    .post('/login')
+  const other = await post(app, '/login')
     .type('form')
     .set('X-Forwarded-For', ipB)
     .send({ email: 'b0@example.com' });

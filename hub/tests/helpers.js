@@ -4,9 +4,48 @@
 // body parsing, locals) and leaves the routes to the caller, so each route test
 // mounts only the route under test. This file used to hand-copy that wiring under
 // three "mirror server.js" comments and had drifted from it; the copies are gone.
+import request from 'supertest';
+import { Writable } from 'node:stream';
 import { openDb } from '../db/index.js';
 import { createAppShell, marketingMiddleware } from '../app.js';
 import { createLogger } from '../lib/logger.js';
+
+// The origin a test browser posts from. DERIVED from TEST_BASE_URL, not written
+// out a second time: the CSRF allow-list is built from BASE_URL, so two hand-kept
+// copies of the same fact would let the fixtures drift into asserting nothing.
+const TEST_BASE_URL = 'https://test';
+export const TEST_ORIGIN = TEST_BASE_URL;
+
+// Same-origin request builders. The CSRF guard (middleware/csrf.js) fails closed,
+// so a state-changing request with no Origin is refused — supertest sends none by
+// default, and a real browser always does. Use these for anything that changes
+// state; reach for request(app) directly only to test the refusal itself, or for
+// the /api/* routes, which are called server-to-server with no Origin at all.
+export const post = (app, path) => request(app).post(path).set('Origin', TEST_ORIGIN);
+export const del = (app, path) => request(app).delete(path).set('Origin', TEST_ORIGIN);
+
+// Captures what the app logs. Lives here rather than in one test file because
+// two suites now assert on log records, and a second hand-rolled copy is how the
+// two drift into asserting different things.
+export function capture() {
+  const chunks = [];
+  const stream = new Writable({
+    write(c, _e, cb) {
+      chunks.push(c.toString());
+      cb();
+    },
+  });
+  return {
+    stream,
+    text: () => chunks.join(''),
+    records: () =>
+      chunks
+        .join('')
+        .split('\n')
+        .filter(Boolean)
+        .map((l) => JSON.parse(l)),
+  };
+}
 
 // All five launched apps. This had drifted to four (no sprintplan.uk), which is
 // what blinded the suite to a Sprintplan magic link landing on /dashboard: the
@@ -31,7 +70,7 @@ const testLogger = createLogger({ level: 'silent' });
 // The minimum env config.js demands. Defaults only — an already-set value wins, so
 // a test that needs a different one sets it before the first buildTestApp().
 const TEST_ENV = {
-  BASE_URL: 'https://test',
+  BASE_URL: TEST_BASE_URL,
   DB_PATH: ':memory:',
   RESEND_API_KEY: 'test',
   FROM_EMAIL: 'login@test',

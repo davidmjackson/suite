@@ -2,7 +2,7 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import request from 'supertest';
-import { buildTestApp } from './helpers.js';
+import { buildTestApp, post } from './helpers.js';
 import { now, randomToken } from '../lib/tokens.js';
 
 async function setup({ isAdmin = true } = {}) {
@@ -40,8 +40,7 @@ test('admin lists users', async () => {
 
 test('POST /admin/users creates a user', async () => {
   const { app, db, sid } = await setup();
-  const res = await request(app)
-    .post('/admin/users')
+  const res = await post(app, '/admin/users')
     .type('form')
     .set('Cookie', `hub_session=${sid}`)
     .send({ email: 'new@test.com', display_name: 'New' });
@@ -61,9 +60,7 @@ test('POST /admin/users/:id/disable kills all their sessions', async () => {
   db.prepare(
     'INSERT INTO central_sessions (id,user_id,created_at,last_heartbeat_at,expires_at) VALUES (?,?,?,?,?)',
   ).run(vsid, 'u2', now(), now(), now() + 60_000);
-  const res = await request(app)
-    .post('/admin/users/u2/disable')
-    .set('Cookie', `hub_session=${sid}`);
+  const res = await post(app, '/admin/users/u2/disable').set('Cookie', `hub_session=${sid}`);
   assert.equal(res.status, 302);
   const sess = db.prepare('SELECT * FROM central_sessions WHERE user_id = ?').all('u2');
   assert.equal(sess.length, 0);
@@ -93,7 +90,7 @@ test('delete: company_members reference does not block delete (prod FK repro)', 
   db.prepare(
     'INSERT INTO company_members (user_id,company_id,role,created_at) VALUES (?,?,?,?)',
   ).run('u2', 'c1', 'member', now());
-  const res = await request(app).post('/admin/users/u2/delete').set('Cookie', `hub_session=${sid}`);
+  const res = await post(app, '/admin/users/u2/delete').set('Cookie', `hub_session=${sid}`);
   assert.equal(res.status, 302);
   assert.equal(db.prepare('SELECT * FROM users WHERE id = ?').get('u2'), undefined);
   assert.equal(db.prepare('SELECT * FROM company_members WHERE user_id = ?').get('u2'), undefined);
@@ -121,7 +118,7 @@ test('delete: team_members reference is cleared and does not block', async () =>
     'member',
     now(),
   );
-  const res = await request(app).post('/admin/users/u2/delete').set('Cookie', `hub_session=${sid}`);
+  const res = await post(app, '/admin/users/u2/delete').set('Cookie', `hub_session=${sid}`);
   assert.equal(res.status, 302);
   assert.equal(db.prepare('SELECT * FROM users WHERE id = ?').get('u2'), undefined);
   assert.equal(db.prepare('SELECT * FROM team_members WHERE user_id = ?').get('u2'), undefined);
@@ -140,7 +137,7 @@ test('delete: app_entitlements.granted_by is SET NULL and grant preserved', asyn
   db.prepare(
     'INSERT INTO app_entitlements (id,app,principal_type,principal_id,status,granted_by,granted_at) VALUES (?,?,?,?,?,?,?)',
   ).run('e1', 'raid', 'company', 'c1', 'active', 'u2', now());
-  const res = await request(app).post('/admin/users/u2/delete').set('Cookie', `hub_session=${sid}`);
+  const res = await post(app, '/admin/users/u2/delete').set('Cookie', `hub_session=${sid}`);
   assert.equal(res.status, 302);
   const ent = db.prepare('SELECT * FROM app_entitlements WHERE id = ?').get('e1');
   assert.ok(ent, 'entitlement should still exist');
@@ -153,7 +150,7 @@ test('delete: access_requests.reviewed_by is SET NULL and request preserved', as
   db.prepare(
     'INSERT INTO access_requests (id,company_name,contact_name,email,status,created_at,reviewed_by) VALUES (?,?,?,?,?,?,?)',
   ).run('r1', 'Acme', 'Jane', 'jane@test', 'approved', now(), 'u2');
-  const res = await request(app).post('/admin/users/u2/delete').set('Cookie', `hub_session=${sid}`);
+  const res = await post(app, '/admin/users/u2/delete').set('Cookie', `hub_session=${sid}`);
   assert.equal(res.status, 302);
   const r = db.prepare('SELECT * FROM access_requests WHERE id = ?').get('r1');
   assert.ok(r, 'access_request should still exist');
@@ -169,7 +166,7 @@ test('delete: user-principal entitlement + usage rows are fully cleaned up', asy
   db.prepare(
     'INSERT INTO app_usage (app,principal_type,principal_id,period_key,count) VALUES (?,?,?,?,?)',
   ).run('raid', 'user', 'u2', '2026-06', 3);
-  const res = await request(app).post('/admin/users/u2/delete').set('Cookie', `hub_session=${sid}`);
+  const res = await post(app, '/admin/users/u2/delete').set('Cookie', `hub_session=${sid}`);
   assert.equal(res.status, 302);
   assert.equal(
     db
@@ -237,7 +234,7 @@ test('delete: combined prod-realistic scenario — whole cascade fires in one de
     'INSERT INTO app_usage (app,principal_type,principal_id,period_key,count) VALUES (?,?,?,?,?)',
   ).run('raid', 'user', 'u2', '2026-06', 3);
 
-  const res = await request(app).post('/admin/users/u2/delete').set('Cookie', `hub_session=${sid}`);
+  const res = await post(app, '/admin/users/u2/delete').set('Cookie', `hub_session=${sid}`);
   assert.equal(res.status, 302);
 
   // user and its owned/membership/session rows are gone
@@ -272,7 +269,7 @@ test('delete: combined prod-realistic scenario — whole cascade fires in one de
 test('delete: audit trail is preserved (user_deleted event logged)', async () => {
   const { app, db, sid } = await setup();
   makeVictim(db);
-  const res = await request(app).post('/admin/users/u2/delete').set('Cookie', `hub_session=${sid}`);
+  const res = await post(app, '/admin/users/u2/delete').set('Cookie', `hub_session=${sid}`);
   assert.equal(res.status, 302);
   const ev = db.prepare('SELECT * FROM audit_events WHERE event_type = ?').get('user_deleted');
   assert.ok(ev, 'user_deleted audit event should exist');
@@ -280,9 +277,7 @@ test('delete: audit trail is preserved (user_deleted event logged)', async () =>
 
 test('delete: self-delete is refused (400) and user remains', async () => {
   const { app, db, sid } = await setup();
-  const res = await request(app)
-    .post('/admin/users/admin1/delete')
-    .set('Cookie', `hub_session=${sid}`);
+  const res = await post(app, '/admin/users/admin1/delete').set('Cookie', `hub_session=${sid}`);
   assert.equal(res.status, 400);
   assert.ok(db.prepare('SELECT * FROM users WHERE id = ?').get('admin1'), 'admin should remain');
 });

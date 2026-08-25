@@ -2,7 +2,7 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import request from 'supertest';
-import { buildTestApp } from './helpers.js';
+import { buildTestApp, post } from './helpers.js';
 import { now, randomToken } from '../lib/tokens.js';
 
 async function setup() {
@@ -35,9 +35,10 @@ test('kill session removes it', async () => {
   db.prepare(
     'INSERT INTO central_sessions (id,user_id,created_at,last_heartbeat_at,expires_at) VALUES (?,?,?,?,?)',
   ).run(otherSid, 'admin1', now(), now(), now() + 60_000);
-  const res = await request(app)
-    .post(`/admin/sessions/${otherSid}/kill`)
-    .set('Cookie', `hub_session=${sid}`);
+  const res = await post(app, `/admin/sessions/${otherSid}/kill`).set(
+    'Cookie',
+    `hub_session=${sid}`,
+  );
   assert.equal(res.status, 302);
   const row = db.prepare('SELECT * FROM central_sessions WHERE id = ?').get(otherSid);
   assert.equal(row, undefined);

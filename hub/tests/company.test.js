@@ -2,7 +2,7 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import request from 'supertest';
-import { buildTestApp } from './helpers.js';
+import { buildTestApp, post } from './helpers.js';
 import { now, randomToken } from '../lib/tokens.js';
 import { createOrg } from '../lib/org.js';
 
@@ -65,8 +65,7 @@ test('GET /company/:slug is 404 for an unknown slug', async () => {
 
 test('owner can invite a new member; user + membership created', async () => {
   const { app, db, company, sid } = await build({ role: 'owner' });
-  const res = await request(app)
-    .post('/company/acme/members')
+  const res = await post(app, '/company/acme/members')
     .type('form')
     .send({ email: 'New@B.C', role: 'member' })
     .set('Cookie', cookie(sid));
@@ -82,8 +81,7 @@ test('owner can invite a new member; user + membership created', async () => {
 
 test('invalid email is rejected with 400', async () => {
   const { app, sid } = await build({ role: 'owner' });
-  const res = await request(app)
-    .post('/company/acme/members')
+  const res = await post(app, '/company/acme/members')
     .type('form')
     .send({ email: 'not-an-email', role: 'member' })
     .set('Cookie', cookie(sid));
@@ -92,8 +90,7 @@ test('invalid email is rejected with 400', async () => {
 
 test('a member cannot invite anyone (403)', async () => {
   const { app, sid } = await build({ role: 'member' });
-  const res = await request(app)
-    .post('/company/acme/members')
+  const res = await post(app, '/company/acme/members')
     .type('form')
     .send({ email: 'x@b.c', role: 'member' })
     .set('Cookie', cookie(sid));
@@ -104,8 +101,7 @@ test("owner can change a member's role to owner", async () => {
   const { app, db, company, org, sid } = await build({ role: 'owner' });
   db.prepare('INSERT INTO users (id,email,created_at) VALUES (?,?,?)').run('u2', 'm@b.c', now());
   org.addCompanyMember({ userId: 'u2', companyId: company.id, role: 'member' });
-  const res = await request(app)
-    .post('/company/acme/members/u2/role')
+  const res = await post(app, '/company/acme/members/u2/role')
     .type('form')
     .send({ role: 'owner' })
     .set('Cookie', cookie(sid));
@@ -120,8 +116,7 @@ test("a member cannot change anyone's role (403)", async () => {
   const { app, db, company, org, sid } = await build({ role: 'member' });
   db.prepare('INSERT INTO users (id,email,created_at) VALUES (?,?,?)').run('u2', 'm@b.c', now());
   org.addCompanyMember({ userId: 'u2', companyId: company.id, role: 'member' });
-  const res = await request(app)
-    .post('/company/acme/members/u2/role')
+  const res = await post(app, '/company/acme/members/u2/role')
     .type('form')
     .send({ role: 'owner' })
     .set('Cookie', cookie(sid));
@@ -132,8 +127,7 @@ test("a plain member cannot change an owner's role (403)", async () => {
   const { app, db, company, org, sid } = await build({ role: 'member' });
   db.prepare('INSERT INTO users (id,email,created_at) VALUES (?,?,?)').run('u2', 'o2@b.c', now());
   org.addCompanyMember({ userId: 'u2', companyId: company.id, role: 'owner' });
-  const res = await request(app)
-    .post('/company/acme/members/u2/role')
+  const res = await post(app, '/company/acme/members/u2/role')
     .type('form')
     .send({ role: 'member' })
     .set('Cookie', cookie(sid));
@@ -142,8 +136,7 @@ test("a plain member cannot change an owner's role (403)", async () => {
 
 test('demoting the last owner shows a friendly error, not a 500', async () => {
   const { app, sid } = await build({ role: 'owner' }); // u1 is the only owner
-  const res = await request(app)
-    .post('/company/acme/members/u1/role')
+  const res = await post(app, '/company/acme/members/u1/role')
     .type('form')
     .send({ role: 'member' })
     .set('Cookie', cookie(sid));
@@ -155,7 +148,7 @@ test('owner can remove a member', async () => {
   const { app, db, company, org, sid } = await build({ role: 'owner' });
   db.prepare('INSERT INTO users (id,email,created_at) VALUES (?,?,?)').run('u2', 'm@b.c', now());
   org.addCompanyMember({ userId: 'u2', companyId: company.id, role: 'member' });
-  const res = await request(app).post('/company/acme/members/u2/remove').set('Cookie', cookie(sid));
+  const res = await post(app, '/company/acme/members/u2/remove').set('Cookie', cookie(sid));
   assert.equal(res.status, 302);
   const m = db
     .prepare('SELECT 1 FROM company_members WHERE user_id=? AND company_id=?')
@@ -167,21 +160,20 @@ test('a member cannot remove anyone (403)', async () => {
   const { app, db, company, org, sid } = await build({ role: 'member' });
   db.prepare('INSERT INTO users (id,email,created_at) VALUES (?,?,?)').run('u2', 'o2@b.c', now());
   org.addCompanyMember({ userId: 'u2', companyId: company.id, role: 'owner' });
-  const res = await request(app).post('/company/acme/members/u2/remove').set('Cookie', cookie(sid));
+  const res = await post(app, '/company/acme/members/u2/remove').set('Cookie', cookie(sid));
   assert.equal(res.status, 403);
 });
 
 test('removing the last owner shows a friendly error', async () => {
   const { app, sid } = await build({ role: 'owner' }); // u1 is the only owner
-  const res = await request(app).post('/company/acme/members/u1/remove').set('Cookie', cookie(sid));
+  const res = await post(app, '/company/acme/members/u1/remove').set('Cookie', cookie(sid));
   assert.equal(res.status, 400);
   assert.match(res.text, /owner/i);
 });
 
 test('owner can create a team', async () => {
   const { app, db, company, sid } = await build({ role: 'owner' });
-  const res = await request(app)
-    .post('/company/acme/teams')
+  const res = await post(app, '/company/acme/teams')
     .type('form')
     .send({ name: 'Squad B' })
     .set('Cookie', cookie(sid));
@@ -194,8 +186,7 @@ test('owner can create a team', async () => {
 
 test('creating a team with a blank name is rejected with 400', async () => {
   const { app, sid } = await build({ role: 'owner' });
-  const res = await request(app)
-    .post('/company/acme/teams')
+  const res = await post(app, '/company/acme/teams')
     .type('form')
     .send({ name: '   ' })
     .set('Cookie', cookie(sid));
@@ -228,8 +219,7 @@ test('GET team page is 404 for a team in another company', async () => {
 test('owner can rename a team', async () => {
   const { app, db, company, org, sid } = await build({ role: 'owner' });
   const t = org.createTeam({ companyId: company.id, name: 'Old' });
-  const res = await request(app)
-    .post(`/company/acme/teams/${t.id}/rename`)
+  const res = await post(app, `/company/acme/teams/${t.id}/rename`)
     .type('form')
     .send({ name: 'Renamed' })
     .set('Cookie', cookie(sid));
@@ -241,8 +231,7 @@ test('renaming a team in another company is 404', async () => {
   const { app, org, sid } = await build({ role: 'owner' });
   const other = org.createCompany({ name: 'Other', slug: 'other' });
   const otherTeam = org.createTeam({ companyId: other.id, name: 'Theirs' });
-  const res = await request(app)
-    .post(`/company/acme/teams/${otherTeam.id}/rename`)
+  const res = await post(app, `/company/acme/teams/${otherTeam.id}/rename`)
     .type('form')
     .send({ name: 'Hijack' })
     .set('Cookie', cookie(sid));
@@ -252,8 +241,7 @@ test('renaming a team in another company is 404', async () => {
 test('creating a team with a duplicate name shows a friendly 400, not a 500', async () => {
   const { app, company, org, sid } = await build({ role: 'owner' });
   org.createTeam({ companyId: company.id, name: 'Squad' });
-  const res = await request(app)
-    .post('/company/acme/teams')
+  const res = await post(app, '/company/acme/teams')
     .type('form')
     .send({ name: 'Squad' })
     .set('Cookie', cookie(sid));
@@ -265,8 +253,7 @@ test('renaming a team to an existing name shows a friendly 400, not a 500', asyn
   const { app, company, org, sid } = await build({ role: 'owner' });
   org.createTeam({ companyId: company.id, name: 'Alpha' });
   const t = org.createTeam({ companyId: company.id, name: 'Beta' });
-  const res = await request(app)
-    .post(`/company/acme/teams/${t.id}/rename`)
+  const res = await post(app, `/company/acme/teams/${t.id}/rename`)
     .type('form')
     .send({ name: 'Alpha' })
     .set('Cookie', cookie(sid));
@@ -279,8 +266,7 @@ test('add a company member to a team', async () => {
   db.prepare('INSERT INTO users (id,email,created_at) VALUES (?,?,?)').run('u2', 'm2@b.c', now());
   org.addCompanyMember({ userId: 'u2', companyId: company.id, role: 'member' });
   const t = org.createTeam({ companyId: company.id, name: 'Squad' });
-  const res = await request(app)
-    .post(`/company/acme/teams/${t.id}/members`)
+  const res = await post(app, `/company/acme/teams/${t.id}/members`)
     .type('form')
     .send({ userId: 'u2' })
     .set('Cookie', cookie(sid));
@@ -296,8 +282,7 @@ test('adding a non-company-member to a team shows a friendly error', async () =>
     now(),
   );
   const t = org.createTeam({ companyId: company.id, name: 'Squad' });
-  const res = await request(app)
-    .post(`/company/acme/teams/${t.id}/members`)
+  const res = await post(app, `/company/acme/teams/${t.id}/members`)
     .type('form')
     .send({ userId: 'u9' })
     .set('Cookie', cookie(sid));
@@ -314,9 +299,10 @@ test('remove a team member', async () => {
   const t = db
     .prepare('SELECT id FROM teams WHERE company_id=? AND name=?')
     .get(company.id, 'Squad');
-  const res = await request(app)
-    .post(`/company/acme/teams/${t.id}/members/u1/remove`)
-    .set('Cookie', cookie(sid));
+  const res = await post(app, `/company/acme/teams/${t.id}/members/u1/remove`).set(
+    'Cookie',
+    cookie(sid),
+  );
   assert.equal(res.status, 302);
   assert.equal(
     db.prepare('SELECT 1 FROM team_members WHERE user_id=? AND team_id=?').get('u1', t.id),
@@ -330,8 +316,7 @@ test('adding a user already on the team shows a friendly 400, not a 500', async 
   org.addCompanyMember({ userId: 'u2', companyId: company.id, role: 'member' });
   const t = org.createTeam({ companyId: company.id, name: 'Squad' });
   org.addTeamMember({ userId: 'u2', teamId: t.id, role: 'member' });
-  const res = await request(app)
-    .post(`/company/acme/teams/${t.id}/members`)
+  const res = await post(app, `/company/acme/teams/${t.id}/members`)
     .type('form')
     .send({ userId: 'u2' })
     .set('Cookie', cookie(sid));
@@ -342,8 +327,7 @@ test('adding a user already on the team shows a friendly 400, not a 500', async 
 test('owner can grant then revoke RAID for a member', async () => {
   const { app, db, org, company, sid } = await build({ role: 'owner' });
   addMember(db, org, company);
-  let res = await request(app)
-    .post('/company/acme/members/mem/apps/raid')
+  let res = await post(app, '/company/acme/members/mem/apps/raid')
     .type('form')
     .send({ action: 'grant' })
     .set('Cookie', cookie(sid));
@@ -355,8 +339,7 @@ test('owner can grant then revoke RAID for a member', async () => {
     .get();
   assert.equal(ent.status, 'active');
   assert.equal(ent.quota_limit, 25);
-  res = await request(app)
-    .post('/company/acme/members/mem/apps/raid')
+  res = await post(app, '/company/acme/members/mem/apps/raid')
     .type('form')
     .send({ action: 'revoke' })
     .set('Cookie', cookie(sid));
@@ -372,8 +355,7 @@ test('owner can grant then revoke RAID for a member', async () => {
 test('owner can grant Signal (unlimited) for a member', async () => {
   const { app, db, org, company, sid } = await build({ role: 'owner' });
   addMember(db, org, company);
-  const res = await request(app)
-    .post('/company/acme/members/mem/apps/signal')
+  const res = await post(app, '/company/acme/members/mem/apps/signal')
     .type('form')
     .send({ action: 'grant' })
     .set('Cookie', cookie(sid));
@@ -389,8 +371,7 @@ test('owner can grant Signal (unlimited) for a member', async () => {
 
 test('grant rejects a non-togglable app', async () => {
   const { app, org, company, sid } = await build({ role: 'owner' });
-  const res = await request(app)
-    .post('/company/acme/members/mem/apps/poker')
+  const res = await post(app, '/company/acme/members/mem/apps/poker')
     .type('form')
     .send({ action: 'grant' })
     .set('Cookie', cookie(sid));
@@ -399,8 +380,7 @@ test('grant rejects a non-togglable app', async () => {
 
 test('cannot toggle an owner row', async () => {
   const { app, sid } = await build({ role: 'owner' }); // u1 is the owner
-  const res = await request(app)
-    .post('/company/acme/members/u1/apps/signal')
+  const res = await post(app, '/company/acme/members/u1/apps/signal')
     .type('form')
     .send({ action: 'revoke' })
     .set('Cookie', cookie(sid));
@@ -410,8 +390,7 @@ test('cannot toggle an owner row', async () => {
 test('a non-owner cannot reach the per-member app toggle (owner-only)', async () => {
   const { app, db, org, company, sid } = await build({ role: 'member' }); // u1 is a member
   addMember(db, org, company, 'mem2');
-  const res = await request(app)
-    .post('/company/acme/members/mem2/apps/signal')
+  const res = await post(app, '/company/acme/members/mem2/apps/signal')
     .type('form')
     .send({ action: 'grant' })
     .set('Cookie', cookie(sid));
@@ -439,8 +418,7 @@ test('owner of one company cannot toggle a member of another company (404, cross
   );
   org.addCompanyMember({ userId: 'outsider', companyId: other.id, role: 'member' });
   // Acme's owner tries to grant RAID to Globex's member via Acme's URL scope
-  const res = await request(app)
-    .post('/company/acme/members/outsider/apps/raid')
+  const res = await post(app, '/company/acme/members/outsider/apps/raid')
     .type('form')
     .send({ action: 'grant' })
     .set('Cookie', cookie(sid));

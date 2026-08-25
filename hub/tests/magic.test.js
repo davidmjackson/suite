@@ -2,7 +2,7 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import request from 'supertest';
-import { buildTestApp } from './helpers.js';
+import { buildTestApp, post } from './helpers.js';
 import { randomToken, now } from '../lib/tokens.js';
 
 async function buildWithMagic() {
@@ -81,7 +81,7 @@ test('POST with valid token logs the user in and 302s to dashboard', async () =>
   const tok = randomToken();
   insertToken(db, tok);
 
-  const res = await request(app).post('/auth/magic').type('form').send({ token: tok });
+  const res = await post(app, '/auth/magic').type('form').send({ token: tok });
 
   assert.equal(res.status, 302);
   assert.equal(res.headers.location, '/dashboard');
@@ -98,9 +98,9 @@ test('POST is single-use: a second POST with the same token is rejected', async 
   const tok = randomToken();
   insertToken(db, tok);
 
-  const first = await request(app).post('/auth/magic').type('form').send({ token: tok });
+  const first = await post(app, '/auth/magic').type('form').send({ token: tok });
   assert.equal(first.status, 302);
-  const second = await request(app).post('/auth/magic').type('form').send({ token: tok });
+  const second = await post(app, '/auth/magic').type('form').send({ token: tok });
   assert.equal(second.status, 400);
   assert.equal(db.prepare('SELECT COUNT(*) AS c FROM central_sessions').get().c, 1);
 });
@@ -111,14 +111,14 @@ test('POST with expired token is rejected', async () => {
   const tok = randomToken();
   insertToken(db, tok, { expiresAt: now() - 1 });
 
-  const res = await request(app).post('/auth/magic').type('form').send({ token: tok });
+  const res = await post(app, '/auth/magic').type('form').send({ token: tok });
   assert.equal(res.status, 400);
   assert.equal(db.prepare('SELECT COUNT(*) AS c FROM central_sessions').get().c, 0);
 });
 
 test('POST with missing token is rejected', async () => {
   const { app } = await buildWithMagic();
-  const res = await request(app).post('/auth/magic').type('form').send({});
+  const res = await post(app, '/auth/magic').type('form').send({});
   assert.equal(res.status, 400);
 });
 
@@ -128,7 +128,7 @@ test('POST with return_to bounces to the launch flow', async () => {
   const tok = randomToken();
   insertToken(db, tok, { returnTo: 'https://sprintraid.uk/some-page' });
 
-  const res = await request(app).post('/auth/magic').type('form').send({ token: tok });
+  const res = await post(app, '/auth/magic').type('form').send({ token: tok });
   assert.equal(res.status, 302);
   assert.match(res.headers.location, /\/launch\/raid\?return_to=/);
 });
@@ -139,7 +139,7 @@ test('POST with a Sprintplan return_to bounces to the launch flow, not the dashb
   const tok = randomToken();
   insertToken(db, tok, { returnTo: 'https://sprintplan.uk/board/42' });
 
-  const res = await request(app).post('/auth/magic').type('form').send({ token: tok });
+  const res = await post(app, '/auth/magic').type('form').send({ token: tok });
   assert.equal(res.status, 302);
   assert.match(res.headers.location, /^\/launch\/plan\?return_to=/);
 });
@@ -169,7 +169,7 @@ test('every allowed app domain resolves to a launch, so no accepted return_to is
     const tok = randomToken();
     insertToken(db, tok, { email, returnTo: `${domain}/deep/link` });
 
-    const res = await request(app).post('/auth/magic').type('form').send({ token: tok });
+    const res = await post(app, '/auth/magic').type('form').send({ token: tok });
     assert.equal(res.status, 302);
     const launched = res.headers.location.match(/^\/launch\/([a-z]+)\?return_to=/);
     assert.ok(

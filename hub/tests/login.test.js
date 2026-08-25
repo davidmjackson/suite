@@ -2,7 +2,7 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import request from 'supertest';
-import { buildTestApp } from './helpers.js';
+import { buildTestApp, post } from './helpers.js';
 
 async function buildWithLogin() {
   const { app, db, config } = await buildTestApp();
@@ -30,10 +30,7 @@ test('login renders the Instrument auth card', async () => {
 
 test('POST /login with unknown email still renders check-email (no leak)', async () => {
   const { app, db } = await buildWithLogin();
-  const res = await request(app)
-    .post('/login')
-    .type('form')
-    .send({ email: 'unknown@test.com.com' });
+  const res = await post(app, '/login').type('form').send({ email: 'unknown@test.com.com' });
   assert.equal(res.status, 200);
   assert.match(res.text, /Check your email/);
   const tokens = db.prepare('SELECT COUNT(*) AS c FROM magic_link_tokens').get();
@@ -42,7 +39,7 @@ test('POST /login with unknown email still renders check-email (no leak)', async
 
 test('POST /login with invalid email returns 400 Invalid email', async () => {
   const { app, db } = await buildWithLogin();
-  const res = await request(app).post('/login').type('form').send({ email: 'notanemail' });
+  const res = await post(app, '/login').type('form').send({ email: 'notanemail' });
   assert.equal(res.status, 400);
   assert.match(res.text, /Invalid email/);
   const tokens = db.prepare('SELECT COUNT(*) AS c FROM magic_link_tokens').get();
@@ -56,7 +53,7 @@ test('POST /login with known email creates a token', async () => {
     'known@test.com',
     Date.now(),
   );
-  const res = await request(app).post('/login').type('form').send({ email: 'known@test.com' });
+  const res = await post(app, '/login').type('form').send({ email: 'known@test.com' });
   assert.equal(res.status, 200);
   const tokens = db.prepare('SELECT * FROM magic_link_tokens').all();
   assert.equal(tokens.length, 1);
