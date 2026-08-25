@@ -2,7 +2,7 @@
 <%~ include("../partials/admin-nav") %>
 <div class="card">
 <h2>Add user</h2>
-<form method="POST" action="/admin/users" style="display:flex;flex-direction:column;gap:12px;max-width:420px;">
+<form method="POST" action="/admin/users" class="formcol">
 <div class="field"><label class="label">Email</label><input class="input" type="email" name="email" placeholder="email@example.com" required></div>
 <div class="field"><label class="label">Display name <span class="helper">(optional)</span></label><input class="input" type="text" name="display_name"></div>
 <label class="check"><input type="checkbox" name="is_admin" value="1"> Admin</label>

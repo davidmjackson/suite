@@ -3,9 +3,9 @@
 <h1><%= it.company.name %></h1>
 <div class="card">
 <h2>Members (<%= it.members.length %>)</h2>
-<form method="POST" action="/company/<%= it.company.slug %>/members" style="display:flex;gap:10px;flex-wrap:wrap;align-items:flex-end;margin-bottom:10px;">
-<div class="field" style="flex:1;min-width:220px;"><label class="label">Invite by email</label><input class="input" type="email" name="email" placeholder="email@example.com" required></div>
-<select class="input" name="role" style="width:auto;">
+<form method="POST" action="/company/<%= it.company.slug %>/members" class="formrow is-spaced">
+<div class="field grows"><label class="label">Invite by email</label><input class="input" type="email" name="email" placeholder="email@example.com" required></div>
+<select class="input is-auto" name="role">
 <option value="member">Member</option>
 <% if (it.companyRole === "owner") { %><option value="owner">Owner</option><% } %>
 </select>
@@ -21,7 +21,7 @@
 <% const canEditRow = it.companyRole === "owner" || m.role !== "owner"; %>
 <% if (canEditRow) { %>
 <form method="POST" action="/company/<%= it.company.slug %>/members/<%= m.userId %>/role" class="tbacts">
-<select class="input" name="role" style="width:auto;">
+<select class="input is-auto" name="role">
 <option value="member" <%= m.role === "member" ? "selected" : "" %>>Member</option>
 <% if (it.companyRole === "owner") { %><option value="owner" <%= m.role === "owner" ? "selected" : "" %>>Owner</option><% } %>
 </select>
@@ -55,8 +55,8 @@
 </div>
 <div class="card">
 <h2>Teams (<%= it.teams.length %>)</h2>
-<form method="POST" action="/company/<%= it.company.slug %>/teams" style="display:flex;gap:10px;align-items:flex-end;margin-bottom:10px;">
-<div class="field" style="flex:1;max-width:320px;"><label class="label">New team</label><input class="input" type="text" name="name" placeholder="Team name" required></div>
+<form method="POST" action="/company/<%= it.company.slug %>/teams" class="formrow is-spaced">
+<div class="field grows-capped"><label class="label">New team</label><input class="input" type="text" name="name" placeholder="Team name" required></div>
 <button class="btn btn-pri" type="submit">Create team</button>
 </form>
 <ul class="plain">

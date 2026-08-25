@@ -33,3 +33,29 @@
 .ins .confirm-actions{display:flex; justify-content:flex-end; gap:10px;}
 @media (prefers-reduced-motion:no-preference){.ins .confirm-backdrop.is-open .confirm-dialog{animation:confirmpop .14s ease-out;}}
 @keyframes confirmpop{from{opacity:0; transform:translateY(6px);} to{opacity:1; transform:none;}}
+/* de-inlined view styles — CSP is style-src 'self', so a style= attribute on a
+   served page is dropped by the browser. tests/no-inline-style.test.js guards it.
+   views/emails/ keeps its inline styles: mail is not an HTTP response. */
+/* auth split-panel: .authleft paints white on green, but instrument-core gives
+   .brand, .mk and .eyebrow their own colours, so each needs re-stating here. */
+.ins .authleft .brand, .ins .authleft .brand .mk{color:#fff;}
+.ins .authleft .eyebrow{color:rgba(255,255,255,.85);}
+.ins .authlede{font-size:20px; font-family:'Bricolage Grotesque',sans-serif;}
+.ins .authleft .eyebrow + .authlede{margin-top:6px;}
+/* page-title scale */
+.ins .title-lg{font-size:26px;}
+.ins .title-md{font-size:24px;}
+/* a paragraph holding a page's primary action */
+.ins .actions{margin-top:16px;}
+.ins .actions.is-tight{margin-top:8px;}
+/* single-row and single-column forms */
+.ins .formrow{display:flex; gap:10px; flex-wrap:wrap; align-items:flex-end;}
+.ins .formrow.is-spaced{margin-bottom:10px;}
+.ins .formcol{display:flex; flex-direction:column; gap:12px; max-width:420px;}
+.ins .field.grows{flex:1; min-width:220px;}
+.ins .field.grows-capped{flex:1; max-width:320px;}
+.ins select.input.is-auto{width:auto;}
+.ins h3.subhead{margin-top:18px;}
+/* narrow centred card (the error page) and its request-reference line */
+.ins .card.is-narrow{max-width:520px; margin:0 auto;}
+.ins .muted.reqref{font-size:13px; opacity:.7;}

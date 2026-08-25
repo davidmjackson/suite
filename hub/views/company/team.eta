@@ -3,8 +3,8 @@
 <h1><%= it.team.name %></h1>
 <div class="card">
 <h2>Rename team</h2>
-<form method="POST" action="/company/<%= it.company.slug %>/teams/<%= it.team.id %>/rename" style="display:flex;gap:10px;align-items:flex-end;">
-<div class="field" style="flex:1;max-width:320px;"><label class="label">Team name</label><input class="input" type="text" name="name" value="<%= it.team.name %>" required></div>
+<form method="POST" action="/company/<%= it.company.slug %>/teams/<%= it.team.id %>/rename" class="formrow">
+<div class="field grows-capped"><label class="label">Team name</label><input class="input" type="text" name="name" value="<%= it.team.name %>" required></div>
 <button class="btn btn-pri" type="submit">Rename</button>
 </form>
 </div>
@@ -20,12 +20,12 @@
 </tr>
 <% } %>
 </tbody></table></div>
-<h3 style="margin-top:18px;">Add to team</h3>
+<h3 class="subhead">Add to team</h3>
 <% if (it.availableMembers.length === 0) { %>
 <p class="lede">All company members are already on this team.</p>
 <% } else { %>
-<form method="POST" action="/company/<%= it.company.slug %>/teams/<%= it.team.id %>/members" style="display:flex;gap:10px;align-items:flex-end;">
-<select class="input" name="userId" style="width:auto;">
+<form method="POST" action="/company/<%= it.company.slug %>/teams/<%= it.team.id %>/members" class="formrow">
+<select class="input is-auto" name="userId">
 <% for (const m of it.availableMembers) { %><option value="<%= m.userId %>"><%= m.email %></option><% } %>
 </select>
 <button class="btn btn-pri" type="submit">Add</button>
