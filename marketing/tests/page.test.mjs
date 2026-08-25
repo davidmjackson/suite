@@ -451,6 +451,16 @@ test('CSS restores the end state when motion is off, hiding nothing', () => {
 
 /* ---------- form (§7.10) ---------- */
 
+test('the form posts, so a no-JS submit cannot put the address in a URL', () => {
+  // sight.js preventDefault()s, so this only bites when JS is off or broken —
+  // and then a method-less form GETs this page's own URL with ?email=…, which
+  // Apache and the hub both write to their access logs. Keep the attribute even
+  // though the JS "handles" submit; the JS is not always there.
+  const tag = html.match(/<form\b[^>]*id="notifyForm"[^>]*>/);
+  assert.ok(tag, 'the notify form is still on the page');
+  assert.match(tag[0], /method="post"/);
+});
+
 test('the form has a real label, email type and autocomplete', () => {
   assert.match(html, /<label class="sr-only" for="notifyEmail">/);
   assert.match(html, /id="notifyEmail"[^>]*type="email"/);
