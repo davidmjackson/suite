@@ -58,6 +58,10 @@ header () { # url  header-name  expected-value  description
 echo "hub:"
 check "$BASE/"       200 "landing page"
 check "$BASE/login"  200 "sign-in"
+# The only externally-probeable evidence that no-store is live: requireSession
+# sets the header before it reads the cookie, so the signed-out 302 to /login
+# carries it. Everything else this control covers is behind a session.
+header "$BASE/dashboard" Cache-Control "no-store" "authenticated route is not stored"
 
 echo "sprintsight promo (Apache alias — NOT served by the hub):"
 check "$BASE/sprintsight-coming-soon/intro/"              200 "the page the landing tile links to"
