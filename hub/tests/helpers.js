@@ -5,6 +5,7 @@
 // mounts only the route under test. This file used to hand-copy that wiring under
 // three "mirror server.js" comments and had drifted from it; the copies are gone.
 import request from 'supertest';
+import { Writable } from 'node:stream';
 import { openDb } from '../db/index.js';
 import { createAppShell, marketingMiddleware } from '../app.js';
 import { createLogger } from '../lib/logger.js';
@@ -22,6 +23,29 @@ export const TEST_ORIGIN = TEST_BASE_URL;
 // the /api/* routes, which are called server-to-server with no Origin at all.
 export const post = (app, path) => request(app).post(path).set('Origin', TEST_ORIGIN);
 export const del = (app, path) => request(app).delete(path).set('Origin', TEST_ORIGIN);
+
+// Captures what the app logs. Lives here rather than in one test file because
+// two suites now assert on log records, and a second hand-rolled copy is how the
+// two drift into asserting different things.
+export function capture() {
+  const chunks = [];
+  const stream = new Writable({
+    write(c, _e, cb) {
+      chunks.push(c.toString());
+      cb();
+    },
+  });
+  return {
+    stream,
+    text: () => chunks.join(''),
+    records: () =>
+      chunks
+        .join('')
+        .split('\n')
+        .filter(Boolean)
+        .map((l) => JSON.parse(l)),
+  };
+}
 
 // All five launched apps. This had drifted to four (no sprintplan.uk), which is
 // what blinded the suite to a Sprintplan magic link landing on /dashboard: the

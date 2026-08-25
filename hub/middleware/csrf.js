@@ -31,9 +31,20 @@ export function trustedOrigins(baseUrl) {
   return [`${protocol}//${bare}`, `${protocol}//www.${bare}`];
 }
 
+// The message carries the offending origin for the logs; `public` is what the
+// person who hit it sees. Without both, a refusal reaches the central error
+// handler indistinguishable from a crash — logged as "unhandled error" and
+// rendered as the generic 500 page.
 function refuse(req, detail) {
   const err = new Error(`blocked cross-origin ${req.method} ${req.path} (${detail})`);
   err.status = 403;
+  err.code = 'csrf_blocked';
+  err.public = {
+    title: 'Request refused',
+    message:
+      'That request did not come from Sprint Suite, so it was not carried out. ' +
+      'Return to the site and try again.',
+  };
   return err;
 }
 

@@ -9,7 +9,9 @@ import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import request from 'supertest';
 import { makeCsrfGuard, trustedOrigins } from '../middleware/csrf.js';
-import { buildTestApp, TEST_ORIGIN } from './helpers.js';
+import { makeErrorHandler } from '../middleware/errorHandler.js';
+import { createLogger } from '../lib/logger.js';
+import { buildTestApp, capture, TEST_ORIGIN } from './helpers.js';
 
 const HUB = 'https://sprintsuite.uk';
 
@@ -165,4 +167,26 @@ test('the shell is wired with the hub origins only, never the app domains', asyn
 
   const genuine = await request(app).post('/csrf-probe').set('Origin', TEST_ORIGIN);
   assert.equal(genuine.status, 200, 'the hub origin itself was refused');
+});
+
+/* error-handler.test.js proves the handler renders a tagged 4xx properly. This
+   proves the guard actually tags one — the seam between them is where a refusal
+   would quietly go back to looking like a crash. */
+test('a refusal is tagged for the error handler, not left looking like a crash', async () => {
+  const cap = capture();
+  const logger = createLogger({ level: 'info', stream: cap.stream });
+  const { app } = await buildTestApp({ logger });
+  app.post('/csrf-probe', (_req, res) => res.json({ ok: true }));
+  app.use(makeErrorHandler({ logger, nodeEnv: 'production' }));
+
+  const res = await request(app).post('/csrf-probe').set('Origin', 'https://evil.example');
+  assert.equal(res.status, 403);
+
+  await new Promise((r) => setImmediate(r));
+  const rec = cap.records().find((r) => r.msg === 'csrf_blocked');
+  assert.ok(rec, `refusal is not filterable by code; saw ${cap.records().map((r) => r.msg)}`);
+  assert.equal(rec.level, 40);
+  assert.match(res.text, /Request refused/);
+  assert.doesNotMatch(res.text, /An unexpected error occurred/);
+  assert.ok(!res.text.includes('evil.example'), 'the rejected origin leaked to the user');
 });
