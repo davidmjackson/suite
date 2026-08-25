@@ -8,30 +8,7 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import request from 'supertest';
-import { createApp } from '../app.js';
-import { openDb } from '../db/index.js';
-import { createLogger } from '../lib/logger.js';
-
-const noopSender = {
-  async sendMagicLink() {},
-  async sendAccessRequestNotification() {},
-};
-
-async function buildRealApp() {
-  process.env.BASE_URL ??= 'https://test';
-  process.env.DB_PATH ??= ':memory:';
-  process.env.RESEND_API_KEY ??= 'test';
-  process.env.FROM_EMAIL ??= 'login@test';
-  process.env.COOKIE_SECRET ??= 'x';
-  process.env.ALLOWED_APP_DOMAINS ??= 'https://sprintraid.uk,https://sprintplan.uk';
-  for (const app of ['RAID', 'SIGNAL', 'RETRO', 'POKER', 'PLAN']) {
-    process.env[`HUB_API_KEY_${app}`] ??= `k-${app.toLowerCase()}`;
-  }
-  const { default: config } = await import('../config.js?t=' + Date.now());
-  const db = openDb(':memory:');
-  const logger = createLogger({ level: 'silent' });
-  return { app: createApp({ config, db, logger, emailSender: noopSender }), db, config };
-}
+import { buildRealApp } from './helpers.js';
 
 /* One row per mount call in app.js. The status is only there to prove the route
    exists and its middleware ran — the behaviour behind each is tested in its own
@@ -47,6 +24,7 @@ const ROUTES = [
   { path: '/company/acme', status: 302, mount: 'mountCompany' },
   { path: '/request', status: 200, mount: 'mountRequest' },
   { path: '/license', status: 200, mount: 'mountLegal' },
+  { path: '/sitemap.xml', status: 200, mount: 'mountSitemap' },
   { path: '/healthz', status: 200, mount: 'healthz' },
 ];
 

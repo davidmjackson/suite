@@ -62,6 +62,16 @@ check "$BASE/login"  200 "sign-in"
 # sets the header before it reads the cookie, so the signed-out 302 to /login
 # carries it. Everything else this control covers is behind a session.
 header "$BASE/dashboard" Cache-Control "no-store" "authenticated route is not stored"
+check "$BASE/sitemap.xml" 200 "sitemap is served"
+contains "$BASE/sitemap.xml" "<loc>$BASE/</loc>" "sitemap URLs carry THIS host"
+# The host in robots.txt is the one fact about the sitemap no unit test can check:
+# the suite runs as https://test, so an equality check there could only pass on a
+# robots.txt that was wrong in production. Interpolating $BASE is what makes it
+# checkable, and it is only checkable from out here. Deleting this leaves the
+# static Sitemap: line in hub/public/robots.txt unguarded — see tests/sitemap.test.js.
+contains "$BASE/robots.txt" "Sitemap: $BASE/sitemap.xml" "robots.txt points at the sitemap on this host"
+check "$BASE/no-such-page-xyz" 404 "unknown path is a 404"
+contains "$BASE/no-such-page-xyz" "Page not found" "404 renders the hub page, not the framework default"
 
 echo "sprintsight promo (Apache alias — NOT served by the hub):"
 check "$BASE/sprintsight-coming-soon/intro/"              200 "the page the landing tile links to"

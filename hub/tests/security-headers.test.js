@@ -101,8 +101,11 @@ test('headers are present on a 404 (covers error responses)', async () => {
   const { app } = await buildTestApp();
   const res = await request(app).get('/no-such-path-xyz');
   assert.equal(res.status, 404);
-  // Express's finalhandler sets its own CSP on unhandled 404s, but our other
-  // headers (set before finalhandler runs) should still be present.
+  // buildTestApp() builds the SHELL, with no routes and so no 404 handler: what
+  // answers here is Express's finalhandler, which sets its own CSP. That is what
+  // this test wants — it proves the shell's headers survive a response the shell
+  // did not render. The real app raises a 404 through the error handler instead,
+  // and tests/not-found.test.js covers the CSP on that.
   assert.equal(res.headers['x-frame-options'], 'DENY');
   assert.equal(res.headers['referrer-policy'], 'strict-origin-when-cross-origin');
   assert.match(res.headers['permissions-policy'], /camera=\(\)/);

@@ -22,6 +22,8 @@ import { mountCompany } from './routes/company.js';
 import { mountRequest } from './routes/request.js';
 import { mountLegal } from './routes/legal.js';
 import { makeRequestLogger } from './middleware/requestLogger.js';
+import { mountSitemap } from './routes/sitemap.js';
+import { makeNotFound } from './middleware/notFound.js';
 import { makeErrorHandler } from './middleware/errorHandler.js';
 import {
   makeSecurityHeaders,
@@ -112,12 +114,17 @@ function mountRoutes(app, { emailSender, marketing }) {
   mountCompany(app);
   mountRequest(app, { emailSender, marketing });
   mountLegal(app, { marketing });
+  mountSitemap(app);
   app.get('/healthz', (_req, res) => res.json({ ok: true }));
 }
 
 export function createApp({ config, db, logger, emailSender }) {
   const app = createAppShell({ config, db, logger });
   mountRoutes(app, { emailSender, marketing: marketingMiddleware(config) });
+  // Nothing matched — raise a 404 for the error handler below to render. Must sit
+  // under every route and above the error handler; either side of that and it
+  // answers requests the routes should have, or never runs at all.
+  app.use(makeNotFound());
   // Central error handler — must be last.
   app.use(makeErrorHandler({ logger, nodeEnv: config.nodeEnv }));
   return app;
