@@ -1,5 +1,6 @@
 // middleware/requireSession.js
 import { parseCookies } from '../lib/cookies.js';
+import { setNoStore } from './noStore.js';
 import { now } from '../lib/tokens.js';
 
 export function createRequireSession(
@@ -15,6 +16,9 @@ export function createRequireSession(
   const touch = db.prepare(`UPDATE central_sessions SET last_heartbeat_at = ? WHERE id = ?`);
 
   return (req, res, next) => {
+    // Before the cookie is read, so the redirect below is uncacheable too: it is
+    // the answer "not signed in", and it must not outlive that being true.
+    setNoStore(res);
     const cookies = parseCookies(req.headers.cookie);
     const sid = cookies[cookieName];
     if (!sid) {

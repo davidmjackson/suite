@@ -3,6 +3,7 @@ import { randomToken, now } from '../lib/tokens.js';
 import { setSessionCookie } from '../lib/cookies.js';
 import { createAuditLogger } from '../lib/audit.js';
 import { validate } from '../lib/validate.js';
+import { noStore } from '../middleware/noStore.js';
 import { magicPostSchema } from '../schemas/magic.js';
 // Every domain the hub accepts as a return_to must resolve to an app here, or a
 // sign-in that asked for that app silently lands on /dashboard instead —
@@ -27,7 +28,7 @@ export function mountMagic(app) {
   // in an email to scan it; if GET consumed the one-time token the link would be
   // dead before the human clicked. Instead we render a confirm page whose button
   // POSTs back — scanners issue GETs but don't submit forms.
-  app.get('/auth/magic', (req, res) => {
+  app.get('/auth/magic', noStore, (req, res) => {
     // Inline token check (not validate()): Express 5 makes req.query getter-only, and validate() targets req.body.
     const token = req.query.token;
     if (!token || typeof token !== 'string') {

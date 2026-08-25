@@ -2,12 +2,13 @@
 import { parseCookies, clearSessionCookie } from '../lib/cookies.js';
 import { createAuditLogger } from '../lib/audit.js';
 import { deleteCentralSession } from '../lib/sessions.js';
+import { noStore } from '../middleware/noStore.js';
 
 export function mountLogout(app) {
   const db = app.locals.db;
   const audit = createAuditLogger(db);
 
-  app.get('/logout', (req, res) => {
+  app.get('/logout', noStore, (req, res) => {
     const sid = parseCookies(req.headers.cookie).hub_session;
     if (sid) {
       const sess = db.prepare('SELECT user_id FROM central_sessions WHERE id = ?').get(sid);
