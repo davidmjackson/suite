@@ -16,7 +16,7 @@ running, and **end-to-end magic-link login confirmed working**.
 
 Remaining project work is **Phase 3** — wiring the four apps
 (`raid → signal → retro → poker`) to `@suite/auth-client`; see
-`docs/superpowers/plans/2026-05-28-sprint-suite-auth-hub.md`.
+`~/suite-archive/docs/superpowers/archive/plans/2026-05-28-sprint-suite-auth-hub.md`.
 
 Operational gotchas learned during deploy:
 - **Magic-link verify is a GET→confirm-page→POST flow** (see step 10) so mailbox

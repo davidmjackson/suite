@@ -1,5 +1,5 @@
 /* sight.js — Sprintsight promo page behaviour.
-   Spec: marketing/docs/sprintsight-promo-BUILD-SPEC.md §8 (motion), §10 (open
+   Spec: ~/suite-archive/marketing/docs/sprintsight-promo-BUILD-SPEC.md §8 (motion), §10 (open
    items), §11.4 (tab a11y). */
 (() => {
   'use strict';

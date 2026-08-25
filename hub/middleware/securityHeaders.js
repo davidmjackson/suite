@@ -1,7 +1,7 @@
 // middleware/securityHeaders.js
 // Pure, static HTTP security headers set on every response. Mounted early in
 // server.js (and mirrored in tests/helpers.js) so it covers static assets and
-// error responses too. See docs/superpowers/specs/2026-06-10-suite-security-headers-design.md.
+// error responses too. See ~/suite-archive/docs/superpowers/specs/2026-06-10-suite-security-headers-design.md.
 
 export const DEFAULT_CSP = [
   "default-src 'self'",
