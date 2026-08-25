@@ -1,10 +1,10 @@
 <%~ include("partials/header", { title: "Confirm sign in", bare: true }) %>
 <div class="authcard">
-  <div class="authleft"><div class="waves"></div><div class="brand" style="color:#fff"><svg class="mk" width="22" height="22" style="color:#fff" aria-hidden="true"><use href="/illos/glyphs.svg#glyph-suite"/></svg> Sprint Suite</div><div><p style="font-size:20px;font-family:'Bricolage Grotesque',sans-serif;">Welcome back.</p></div></div>
+  <div class="authleft"><div class="waves"></div><div class="brand"><svg class="mk" width="22" height="22" aria-hidden="true"><use href="/illos/glyphs.svg#glyph-suite"/></svg> Sprint Suite</div><div><p class="authlede">Welcome back.</p></div></div>
   <div class="authright">
-    <h1 style="font-size:24px;">Confirm sign in</h1>
+    <h1 class="title-md">Confirm sign in</h1>
     <p class="helper">Click below to finish signing in to Sprint Suite.</p>
-    <form method="POST" action="/auth/magic"><input type="hidden" name="token" value="<%= it.token %>"><p style="margin-top:8px;"><button class="btn btn-pri" type="submit">Sign in</button></p></form>
+    <form method="POST" action="/auth/magic"><input type="hidden" name="token" value="<%= it.token %>"><p class="actions is-tight"><button class="btn btn-pri" type="submit">Sign in</button></p></form>
   </div>
 </div>
 <%~ include("partials/footer") %>

@@ -41,9 +41,10 @@ test('sets the full default header block and calls next', () => {
   assert.equal(nexted, true);
 });
 
-test('DEFAULT_CSP keeps script-src strict and styles inline', () => {
+test('DEFAULT_CSP keeps both script-src and style-src strict', () => {
   assert.match(DEFAULT_CSP, /script-src 'self'(;|$)/);
-  assert.match(DEFAULT_CSP, /style-src 'self' 'unsafe-inline'/);
+  assert.match(DEFAULT_CSP, /style-src 'self'(;|$)/);
+  assert.doesNotMatch(DEFAULT_CSP, /style-src[^;]*unsafe-inline/);
   assert.match(DEFAULT_CSP, /frame-ancestors 'none'/);
   assert.match(DEFAULT_CSP, /object-src 'none'/);
   assert.doesNotMatch(DEFAULT_CSP, /script-src[^;]*unsafe-inline/);
