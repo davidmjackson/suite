@@ -1,14 +1,8 @@
-// tests/not-found.test.js
+// tests/not-found.test.js — the catch-all in middleware/notFound.js.
 //
-// An unmatched path used to fall through to Express's finalhandler, which answers
-// with `<pre>Cannot GET /whatever</pre>` under its OWN `default-src 'none'` CSP.
-// That is not a security hole — 'none' is STRICTER than ours — but it is an
-// unbranded page that names the framework, and it echoes the requested path.
-//
-// The handler that replaces it is the one layer here that could be WORSE than what
-// it replaces, in exactly one way: rendering the requested path into HTML would put
-// attacker-controlled text on a page we serve. So it renders a fixed message and
-// the marker test below is what holds it to that.
+// An unmatched path used to fall through to Express's finalhandler: an unbranded
+// page naming the framework, echoing the path back, under its own `default-src
+// 'none'` CSP. That CSP was STRICTER than ours, so this was never a security fix.
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import request from 'supertest';
@@ -43,11 +37,19 @@ test('the 404 page does not echo the requested path back', async () => {
   assert.doesNotMatch(res.text, /alert\(1\)/);
 });
 
-// finalhandler is what runs when nothing else answers, so a handler mounted BELOW
-// the error handler would never see the request. Order is the whole control.
-test('the error handler is still the last layer, with the 404 handler above it', async () => {
+// Express answers OPTIONS itself, by wrapping the router's done callback with a
+// handler that computes Allow from the methods a path defines. A catch-all mounted
+// as a router layer runs BEFORE done and takes that request away: the reply becomes
+// a 404 page and Allow is never computed. Nothing else in the suite sends OPTIONS,
+// so this is the only thing standing between that and a silent regression.
+test('OPTIONS on a real route still answers with its method list', async () => {
   const { app } = await buildRealApp();
-  const last = app.router.stack.at(-1);
-  assert.equal(last.name, 'errorHandler', 'the 404 handler was mounted below the error handler');
-  assert.equal(last.handle.length, 4);
+  const res = await request(app).options('/login');
+  assert.equal(res.status, 200);
+  assert.equal(res.headers.allow, 'GET, HEAD, POST');
+});
+
+test('OPTIONS on a path with no route is still a 404', async () => {
+  const { app } = await buildRealApp();
+  assert.equal((await request(app).options('/no-such-page')).status, 404);
 });

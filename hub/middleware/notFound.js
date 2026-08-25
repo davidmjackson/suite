@@ -1,22 +1,18 @@
 // middleware/notFound.js — answers anything the routes did not. Mount AFTER every
-// route and BEFORE the central error handler.
+// route and BEFORE the central error handler: above the routes it steals their
+// requests, below the error handler it never runs.
 //
-// Without it, Express's finalhandler replies with `<pre>Cannot GET /path</pre>`
-// under its own `default-src 'none'` CSP. That policy is stricter than ours, not
-// weaker — the problem is an unbranded page that names the framework and echoes
-// the requested path back to whoever asked for it.
+// It raises rather than renders, so the error view, the JSON negotiation for
+// /api/*, the render-failure fallback and the logging stay in errorHandler.
 //
-// This does NOT render. It raises a 404 the way middleware/csrf.js raises a 403
-// and lets errorHandler answer, which is what keeps one rendering path: the JSON
-// negotiation for /api/*, the render-failure fallback and the request logging all
-// already live there, and a second renderer here would be a second copy of each.
-//
-// The `public` copy is FIXED and mentions no path. Rendering req.originalUrl would
-// put an attacker-chosen string on a page we serve — the one way this could be
-// worse than the finalhandler page it replaces. tests/not-found.test.js holds it
-// to that with a marker the naive implementation would echo.
+// The copy names no path. Reflecting req.originalUrl would hand an attacker a
+// string on a page we serve — and note reqId already is one: genReqId echoes a
+// caller-supplied X-Request-Id, which Eta escapes but nothing strips.
 export function makeNotFound() {
   return function notFound(req, _res, next) {
+    // Express builds the OPTIONS Allow header in a wrapper around the router's
+    // done callback, which this layer runs before. Swallowing OPTIONS loses it.
+    if (req.method === 'OPTIONS') return next();
     const err = new Error(`no route for ${req.method} ${req.path}`);
     err.status = 404;
     err.code = 'not_found';

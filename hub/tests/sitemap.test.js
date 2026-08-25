@@ -1,9 +1,4 @@
-// tests/sitemap.test.js
-//
-// /sitemap.xml 404'd, so nothing told a crawler which pages are worth having. It
-// is a ROUTE rather than a file in public/ because every <loc> has to be absolute:
-// a static file would hard-code the host, and the host already lives in BASE_URL,
-// where config.js and the CSRF allow-list both read it. One source, derived.
+// tests/sitemap.test.js — /sitemap.xml, and the robots.txt line that points at it.
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import request from 'supertest';
@@ -35,18 +30,30 @@ test('the sitemap lists the public content pages', async () => {
   }
 });
 
-// The discriminating test. A sitemap built by walking the router — the obvious
-// implementation — would sweep up /dashboard, /admin and /login and hand a crawler
-// a map of the authenticated surface. /terms is excluded for a different reason:
-// it renders a "coming soon" stub, and inviting Google to index a placeholder is
-// worse than not being listed.
-test('the sitemap lists nothing gated, and no placeholder page', async () => {
+// The discriminating test, and it does not name the gated paths — it FETCHES every
+// URL the sitemap advertises and requires each to answer 200 to a caller with no
+// session. A deny-list of names was the first version and it was worthless: it
+// false-passed on any path outside the six it happened to list. This fails on any
+// gated path, named or not, because gated paths 302 to /login.
+test('every advertised URL is reachable without signing in', async () => {
+  const { app, config } = await buildRealApp();
+  const res = await request(app).get('/sitemap.xml');
+  const paths = [...res.text.matchAll(/<loc>([^<]+)<\/loc>/g)].map((m) =>
+    m[1].slice(config.baseUrl.length),
+  );
+  assert.ok(paths.length >= 4);
+  for (const path of paths) {
+    const page = await request(app).get(path);
+    assert.equal(page.status, 200, `${path} is advertised but answers ${page.status} signed out`);
+  }
+});
+
+// Two pages that ARE reachable signed out and still do not belong. Reachability is
+// what the test above measures; this is the editorial half it cannot know.
+test('the sitemap omits the sign-in page and the coming-soon stub', async () => {
   const { app } = await buildRealApp();
   const res = await request(app).get('/sitemap.xml');
-  for (const path of ['/dashboard', '/admin', '/company', '/launch', '/logout', '/auth']) {
-    assert.doesNotMatch(res.text, new RegExp(`<loc>[^<]*${path}`), `${path} is in the sitemap`);
-  }
-  assert.doesNotMatch(res.text, /<loc>[^<]*\/terms</, '/terms is a stub and should not be listed');
+  assert.doesNotMatch(res.text, /<loc>[^<]*\/terms</, '/terms still renders a placeholder');
   assert.doesNotMatch(res.text, /<loc>[^<]*\/login</, '/login is a utility page, not content');
 });
 

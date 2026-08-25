@@ -16,8 +16,13 @@ export function makeErrorHandler({ logger, nodeEnv }) {
     // message buries real 500s among routine rejections, and leaves on-call
     // unable to tell a CSRF probe from a broken route.
     const isServerError = status >= 500;
+    // A refusal's stack is this file and the router, identical every time. The 404
+    // catch-all sends every unmatched path down here and nothing rate-limits those,
+    // so keeping the frames would let a path scanner roll real records out of the
+    // journal on-call reads. The message stays: csrf.js writes the offending origin
+    // into it, and notFound.js the method and path.
     log[isServerError ? 'error' : 'warn'](
-      { err, reqId },
+      { err: isServerError ? err : { message: err.message }, reqId },
       err.code || (isServerError ? 'unhandled error' : 'request refused'),
     );
     res.status(status);

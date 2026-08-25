@@ -99,12 +99,10 @@ export async function buildTestApp({ env = {}, logger = testLogger } = {}) {
   return { app, db, config, marketing };
 }
 
-// The REAL app, whole, the way server.js builds it — routes, the 404 handler and
-// the error handler all mounted in production order. buildTestApp() above stops at
+// The REAL app, whole, the way server.js builds it. buildTestApp() above stops at
 // the shell so a route test can mount only its own route; anything asserting on
-// WIRING (what answers an unmatched path, what sits last in the stack) has to come
-// through here instead. It lived as a private copy inside app.test.js until a
-// second suite needed it; two copies of the real wiring is the drift that file's
+// WIRING — what answers an unmatched path, what sits last in the stack — needs this
+// one. Keep it single: a second copy of the real wiring is the drift app.test.js's
 // own header warns about.
 export async function buildRealApp() {
   seedTestEnv({});

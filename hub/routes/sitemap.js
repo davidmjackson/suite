@@ -1,19 +1,12 @@
 // routes/sitemap.js — /sitemap.xml for the public pages.
 //
-// A ROUTE, not a file in public/, because every <loc> must be absolute and the
-// host already lives in BASE_URL — where config.js and the CSRF allow-list both
-// read it. A static sitemap would be a second copy of the host that nothing could
-// keep in step, and it would be wrong the moment the hub answered on another
-// origin.
+// A route, not a file in public/, because every <loc> must be absolute and the host
+// lives in BASE_URL. A static copy could not follow it.
 //
-// The list is WRITTEN OUT, not walked off the router. Walking would be shorter and
-// would sweep up /dashboard, /admin and every /company/:slug — handing a crawler a
-// map of the authenticated surface. Adding a public page here is a deliberate act.
-//
-// /login is left out as a utility page with no content to index, and /terms
-// because it still renders the "coming soon" stub in views/legal.eta: inviting
-// Google to index a placeholder is worse than not being listed at all. Give /terms
-// real copy and it belongs here.
+// The path list is written out, not walked off the router: a walk would publish
+// /dashboard, /admin and every /company/:slug. /login is a utility page and /terms
+// still renders the coming-soon stub, so neither is listed — give /terms real copy
+// and it belongs here.
 const PUBLIC_PATHS = ['/', '/request', '/privacy', '/license'];
 
 function escapeXml(value) {
@@ -21,11 +14,10 @@ function escapeXml(value) {
 }
 
 export function buildSitemap(baseUrl) {
-  // BASE_URL is not normalised anywhere (config.js takes it verbatim), and the rest
-  // of the app happens to depend on it having no trailing slash — trustedOrigins()
-  // compares it against Origin headers, which never carry one. Rather than reach
-  // into config and move a value the CSRF allow-list is built from, this trims
-  // locally: a stray slash in .env would otherwise publish sprintsuite.uk//request.
+  // BASE_URL is unvalidated (config.js takes it verbatim), so a stray trailing
+  // slash would publish sprintsuite.uk//request. Trimmed here only — the same slash
+  // also breaks the magic links built in routes/login.js and routes/admin.js, and
+  // fixing THAT means normalising in config.js, which the CSRF allow-list reads.
   const root = baseUrl.replace(/\/+$/, '');
   const urls = PUBLIC_PATHS.map((p) => `  <url><loc>${escapeXml(root + p)}</loc></url>`);
   return [

@@ -11,6 +11,7 @@
 set -uo pipefail
 
 BASE="${1:-https://sprintsuite.uk}"
+BASE="${BASE%/}"   # a trailing slash would make every needle below miss
 fails=0
 
 check () { # url  expected-status  description
