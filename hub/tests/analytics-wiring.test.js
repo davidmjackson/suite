@@ -4,7 +4,7 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import request from 'supertest';
-import { buildTestApp } from './helpers.js';
+import { buildTestApp, post } from './helpers.js';
 import { now, randomToken } from '../lib/tokens.js';
 
 const GA = { GA_MEASUREMENT_ID: 'G-TEST123' };
@@ -70,17 +70,14 @@ test('every public page carries the bar', async () => {
 
 test('the 400-invalid re-render keeps the bar (the res.locals regression guard)', async () => {
   const { app } = await withRoutes(GA);
-  const res = await request(app)
-    .post('/request')
-    .type('form')
-    .send({ company_name: '', email: 'nope' });
+  const res = await post(app, '/request').type('form').send({ company_name: '', email: 'nope' });
   assert.equal(res.status, 400);
   assert.match(res.text, /consent-banner\.js/, 'validation-error page is a live public page too');
 });
 
 test('POST /request success renders request-received with the bar', async () => {
   const { app } = await withRoutes(GA);
-  const res = await request(app).post('/request').type('form').send({
+  const res = await post(app, '/request').type('form').send({
     company_name: 'Acme',
     contact_name: 'A Person',
     email: 'a@example.com',

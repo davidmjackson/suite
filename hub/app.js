@@ -30,6 +30,7 @@ import {
   withAppDomains,
 } from './middleware/securityHeaders.js';
 import { analyticsLocals } from './middleware/analytics.js';
+import { makeCsrfGuard, trustedOrigins } from './middleware/csrf.js';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 
@@ -85,6 +86,12 @@ export function createAppShell({ config, db, logger }) {
   app.use(makeRequestLogger(logger));
   app.use(express.urlencoded({ extended: false }));
   app.use(express.json());
+
+  // CSRF — after the parsers (a token layer would need req.body) and before every
+  // route. The allow-list comes from config.baseUrl, never from req.protocol:
+  // Apache sets X-Forwarded-Proto "http" on the :443 vhost, so a computed origin
+  // would be http://sprintsuite.uk and would refuse every real browser post.
+  app.use(makeCsrfGuard({ allowedOrigins: trustedOrigins(config.baseUrl) }));
 
   app.locals.db = db;
   app.locals.config = config;

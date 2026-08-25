@@ -2,7 +2,7 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import request from 'supertest';
-import { buildTestApp } from './helpers.js';
+import { buildTestApp, post } from './helpers.js';
 import { now, randomToken } from '../lib/tokens.js';
 import { APP_ORIGIN, APP_BY_HOST } from '../lib/apps.js';
 
@@ -59,7 +59,7 @@ for (const appName of Object.keys(APP_DOMAIN)) {
   test(`POST /launch/${appName} generates token and 302s to app domain`, async () => {
     const { app, db } = await buildWithLaunch();
     const sid = await loggedInCookie(db);
-    const res = await request(app).post(`/launch/${appName}`).set('Cookie', `hub_session=${sid}`);
+    const res = await post(app, `/launch/${appName}`).set('Cookie', `hub_session=${sid}`);
     assert.equal(res.status, 302);
     assert.ok(res.headers.location.startsWith(`${APP_DOMAIN[appName]}/auth/launch?token=`));
     const launchTok = db.prepare('SELECT * FROM launch_tokens').get();
@@ -71,7 +71,7 @@ for (const appName of Object.keys(APP_DOMAIN)) {
 test('POST /launch/unknown returns 404', async () => {
   const { app, db } = await buildWithLaunch();
   const sid = await loggedInCookie(db);
-  const res = await request(app).post(`/launch/unknown`).set('Cookie', `hub_session=${sid}`);
+  const res = await post(app, `/launch/unknown`).set('Cookie', `hub_session=${sid}`);
   assert.equal(res.status, 404);
 });
 

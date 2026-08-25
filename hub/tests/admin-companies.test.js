@@ -2,7 +2,7 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import request from 'supertest';
-import { buildTestApp } from './helpers.js';
+import { buildTestApp, post } from './helpers.js';
 import { now, randomToken } from '../lib/tokens.js';
 import { createAccessRequests } from '../lib/access-requests.js';
 
@@ -54,9 +54,10 @@ test('approve provisions and emails the CR', async () => {
     contactName: 'James',
     email: 'james@ibm.com',
   });
-  const res = await request(app)
-    .post(`/admin/requests/${r.id}/approve`)
-    .set('Cookie', `hub_session=${sid}`);
+  const res = await post(app, `/admin/requests/${r.id}/approve`).set(
+    'Cookie',
+    `hub_session=${sid}`,
+  );
   assert.equal(res.status, 302);
   const company = db.prepare("SELECT * FROM companies WHERE slug='ibm'").get();
   assert.ok(company);
@@ -92,10 +93,11 @@ test('approving an already-handled request returns a friendly 400', async () => 
     contactName: 'James',
     email: 'james@ibm.com',
   });
-  await request(app).post(`/admin/requests/${r.id}/approve`).set('Cookie', `hub_session=${sid}`);
-  const res = await request(app)
-    .post(`/admin/requests/${r.id}/approve`)
-    .set('Cookie', `hub_session=${sid}`);
+  await post(app, `/admin/requests/${r.id}/approve`).set('Cookie', `hub_session=${sid}`);
+  const res = await post(app, `/admin/requests/${r.id}/approve`).set(
+    'Cookie',
+    `hub_session=${sid}`,
+  );
   assert.equal(res.status, 400);
 });
 
@@ -106,8 +108,7 @@ test('reject marks the request rejected and provisions nothing', async () => {
     contactName: 'James',
     email: 'james@ibm.com',
   });
-  const res = await request(app)
-    .post(`/admin/requests/${r.id}/reject`)
+  const res = await post(app, `/admin/requests/${r.id}/reject`)
     .type('form')
     .set('Cookie', `hub_session=${sid}`)
     .send({ review_note: 'spam' });
@@ -132,9 +133,10 @@ test('approve still succeeds (302) when no emailSender is wired', async () => {
     contactName: 'James',
     email: 'james@ibm.com',
   });
-  const res = await request(app)
-    .post(`/admin/requests/${r.id}/approve`)
-    .set('Cookie', `hub_session=${sid}`);
+  const res = await post(app, `/admin/requests/${r.id}/approve`).set(
+    'Cookie',
+    `hub_session=${sid}`,
+  );
   assert.equal(res.status, 302);
   assert.ok(db.prepare("SELECT 1 FROM companies WHERE slug='ibm'").get());
 });
@@ -158,9 +160,7 @@ test('a pending request whose company name already exists is flagged', async () 
     contactName: 'G',
     email: 'g@globex.com',
   });
-  await request(app)
-    .post(`/admin/requests/${first.id}/approve`)
-    .set('Cookie', `hub_session=${sid}`);
+  await post(app, `/admin/requests/${first.id}/approve`).set('Cookie', `hub_session=${sid}`);
   // A new pending request reuses the same company name.
   ar.createRequest({ companyName: 'Globex', contactName: 'H', email: 'h@globex.com' });
   const res = await request(app).get('/admin/companies').set('Cookie', `hub_session=${sid}`);

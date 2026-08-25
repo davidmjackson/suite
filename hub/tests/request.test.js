@@ -2,7 +2,7 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import request from 'supertest';
-import { buildTestApp } from './helpers.js';
+import { buildTestApp, post } from './helpers.js';
 
 async function setup() {
   const { app, db } = await buildTestApp();
@@ -21,8 +21,7 @@ test('GET /request renders the form', async () => {
 
 test('POST /request stores a pending request', async () => {
   const { app, db } = await setup();
-  const res = await request(app)
-    .post('/request')
+  const res = await post(app, '/request')
     .type('form')
     .send({
       company_name: 'IBM',
@@ -43,7 +42,7 @@ test('POST /request stores a pending request', async () => {
 
 test('POST /request rejects an invalid email with 400 and stores nothing', async () => {
   const { app, db } = await setup();
-  const res = await request(app).post('/request').type('form').send({
+  const res = await post(app, '/request').type('form').send({
     company_name: 'IBM',
     contact_name: 'James',
     email: 'not-an-email',
@@ -54,7 +53,7 @@ test('POST /request rejects an invalid email with 400 and stores nothing', async
 
 test('POST /request silently drops bot submissions (honeypot filled)', async () => {
   const { app, db } = await setup();
-  const res = await request(app).post('/request').type('form').send({
+  const res = await post(app, '/request').type('form').send({
     company_name: 'IBM',
     contact_name: 'James',
     email: 'james@ibm.com',
@@ -68,8 +67,7 @@ test('POST /request rate-limits a flood from one IP', async () => {
   const { app } = await setup();
   let last;
   for (let i = 0; i < 7; i++) {
-    last = await request(app)
-      .post('/request')
+    last = await post(app, '/request')
       .type('form')
       .send({
         company_name: 'C' + i,
@@ -82,8 +80,7 @@ test('POST /request rate-limits a flood from one IP', async () => {
 
 test('POST /request with a bad email re-renders with entered values restored', async () => {
   const { app } = await setup();
-  const res = await request(app)
-    .post('/request')
+  const res = await post(app, '/request')
     .type('form')
     .send({
       company_name: 'IBM',
@@ -135,8 +132,7 @@ test('POST /request notifies the operator when ADMIN_EMAIL is set', async () => 
   const { app } = await buildTestApp({ env: { ADMIN_EMAIL: 'ops@test.co' } });
   const { mountRequest } = await import('../routes/request.js?t=' + Date.now());
   mountRequest(app, { emailSender: fakeSender(calls) });
-  const res = await request(app)
-    .post('/request')
+  const res = await post(app, '/request')
     .type('form')
     .send({
       company_name: 'IBM',
@@ -161,7 +157,7 @@ test('POST /request does not notify when ADMIN_EMAIL is unset', async () => {
   const { app } = await buildTestApp({ env: { ADMIN_EMAIL: '' } });
   const { mountRequest } = await import('../routes/request.js?t=' + Date.now());
   mountRequest(app, { emailSender: fakeSender(calls) });
-  const res = await request(app).post('/request').type('form').send({
+  const res = await post(app, '/request').type('form').send({
     company_name: 'IBM',
     contact_name: 'James',
     email: 'james@ibm.com',
@@ -175,12 +171,10 @@ test('POST /request does not notify on honeypot or invalid submissions', async (
   const { app } = await buildTestApp({ env: { ADMIN_EMAIL: 'ops@test.co' } });
   const { mountRequest } = await import('../routes/request.js?t=' + Date.now());
   mountRequest(app, { emailSender: fakeSender(calls) });
-  await request(app)
-    .post('/request')
+  await post(app, '/request')
     .type('form')
     .send({ company_name: 'X', contact_name: 'Y', email: 'x@y.co', website: 'spam' });
-  await request(app)
-    .post('/request')
+  await post(app, '/request')
     .type('form')
     .send({ company_name: 'X', contact_name: 'Y', email: 'bad' });
   assert.equal(calls.length, 0);
@@ -196,7 +190,7 @@ test('POST /request still succeeds if the notification email throws', async () =
       },
     },
   });
-  const res = await request(app).post('/request').type('form').send({
+  const res = await post(app, '/request').type('form').send({
     company_name: 'Acme',
     contact_name: 'Jo',
     email: 'jo@acme.co',
@@ -211,7 +205,7 @@ test('POST /request still succeeds if the notification email throws', async () =
 
 test('POST /request normalizes email case + whitespace and stores cleaned values', async () => {
   const { app, db } = await setup();
-  await request(app).post('/request').type('form').send({
+  await post(app, '/request').type('form').send({
     company_name: '  Acme  ',
     contact_name: ' Jo ',
     email: '  JO@ACME.COM ',

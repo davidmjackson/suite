@@ -94,3 +94,36 @@ test('the marketing CSP is applied per-route, so analytics stay off app pages', 
   assert.match(publicPage.headers['content-security-policy'], /googletagmanager/);
   assert.doesNotMatch(appPage.headers['content-security-policy'], /googletagmanager/);
 });
+
+/* The CSRF guard has to sit above every route, not merely exist. A forged post
+   that reaches a handler is not protected by a 403 rendered afterwards. */
+test('the CSRF guard is mounted on the real app, above the routes', async () => {
+  const { app } = await buildRealApp();
+  const forged = await request(app)
+    .post('/login')
+    .type('form')
+    .set('Origin', 'https://evil.example');
+  assert.equal(forged.status, 403, 'a cross-origin post was not refused');
+});
+
+/* The guard exempts /api/* because those routes are Bearer-authed server-to-server
+   calls that carry no Origin. That exemption is only safe while it stays true, so
+   this walks the real router and proves every state-changing /api route still
+   refuses an unauthenticated caller. Add a cookie-authed /api route and this fails. */
+test('every state-changing /api route is Bearer-only, keeping the CSRF exemption honest', async () => {
+  const { app } = await buildRealApp();
+  const apiRoutes = app.router.stack
+    .filter((l) => l.route?.path?.startsWith('/api/'))
+    .flatMap((l) =>
+      Object.keys(l.route.methods)
+        .filter((m) => m !== 'get' && m !== 'head')
+        .map((method) => ({ method, path: l.route.path })),
+    );
+  assert.ok(apiRoutes.length >= 4, `expected the four /api routes, found ${apiRoutes.length}`);
+
+  for (const { method, path } of apiRoutes) {
+    const probe = path.replace(/:[^/]+/g, 'x');
+    const res = await request(app)[method](probe).type('form');
+    assert.equal(res.status, 401, `${method.toUpperCase()} ${path} is not Bearer-only`);
+  }
+});

@@ -4,9 +4,22 @@
 // body parsing, locals) and leaves the routes to the caller, so each route test
 // mounts only the route under test. This file used to hand-copy that wiring under
 // three "mirror server.js" comments and had drifted from it; the copies are gone.
+import request from 'supertest';
 import { openDb } from '../db/index.js';
 import { createAppShell, marketingMiddleware } from '../app.js';
 import { createLogger } from '../lib/logger.js';
+
+// The origin a test browser posts from — TEST_ENV.BASE_URL below, which is what
+// the CSRF guard's allow-list is derived from.
+export const TEST_ORIGIN = 'https://test';
+
+// Same-origin request builders. The CSRF guard (middleware/csrf.js) fails closed,
+// so a state-changing request with no Origin is refused — supertest sends none by
+// default, and a real browser always does. Use these for anything that changes
+// state; reach for request(app) directly only to test the refusal itself, or for
+// the /api/* routes, which are called server-to-server with no Origin at all.
+export const post = (app, path) => request(app).post(path).set('Origin', TEST_ORIGIN);
+export const del = (app, path) => request(app).delete(path).set('Origin', TEST_ORIGIN);
 
 // All five launched apps. This had drifted to four (no sprintplan.uk), which is
 // what blinded the suite to a Sprintplan magic link landing on /dashboard: the
