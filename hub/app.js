@@ -88,9 +88,10 @@ export function createAppShell({ config, db, logger }) {
   app.use(express.json());
 
   // CSRF — after the parsers (a token layer would need req.body) and before every
-  // route. The allow-list comes from config.baseUrl, never from req.protocol:
-  // Apache sets X-Forwarded-Proto "http" on the :443 vhost, so a computed origin
-  // would be http://sprintsuite.uk and would refuse every real browser post.
+  // route. The allow-list is DERIVED FROM config.baseUrl and never computed from
+  // the request: req.protocol and Host are only ever as truthful as the proxy in
+  // front of us, so an allow-list built from them silently follows a vhost edit
+  // and starts refusing real browser posts. baseUrl is the declared public origin.
   app.use(makeCsrfGuard({ allowedOrigins: trustedOrigins(config.baseUrl) }));
 
   app.locals.db = db;
