@@ -45,8 +45,19 @@ test('an allow-listed Origin passes', () => {
   );
 });
 
+/* The negatives here are all NEAR MISSES, deliberately. A distant origin like
+   evil.example is refused by a correct exact-match guard and by every common way
+   of writing one wrongly, so it discriminates nothing. Each case below dies only
+   if the comparison is exact origin equality. */
 test('a foreign Origin is refused with 403', () => {
   assert.equal(decide({ headers: { origin: 'https://evil.example' } }), 403);
+  // Prefix matching would admit these — the attacker registers the longer name.
+  assert.equal(decide({ headers: { origin: 'https://sprintsuite.uk.evil.example' } }), 403);
+  assert.equal(decide({ headers: { origin: 'https://sprintsuite.ukevil.example' } }), 403);
+  // A host-only comparison would admit a downgraded scheme.
+  assert.equal(decide({ headers: { origin: 'http://sprintsuite.uk' } }), 403);
+  // Stripping the port would admit any other service on the same host.
+  assert.equal(decide({ headers: { origin: 'https://sprintsuite.uk:8443' } }), 403);
 });
 
 /* The four holes in SameSite=Lax that this guard exists to close. A sibling host
@@ -66,6 +77,8 @@ test('Origin: null is refused, not treated as absent', () => {
   // branch also ends in a 403 when no metadata is present, so only a request
   // carrying BOTH tells the two apart — and lets the bypass through.
   assert.equal(decide({ headers: { origin: 'null', 'sec-fetch-site': 'same-origin' } }), 403);
+  // An empty Origin is a value too, and dies to the same shape.
+  assert.equal(decide({ headers: { origin: '', 'sec-fetch-site': 'same-origin' } }), 403);
 });
 
 test('with no Origin, Sec-Fetch-Site: same-origin is accepted', () => {
@@ -133,4 +146,23 @@ test('a refused request never reaches the route handler', async () => {
   });
   await request(app).post('/csrf-probe').set('Origin', 'https://evil.example');
   assert.equal(reached, false, 'the handler ran despite the refusal');
+});
+
+/* The decision table above proves the guard's behaviour given an allow-list. This
+   proves the allow-list the SHELL actually builds — a different claim, and the one
+   a wiring mistake breaks. Widening app.js to bless config.allowedAppDomains makes
+   every hub post forgeable from five same-site siblings, which is precisely what
+   this control exists to prevent, and nothing else in the suite would notice. */
+test('the shell is wired with the hub origins only, never the app domains', async () => {
+  const { app, config } = await buildTestApp();
+  app.post('/csrf-probe', (_req, res) => res.json({ ok: true }));
+
+  assert.equal(config.allowedAppDomains.length, 5, 'expected the five app origins');
+  for (const origin of config.allowedAppDomains) {
+    const res = await request(app).post('/csrf-probe').set('Origin', origin);
+    assert.equal(res.status, 403, `${origin} was accepted — app origins are not this origin`);
+  }
+
+  const genuine = await request(app).post('/csrf-probe').set('Origin', TEST_ORIGIN);
+  assert.equal(genuine.status, 200, 'the hub origin itself was refused');
 });

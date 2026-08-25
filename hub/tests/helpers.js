@@ -9,9 +9,11 @@ import { openDb } from '../db/index.js';
 import { createAppShell, marketingMiddleware } from '../app.js';
 import { createLogger } from '../lib/logger.js';
 
-// The origin a test browser posts from — TEST_ENV.BASE_URL below, which is what
-// the CSRF guard's allow-list is derived from.
-export const TEST_ORIGIN = 'https://test';
+// The origin a test browser posts from. DERIVED from TEST_BASE_URL, not written
+// out a second time: the CSRF allow-list is built from BASE_URL, so two hand-kept
+// copies of the same fact would let the fixtures drift into asserting nothing.
+const TEST_BASE_URL = 'https://test';
+export const TEST_ORIGIN = TEST_BASE_URL;
 
 // Same-origin request builders. The CSRF guard (middleware/csrf.js) fails closed,
 // so a state-changing request with no Origin is refused — supertest sends none by
@@ -44,7 +46,7 @@ const testLogger = createLogger({ level: 'silent' });
 // The minimum env config.js demands. Defaults only — an already-set value wins, so
 // a test that needs a different one sets it before the first buildTestApp().
 const TEST_ENV = {
-  BASE_URL: 'https://test',
+  BASE_URL: TEST_BASE_URL,
   DB_PATH: ':memory:',
   RESEND_API_KEY: 'test',
   FROM_EMAIL: 'login@test',
