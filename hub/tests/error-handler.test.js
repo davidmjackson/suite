@@ -129,6 +129,32 @@ async function appWithRefusal({ nodeEnv = 'production' } = {}) {
   return { app, cap };
 }
 
+/* A refusal's stack is this file and the router — the same frames every time, and
+   nothing a reader could act on. It matters because the 404 catch-all sends every
+   unmatched path down here: nothing in the app or the vhost rate-limits those, so a
+   path scanner would otherwise turn each probe into a kilobyte of journald and roll
+   real sign-ins and audit records out of the window on-call reads. The message
+   stays — csrf.js writes the offending origin into it. */
+test('a 4xx is logged without a stack trace, but keeps its message', async () => {
+  const { app, cap } = await appWithRefusal();
+  await request(app).get('/refused').set('Accept', 'application/json');
+  await tick();
+  const rec = cap.records().find((r) => r.msg === 'csrf_blocked');
+  assert.ok(rec, 'no csrf_blocked record');
+  assert.ok(!rec.err.stack, 'a refusal carried a stack trace into the log');
+  assert.match(rec.err.message, /evil\.example/, 'the message that names the origin was lost');
+});
+
+/* The half that makes the one above mean something: strip stacks everywhere and
+   this fails. A crash is the case where the frames are the whole point. */
+test('a 500 still carries its stack, so a crash stays diagnosable', async () => {
+  const { app, cap } = await appWithBoom();
+  await request(app).get('/boom').set('Accept', 'application/json');
+  await tick();
+  const rec = cap.records().find((r) => r.msg === 'unhandled error');
+  assert.ok(rec.err.stack.includes('kaboom-secret-detail'), 'the crash lost its stack');
+});
+
 test('a 4xx is logged at warn under its own code, not as an unhandled error', async () => {
   const { app, cap } = await appWithRefusal();
   await request(app).get('/refused').set('Accept', 'application/json');

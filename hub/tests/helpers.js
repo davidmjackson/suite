@@ -7,7 +7,7 @@
 import request from 'supertest';
 import { Writable } from 'node:stream';
 import { openDb } from '../db/index.js';
-import { createAppShell, marketingMiddleware } from '../app.js';
+import { createApp, createAppShell, marketingMiddleware } from '../app.js';
 import { createLogger } from '../lib/logger.js';
 
 // The origin a test browser posts from. DERIVED from TEST_BASE_URL, not written
@@ -98,3 +98,21 @@ export async function buildTestApp({ env = {}, logger = testLogger } = {}) {
   mountLanding(app, { marketing });
   return { app, db, config, marketing };
 }
+
+// The REAL app, whole, the way server.js builds it. buildTestApp() above stops at
+// the shell so a route test can mount only its own route; anything asserting on
+// WIRING — what answers an unmatched path, what sits last in the stack — needs this
+// one. Keep it single: a second copy of the real wiring is the drift app.test.js's
+// own header warns about.
+export async function buildRealApp() {
+  seedTestEnv({});
+  const { default: config } = await import('../config.js?t=' + Date.now());
+  const db = openDb(':memory:');
+  const app = createApp({ config, db, logger: testLogger, emailSender: noopSender });
+  return { app, db, config };
+}
+
+const noopSender = {
+  async sendMagicLink() {},
+  async sendAccessRequestNotification() {},
+};
