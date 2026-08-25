@@ -105,7 +105,7 @@ DB_PATH=./data/suite.db
 
 # Email — set RESEND_API_KEY after step 4
 RESEND_API_KEY=re_xxxxxxxxxxxxxxxxxxxxxxxxxxxxx
-FROM_EMAIL=login@sprintsuite.uk
+FROM_EMAIL=david.jackson@sprintsuite.uk
 
 # Per-app API keys (each must match the app's own HUB_API_KEY env)
 HUB_API_KEY_RAID=paste-32-byte-hex
