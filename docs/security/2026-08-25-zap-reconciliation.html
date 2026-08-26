@@ -1,0 +1,1131 @@
+<!doctype html>
+<html lang="en-GB">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="robots" content="noindex, nofollow" />
+    <title>Sprint Suite ZAP Reconciliation</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      rel="stylesheet"
+      href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,700&family=Hanken+Grotesk:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500;600&display=swap"
+    />
+
+    <style>
+      /* Instrument, the Sprint Suite design system (shared/theme/instrument-core.css).
+     Tokens copied, not reinvented, so this report reads as part of the suite.
+     Single-theme by choice: every Instrument surface is light-committed, so the
+     palette is painted explicitly and no dark variant is offered. */
+      :root {
+        --bone: oklch(0.964 0.004 240);
+        --panel: oklch(0.996 0.002 240);
+        --ink: oklch(0.235 0.013 250);
+        --soft: oklch(0.455 0.012 250);
+        --faint: oklch(0.6 0.01 250);
+        --line: oklch(0.9 0.006 250);
+        --line2: oklch(0.84 0.008 250);
+
+        --green: oklch(0.45 0.077 162);
+        --greenwash: oklch(0.95 0.03 165);
+        --teal: oklch(0.58 0.088 206);
+        --tealink: oklch(0.5 0.088 206);
+        --tealwash: oklch(0.95 0.03 206);
+        --amber: oklch(0.52 0.11 62);
+        --amberwash: oklch(0.95 0.05 78);
+        --melon: oklch(0.53 0.19 24);
+        --melonwash: oklch(0.95 0.045 24);
+
+        --disp: 'Bricolage Grotesque', 'Hanken Grotesk', system-ui, sans-serif;
+        --body: 'Hanken Grotesk', system-ui, -apple-system, sans-serif;
+        --mono: 'IBM Plex Mono', ui-monospace, 'SF Mono', Menlo, monospace;
+      }
+
+      *,
+      *::before,
+      *::after {
+        box-sizing: border-box;
+      }
+      body {
+        margin: 0;
+        background: var(--bone);
+        color: var(--ink);
+        font-family: var(--body);
+        font-size: 15px;
+        line-height: 1.55;
+        -webkit-font-smoothing: antialiased;
+      }
+      h1,
+      h2,
+      h3 {
+        font-family: var(--disp);
+        font-weight: 700;
+        letter-spacing: -0.02em;
+        text-wrap: balance;
+        margin: 0;
+      }
+      p {
+        margin: 0;
+      }
+      a {
+        color: var(--green);
+        text-decoration: none;
+        border-bottom: 1px solid color-mix(in oklab, var(--green) 30%, transparent);
+      }
+      a:focus-visible,
+      summary:focus-visible {
+        outline: 2px solid var(--green);
+        outline-offset: 3px;
+        border-radius: 3px;
+      }
+      code,
+      .mono {
+        font-family: var(--mono);
+        font-size: 0.92em;
+      }
+      code {
+        background: var(--bone);
+        border: 1px solid var(--line);
+        border-radius: 4px;
+        padding: 0.08em 0.34em;
+      }
+
+      /* Both take a darker value than instrument-core's, which sets --faint here.
+     At 10.5-11px uppercase these are small text needing 4.5:1, and --faint gives
+     3.55-3.90:1 on these grounds. Ratios checked with the converter in
+     marketing/tests/contrast.test.mjs, not estimated. */
+      .eyebrow {
+        font-family: var(--mono);
+        font-size: 11px;
+        font-weight: 600;
+        letter-spacing: 0.2em;
+        text-transform: uppercase;
+        color: var(--tealink);
+      }
+      .micro {
+        font-family: var(--mono);
+        font-size: 10.5px;
+        font-weight: 500;
+        letter-spacing: 0.16em;
+        text-transform: uppercase;
+        color: var(--soft);
+      }
+
+      /* ---- header band ---- */
+      .band {
+        background: var(--panel);
+        border-bottom: 1px solid var(--line2);
+      }
+      .band-in {
+        max-width: 1060px;
+        margin: 0 auto;
+        padding: 40px 32px 34px;
+        display: flex;
+        flex-direction: column;
+        gap: 6px;
+      }
+      .band h1 {
+        font-size: clamp(30px, 5vw, 46px);
+        line-height: 1.02;
+        margin-top: 8px;
+      }
+      .band .sub {
+        color: var(--soft);
+        max-width: 62ch;
+        margin-top: 6px;
+      }
+
+      .ident {
+        margin-top: 22px;
+        display: grid;
+        gap: 1px;
+        grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+        background: var(--line);
+        border: 1px solid var(--line);
+        border-radius: 9px;
+        overflow: hidden;
+      }
+      .ident div {
+        background: var(--panel);
+        padding: 11px 14px;
+        display: flex;
+        flex-direction: column;
+        gap: 3px;
+      }
+      .ident b {
+        font-family: var(--mono);
+        font-size: 13px;
+        font-weight: 600;
+        font-variant-numeric: tabular-nums;
+      }
+
+      /* ---- page ---- */
+      .page {
+        max-width: 1060px;
+        margin: 0 auto;
+        padding: 30px 32px 56px;
+        display: flex;
+        flex-direction: column;
+        gap: 26px;
+      }
+      section {
+        display: flex;
+        flex-direction: column;
+        gap: 14px;
+      }
+      section > h2 {
+        font-size: 22px;
+      }
+      .lede {
+        color: var(--soft);
+        max-width: 72ch;
+      }
+
+      .card {
+        background: var(--panel);
+        border: 1px solid var(--line2);
+        border-radius: 10px;
+        padding: 22px 24px;
+      }
+
+      /* ---- the interpretive key ---- */
+      .keynote {
+        background: var(--amberwash);
+        border: 1px solid color-mix(in oklab, var(--amber) 30%, var(--line2));
+        border-radius: 10px;
+        padding: 20px 24px;
+        display: flex;
+        flex-direction: column;
+        gap: 8px;
+      }
+      .keynote .keynote-mark {
+        color: var(--amber);
+      }
+      .keynote h2 {
+        font-size: 19px;
+      }
+      .keynote p {
+        color: color-mix(in oklab, var(--ink) 88%, var(--amber));
+        max-width: 76ch;
+      }
+
+      /* ---- disposition tally ---- */
+      .tally {
+        display: grid;
+        gap: 12px;
+        grid-template-columns: repeat(auto-fit, minmax(190px, 1fr));
+      }
+      .tally > div {
+        background: var(--panel);
+        border: 1px solid var(--line2);
+        border-radius: 10px;
+        padding: 16px 18px;
+        display: flex;
+        flex-direction: column;
+        gap: 4px;
+        border-top: 3px solid var(--tt, var(--line2));
+      }
+      .tally .n {
+        font-family: var(--disp);
+        font-size: 34px;
+        line-height: 1;
+        font-variant-numeric: tabular-nums;
+        color: var(--tt, var(--ink));
+      }
+      .tally .t {
+        font-size: 13.5px;
+        font-weight: 600;
+      }
+      .tally .d {
+        font-size: 12.5px;
+        color: var(--soft);
+      }
+      .t-fix {
+        --tt: var(--green);
+      }
+      .t-prior {
+        --tt: var(--teal);
+      }
+      .t-nodef {
+        --tt: var(--faint);
+      }
+
+      /* ---- alert ledger ---- */
+      .ledger {
+        display: flex;
+        flex-direction: column;
+        gap: 12px;
+      }
+      .alert {
+        background: var(--panel);
+        border: 1px solid var(--line2);
+        border-radius: 10px;
+        border-left: 4px solid var(--rail, var(--line2));
+        padding: 18px 22px 20px;
+        display: flex;
+        flex-direction: column;
+        gap: 14px;
+      }
+      .r-med {
+        --rail: var(--melon);
+      }
+      .r-low {
+        --rail: var(--amber);
+      }
+      .r-info {
+        --rail: var(--teal);
+      }
+
+      .ahead {
+        display: flex;
+        flex-wrap: wrap;
+        align-items: baseline;
+        gap: 8px 12px;
+      }
+      .ahead h3 {
+        font-size: 17.5px;
+        flex: 1 1 auto;
+        min-width: 240px;
+      }
+      .ameta {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 6px;
+        align-items: center;
+      }
+
+      .pill {
+        font-family: var(--mono);
+        font-size: 10.5px;
+        font-weight: 600;
+        letter-spacing: 0.08em;
+        text-transform: uppercase;
+        padding: 4px 9px;
+        border-radius: 5px;
+        white-space: nowrap;
+      }
+      .p-med {
+        background: var(--melonwash);
+        color: oklch(0.44 0.16 24);
+      }
+      .p-low {
+        background: var(--amberwash);
+        color: var(--amber);
+      }
+      .p-info {
+        background: var(--tealwash);
+        color: oklch(0.44 0.08 206);
+      }
+      .p-count {
+        background: var(--bone);
+        color: var(--soft);
+        border: 1px solid var(--line2);
+      }
+      .p-fixed {
+        background: var(--greenwash);
+        color: var(--green);
+      }
+      .p-prior {
+        background: var(--tealwash);
+        color: oklch(0.44 0.08 206);
+      }
+      .p-nodef {
+        background: oklch(0.93 0.006 250);
+        color: var(--soft);
+      }
+
+      .cols {
+        display: grid;
+        gap: 16px 26px;
+        grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+      }
+      .col {
+        display: flex;
+        flex-direction: column;
+        gap: 6px;
+      }
+      .col p + p {
+        margin-top: 4px;
+      }
+      .col p {
+        font-size: 14.2px;
+      }
+      .col .micro {
+        margin-bottom: 2px;
+      }
+
+      .urls {
+        font-family: var(--mono);
+        font-size: 12px;
+        color: var(--soft);
+        word-break: break-all;
+        line-height: 1.7;
+      }
+
+      .verify {
+        background: var(--greenwash);
+        border-radius: 7px;
+        padding: 10px 13px;
+        font-size: 13.2px;
+        color: color-mix(in oklab, var(--ink) 85%, var(--green));
+        display: flex;
+        gap: 8px;
+        align-items: flex-start;
+      }
+      .verify > b {
+        font-family: var(--mono);
+        font-size: 11px;
+        letter-spacing: 0.1em;
+        text-transform: uppercase;
+        color: var(--green);
+        flex: none;
+        padding-top: 2px;
+      }
+      .caveat {
+        background: var(--bone);
+        border: 1px solid var(--line);
+        border-radius: 7px;
+        padding: 10px 13px;
+        font-size: 13.2px;
+        color: var(--soft);
+        display: flex;
+        gap: 8px;
+        align-items: flex-start;
+      }
+      .caveat > b {
+        font-family: var(--mono);
+        font-size: 11px;
+        letter-spacing: 0.1em;
+        text-transform: uppercase;
+        color: var(--soft);
+        flex: none;
+        padding-top: 2px;
+      }
+
+      /* ---- tables ---- */
+      .scroll {
+        overflow-x: auto;
+        border: 1px solid var(--line2);
+        border-radius: 9px;
+        background: var(--panel);
+      }
+      table {
+        border-collapse: collapse;
+        width: 100%;
+        font-size: 13.6px;
+      }
+      th,
+      td {
+        text-align: left;
+        padding: 10px 14px;
+        border-bottom: 1px solid var(--line);
+        vertical-align: top;
+      }
+      thead th {
+        font-family: var(--mono);
+        font-size: 10.5px;
+        font-weight: 600;
+        letter-spacing: 0.14em;
+        text-transform: uppercase;
+        color: var(--soft);
+        background: var(--bone);
+        white-space: nowrap;
+      }
+      tbody tr:last-child td {
+        border-bottom: none;
+      }
+      td.m {
+        font-family: var(--mono);
+        font-size: 12.5px;
+        white-space: nowrap;
+        font-variant-numeric: tabular-nums;
+      }
+
+      ul {
+        margin: 0;
+        padding-left: 1.1em;
+        display: flex;
+        flex-direction: column;
+        gap: 7px;
+      }
+      li {
+        font-size: 14.2px;
+      }
+
+      footer {
+        border-top: 1px solid var(--line2);
+        background: var(--panel);
+        padding: 22px 32px;
+        text-align: center;
+        color: var(--soft);
+        font-size: 12.5px;
+      }
+
+      @media (max-width: 640px) {
+        .band-in {
+          padding: 30px 20px 26px;
+        }
+        .page {
+          padding: 22px 20px 40px;
+        }
+        .alert {
+          padding: 16px 16px 18px;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <div class="band">
+      <div class="band-in">
+        <span class="eyebrow">Security scan reconciliation</span>
+        <h1>Every ZAP alert, and what happened to it</h1>
+        <p class="sub">
+          A row-for-row answer to the 25 August 2026 ZAP scan of <code>sprintsuite.uk</code>. Each
+          of the eleven alerts is listed in ZAP's own order, stamped with its plugin id and instance
+          count, so a line here matches a line there. Alerts that were fixed say what was changed
+          and how it was verified. Alerts that were not fixed say why they were not defects.
+        </p>
+
+        <div class="ident">
+          <div><span class="micro">Scanner</span><b>ZAP 2.17.0</b></div>
+          <div><span class="micro">Target</span><b>sprintsuite.uk</b></div>
+          <div><span class="micro">Report generated</span><b>25 Aug 2026 18:43</b></div>
+          <div><span class="micro">Alerts</span><b>0 H · 5 M · 2 L · 4 I</b></div>
+          <div><span class="micro">Responses</span><b>5,209</b></div>
+          <div><span class="micro">Session</span><b>Unauthenticated</b></div>
+        </div>
+      </div>
+    </div>
+
+    <div class="page">
+      <!-- The single fact that governs how the whole report should be read. It is not
+       a footnote: six of eleven alerts describe a site that no longer existed. -->
+      <div class="keynote">
+        <span class="micro keynote-mark">Read this first</span>
+        <h2>Most of this report describes a site that had already changed</h2>
+        <p>
+          ZAP generated the report at <b>18:43</b>, but the responses it captured are timestamped
+          <b>10:22</b> — the morning, before that day's deploys. Six of the eleven alerts had
+          already been fixed and released by the time the file was written. They are marked
+          <span class="pill p-prior">Fixed before review</span> below, and each one was re-probed
+          against live production to confirm it.
+        </p>
+        <p>
+          Only one alert was both live and a genuine defect. It has been fixed, deployed and
+          verified.
+        </p>
+      </div>
+
+      <section>
+        <h2>Where the eleven alerts landed</h2>
+        <div class="tally">
+          <div class="t-fix">
+            <span class="n">1</span>
+            <span class="t">Fixed in response to this scan</span>
+            <span class="d">Live at capture, and a real defect.</span>
+          </div>
+          <div class="t-prior">
+            <span class="n">6</span>
+            <span class="t">Already fixed before review</span>
+            <span class="d">Closed hours before the report was written.</span>
+          </div>
+          <div class="t-nodef">
+            <span class="n">4</span>
+            <span class="t">Not a defect</span>
+            <span class="d">By design, informational, or a scanner false positive.</span>
+          </div>
+        </div>
+        <p class="lede">
+          No High-risk alerts were raised. The active scan's Path Traversal and CRLF Injection rules
+          both passed. Of the 5,209 responses ZAP received, <b>1,725 were 403 Forbidden</b> — that
+          is the hub's CSRF Origin guard refusing cross-origin state-changing requests throughout
+          the scan, which is discussed under the first alert below.
+        </p>
+      </section>
+
+      <section>
+        <h2>Alert by alert</h2>
+        <p class="lede">
+          In ZAP's order. The coloured rail is ZAP's risk rating; the pill on the right is the
+          disposition. "Instances" is ZAP's own figure — where it reads <i>Systemic</i>, ZAP
+          declined to count and listed only the first five.
+        </p>
+
+        <div class="ledger">
+          <!-- ============================ MEDIUM ============================ -->
+
+          <article class="alert r-med">
+            <div class="ahead">
+              <h3>Absence of Anti-CSRF Tokens</h3>
+              <div class="ameta">
+                <span class="pill p-med">Medium</span>
+                <span class="pill p-count">10202 · Systemic</span>
+                <span class="pill p-nodef">Not a defect</span>
+              </div>
+            </div>
+            <p class="urls">/login · /request · /sprintsight-coming-soon/intro/</p>
+            <div class="cols">
+              <div class="col">
+                <span class="micro">What ZAP flagged</span>
+                <p>
+                  No anti-CSRF token was found in the HTML of these submission forms. ZAP looks for
+                  a hidden token field and reports its absence as a Medium risk.
+                </p>
+              </div>
+              <div class="col">
+                <span class="micro">What we found</span>
+                <p>
+                  The hub does not defend CSRF with tokens. It uses an <b>Origin-header guard</b>
+                  (<code>hub/middleware/csrf.js</code>), mounted in the app shell above every route,
+                  which ZAP has no way to observe from the page source.
+                </p>
+                <p>
+                  It <b>fails closed</b>: a state-changing request carrying neither
+                  <code>Origin</code> nor <code>Sec-Fetch-Site</code> is refused, and
+                  <code>Origin: null</code> is refused with everything else off the allow-list. The
+                  allow-list is derived from the declared public origin, never computed from the
+                  request. The four <code>/api/*</code> routes are exempt by path — they are
+                  server-to-server calls with a Bearer key and no cookie.
+                </p>
+              </div>
+            </div>
+            <div class="verify">
+              <b>Evidence</b>
+              <span>
+                The scan proves the guard rather than the token.
+                <b>1,725 of ZAP's 5,209 responses were 403</b> — the guard refusing its forged
+                requests. No token scheme would have produced better evidence than the scanner's own
+                tally.
+              </span>
+            </div>
+            <div class="caveat">
+              <b>Open</b>
+              <span>
+                Two state-changing <b>GET</b> routes sit outside the guard, because safe methods
+                pass through untouched: <code>GET /logout</code> and <code>GET /launch/:app</code>.
+                Both are recorded deliberately rather than closed — closing them means converting
+                the routes to POST and reworking the magic-link redirect chain. ZAP did not flag
+                them; we are naming them because a report that only lists what the scanner found is
+                not an honest one.
+              </span>
+            </div>
+          </article>
+
+          <article class="alert r-med">
+            <div class="ahead">
+              <h3>CSP: Failure to Define Directive with No Fallback</h3>
+              <div class="ameta">
+                <span class="pill p-med">Medium</span>
+                <span class="pill p-count">10055 · Systemic</span>
+                <span class="pill p-fixed">Fixed</span>
+              </div>
+            </div>
+            <p class="urls">/css · /fonts · /illos · /img · /sitemap.xml</p>
+            <div class="cols">
+              <div class="col">
+                <span class="micro">What ZAP flagged</span>
+                <p>
+                  These responses carried <code>Content-Security-Policy: default-src 'none'</code>.
+                  Because <code>frame-ancestors</code> and <code>form-action</code> do not fall back
+                  to <code>default-src</code>, ZAP reports them as undefined.
+                </p>
+              </div>
+              <div class="col">
+                <span class="micro">What we found</span>
+                <p>
+                  This is the <b>one alert that was live and real</b>. The four directory paths are
+                  answered by <code>express.static</code>, which redirects <code>/img</code> to
+                  <code>/img/</code> and writes <i>its own</i> CSP over the one the app shell had
+                  already set (<code>serve-static/index.js:203</code>).
+                </p>
+                <p>
+                  Fixed by turning that redirect off. <code>hub/public/</code> has no directory
+                  index, so the 301 only ever led to a 404 anyway; the path now falls through to the
+                  branded 404 under the hub's full policy. The <code>/sitemap.xml</code> instance
+                  was a 404 captured before the sitemap shipped, and now returns 200.
+                </p>
+              </div>
+            </div>
+            <div class="verify">
+              <b>Verified</b>
+              <span>
+                <code>/img</code>, <code>/fonts</code>, <code>/css</code> and
+                <code>/illos</code> now return <b>404 under the full hub CSP</b> — no redirect, no
+                <code>Location</code>, no <code>default-src 'none'</code>. Real assets still serve
+                200. Shipped in <code>e89180d</code>, pinned by a regression test in
+                <code>hub/tests/not-found.test.js</code> that asserts the status before the header.
+              </span>
+            </div>
+            <div class="caveat">
+              <b>Honest</b>
+              <span>
+                This repaired <b>no vulnerability</b>. <code>X-Frame-Options: DENY</code> came from
+                our own middleware and survived the overwrite, and a 301 body is never rendered. The
+                fix closes the alert, removes a pointless hop, and makes header behaviour uniform —
+                nothing more.
+              </span>
+            </div>
+          </article>
+
+          <article class="alert r-med">
+            <div class="ahead">
+              <h3>CSP: style-src unsafe-inline</h3>
+              <div class="ameta">
+                <span class="pill p-med">Medium</span>
+                <span class="pill p-count">10055 · Systemic</span>
+                <span class="pill p-prior">Fixed before review</span>
+              </div>
+            </div>
+            <p class="urls">/login · /request · /terms</p>
+            <div class="cols">
+              <div class="col">
+                <span class="micro">What ZAP flagged</span>
+                <p>
+                  The policy permitted <code>style-src 'self' 'unsafe-inline'</code>, which weakens
+                  CSP as a defence against injected styling and some data-exfiltration techniques.
+                </p>
+              </div>
+              <div class="col">
+                <span class="micro">What we found</span>
+                <p>
+                  Correct at 10:22 and already fixed by the time the report was generated.
+                  Thirty-two inline
+                  <code>style</code> attributes were removed from the hub's views and replaced with
+                  classes, which let <code>'unsafe-inline'</code> come out of the policy entirely.
+                </p>
+              </div>
+            </div>
+            <div class="verify">
+              <b>Verified</b>
+              <span>
+                <code>/login</code>, <code>/request</code> and <code>/terms</code> all return
+                <code>style-src 'self'</code> on production, with no <code>'unsafe-inline'</code>.
+                Shipped in <code>1423cbb</code>.
+              </span>
+            </div>
+          </article>
+
+          <article class="alert r-med">
+            <div class="ahead">
+              <h3>Content Security Policy (CSP) Header Not Set</h3>
+              <div class="ameta">
+                <span class="pill p-med">Medium</span>
+                <span class="pill p-count">10038 · 2 instances</span>
+                <span class="pill p-prior">Fixed before review</span>
+              </div>
+            </div>
+            <p class="urls">/sprintsight-coming-soon/intro/ (both instances)</p>
+            <div class="cols">
+              <div class="col">
+                <span class="micro">What ZAP flagged</span>
+                <p>The SprintSight coming-soon page returned no CSP header at all.</p>
+              </div>
+              <div class="col">
+                <span class="micro">What we found</span>
+                <p>
+                  A real gap, with an instructive cause. That page is static and served by an Apache
+                  <code>Alias</code> sitting above a <code>ProxyPass … !</code> carve-out. The
+                  carve-out is what makes the page reachable — and it also removes the request from
+                  the hub entirely, so the security-headers middleware never ran on it.
+                </p>
+                <p>
+                  No test in the repository could see this: they all exercise the hub, and Apache is
+                  not the hub. Fixed by a <code>&lt;Directory&gt;</code> block on the vhost setting
+                  all six headers, including a CSP that matches the hub's byte for byte except for a
+                  <code>sha256</code> hash in place of <code>'unsafe-inline'</code>.
+                </p>
+              </div>
+            </div>
+            <div class="verify">
+              <b>Verified</b>
+              <span>
+                Live headers confirmed on the page and its assets, and the pinned hash still matches
+                the page's <code>&lt;noscript&gt;</code> block. Shipped in <code>06ce3cb</code> at
+                12:23 — two hours after ZAP's capture. Guarded by five tests in
+                <code>marketing/tests/promo-security-headers.test.mjs</code>, which recompute the
+                hash from the file, plus seven probes in the production smoke check.
+              </span>
+            </div>
+          </article>
+
+          <article class="alert r-med">
+            <div class="ahead">
+              <h3>Missing Anti-clickjacking Header</h3>
+              <div class="ameta">
+                <span class="pill p-med">Medium</span>
+                <span class="pill p-count">10020 · 2 instances</span>
+                <span class="pill p-prior">Fixed before review</span>
+              </div>
+            </div>
+            <p class="urls">/sprintsight-coming-soon/intro/ (both instances)</p>
+            <div class="cols">
+              <div class="col">
+                <span class="micro">What ZAP flagged</span>
+                <p>
+                  No <code>X-Frame-Options</code> and no CSP <code>frame-ancestors</code> on the
+                  promo page, leaving it framable by a third-party site.
+                </p>
+              </div>
+              <div class="col">
+                <span class="micro">What we found</span>
+                <p>
+                  Same root cause as the alert above — the Apache <code>Alias</code> bypassing the
+                  hub's middleware — and closed by the same <code>&lt;Directory&gt;</code> block,
+                  which sets <code>X-Frame-Options: DENY</code> and
+                  <code>frame-ancestors 'none'</code> together.
+                </p>
+              </div>
+            </div>
+            <div class="verify">
+              <b>Verified</b>
+              <span
+                >Both headers confirmed live on the page and its assets. Shipped in
+                <code>06ce3cb</code>.</span
+              >
+            </div>
+          </article>
+
+          <!-- ============================== LOW ============================== -->
+
+          <article class="alert r-low">
+            <div class="ahead">
+              <h3>Strict-Transport-Security Header Not Set</h3>
+              <div class="ameta">
+                <span class="pill p-low">Low</span>
+                <span class="pill p-count">10035 · Systemic</span>
+                <span class="pill p-prior">Fixed before review</span>
+              </div>
+            </div>
+            <p class="urls">
+              /sprintsight-coming-soon/intro/ and its assets — sight.css, the three pass
+              illustrations
+            </p>
+            <div class="cols">
+              <div class="col">
+                <span class="micro">What ZAP flagged</span>
+                <p>
+                  No HSTS header, so a browser is not instructed to refuse a plaintext connection to
+                  the host on a later visit.
+                </p>
+              </div>
+              <div class="col">
+                <span class="micro">What we found</span>
+                <p>
+                  Every flagged URL is under the aliased promo path — the same middleware bypass
+                  again. The hub's own responses carried HSTS correctly throughout the scan, which
+                  is why no hub URL appears in this alert.
+                </p>
+              </div>
+            </div>
+            <div class="verify">
+              <b>Verified</b>
+              <span>
+                <code>max-age=31536000; includeSubDomains</code> confirmed live on the page and its
+                assets. Shipped in <code>06ce3cb</code>.
+              </span>
+            </div>
+          </article>
+
+          <article class="alert r-low">
+            <div class="ahead">
+              <h3>X-Content-Type-Options Header Missing</h3>
+              <div class="ameta">
+                <span class="pill p-low">Low</span>
+                <span class="pill p-count">10021 · Systemic</span>
+                <span class="pill p-prior">Fixed before review</span>
+              </div>
+            </div>
+            <p class="urls">/sprintsight-coming-soon/intro/ and its assets</p>
+            <div class="cols">
+              <div class="col">
+                <span class="micro">What ZAP flagged</span>
+                <p>
+                  No <code>nosniff</code>, so a browser may MIME-sniff a response and treat it as a
+                  type the server did not declare.
+                </p>
+              </div>
+              <div class="col">
+                <span class="micro">What we found</span>
+                <p>
+                  Same aliased path, same bypass, same fix. As with HSTS, the absence of any hub URL
+                  in this alert is the useful signal: the middleware was working everywhere it ran.
+                </p>
+              </div>
+            </div>
+            <div class="verify">
+              <b>Verified</b>
+              <span
+                ><code>nosniff</code> confirmed live on the page and its assets. Shipped in
+                <code>06ce3cb</code>.</span
+              >
+            </div>
+          </article>
+
+          <!-- ========================= INFORMATIONAL ========================= -->
+
+          <article class="alert r-info">
+            <div class="ahead">
+              <h3>Information Disclosure — Sensitive Information in URL</h3>
+              <div class="ameta">
+                <span class="pill p-info">Informational</span>
+                <span class="pill p-count">10024 · 2 instances</span>
+                <span class="pill p-prior">Fixed before review</span>
+              </div>
+            </div>
+            <p class="urls">/sprintsight-coming-soon/intro/?email=zaproxy%40example.com</p>
+            <div class="cols">
+              <div class="col">
+                <span class="micro">What ZAP flagged</span>
+                <p>An email address appearing in the query string of a request URL.</p>
+              </div>
+              <div class="col">
+                <span class="micro">What we found</span>
+                <p>
+                  Real, and rated too low by the scanner. The promo page's notify form had no
+                  <code>method</code>, so it defaulted to GET. With JavaScript enabled the handler
+                  intercepts the submit and nothing leaves the browser — but a
+                  <b>visitor without JavaScript</b> would have put their address into the URL, and
+                  from there into Apache's access log and their own browser history.
+                </p>
+                <p>
+                  Fixed by declaring <code>method="post"</code>, so the no-JS fallback cannot leak
+                  the address into either log.
+                </p>
+              </div>
+            </div>
+            <div class="verify">
+              <b>Verified</b>
+              <span
+                >The live form is <code>method="post"</code>. Shipped in <code>f84d94e</code>.</span
+              >
+            </div>
+          </article>
+
+          <article class="alert r-info">
+            <div class="ahead">
+              <h3>Information Disclosure — Suspicious Comments</h3>
+              <div class="ameta">
+                <span class="pill p-info">Informational</span>
+                <span class="pill p-count">10027 · 18 instances</span>
+                <span class="pill p-nodef">Not a defect — acted on</span>
+              </div>
+            </div>
+            <p class="urls">
+              /sprintsight-coming-soon/intro/ (14) · /js/confirm-modal.js · /js/consent-banner.js ·
+              /js/ga.js · /js/oscilloscope.js
+            </p>
+            <div class="cols">
+              <div class="col">
+                <span class="micro">What ZAP flagged</span>
+                <p>
+                  Source comments matching its suspicious-word list. The words it actually matched
+                  were
+                  <code>FROM</code>, <code>USER</code>, <code>WHERE</code> and <code>LATER</code>,
+                  in ordinary English sentences. As a security finding this is a
+                  <b>false positive</b> — the four hub JavaScript files disclose nothing.
+                </p>
+              </div>
+              <div class="col">
+                <span class="micro">What we found</span>
+                <p>
+                  The rule was wrong but it pointed at something true. Fourteen of the eighteen
+                  instances were the promo page, whose comments shipped its build-spec commentary to
+                  every visitor: internal document paths, and a note that the eval scorecard carries
+                  <i>target</i> figures rather than measured results.
+                </p>
+                <p>
+                  Those rules are binding and stay binding, so they were moved rather than deleted —
+                  into
+                  <code>marketing/docs/sprintsight-promo-EDITING.md</code>, which sits outside
+                  <code>public/</code> and is unreachable through the Alias. Each of the three files
+                  keeps a one-line pointer to it. Bare section marks stay: they are useful with the
+                  spec open and say nothing without it.
+                </p>
+              </div>
+            </div>
+            <div class="verify">
+              <b>Verified</b>
+              <span>
+                Zero matches for any internal document reference in the live page; the editing doc
+                returns 404 over HTTP. Nothing visible on the page changed, and the pinned CSP hash
+                still matches. Shipped in <code>8b39869</code>.
+              </span>
+            </div>
+            <div class="caveat">
+              <b>Honest</b>
+              <span>
+                This is disclosure hygiene, <b>not a security fix</b>. Nothing in those comments was
+                a credential or a live internal address.
+              </span>
+            </div>
+          </article>
+
+          <article class="alert r-info">
+            <div class="ahead">
+              <h3>Modern Web Application</h3>
+              <div class="ameta">
+                <span class="pill p-info">Informational</span>
+                <span class="pill p-count">10109 · 5 instances</span>
+                <span class="pill p-nodef">Not a defect</span>
+              </div>
+            </div>
+            <p class="urls">/sprintsight-coming-soon/intro/ · /login</p>
+            <div class="cols">
+              <div class="col">
+                <span class="micro">What ZAP flagged</span>
+                <p>
+                  The pages use JavaScript in ways that may present links the traditional spider
+                  cannot follow.
+                </p>
+              </div>
+              <div class="col">
+                <span class="micro">What we found</span>
+                <p>
+                  This is a statement about <b>the scanner's coverage</b>, not about the
+                  application. There is nothing to fix.
+                </p>
+                <p>
+                  It is worth recording for the opposite reason, though: it means the spider may not
+                  have reached every link, so this scan's coverage is narrower than its URL count
+                  suggests.
+                </p>
+              </div>
+            </div>
+          </article>
+
+          <article class="alert r-info">
+            <div class="ahead">
+              <h3>Re-examine Cache-control Directives</h3>
+              <div class="ameta">
+                <span class="pill p-info">Informational</span>
+                <span class="pill p-count">10015 · Systemic</span>
+                <span class="pill p-nodef">Not a defect</span>
+              </div>
+            </div>
+            <p class="urls">/license · /login · /request · /robots.txt · /terms</p>
+            <div class="cols">
+              <div class="col">
+                <span class="micro">What ZAP flagged</span>
+                <p>
+                  These responses do not forbid caching, so a shared or browser cache may store and
+                  later re-serve them.
+                </p>
+              </div>
+              <div class="col">
+                <span class="micro">What we found</span>
+                <p>
+                  Every URL in this alert is a <b>public, unauthenticated page</b> carrying no
+                  personal data — the licence, the terms, the sign-in form, the registration form
+                  and <code>robots.txt</code>. Caching them is correct behaviour, and suppressing it
+                  would cost performance for no benefit.
+                </p>
+                <p>
+                  The authenticated surface is handled separately and was not what ZAP reached:
+                  authenticated responses carry <code>no-store</code>, and the production smoke
+                  check probes that the signed-out redirect from <code>/dashboard</code> carries it
+                  too.
+                </p>
+              </div>
+            </div>
+            <div class="caveat">
+              <b>Note</b>
+              <span>
+                The <code>no-store</code> work (<code>6c869a4</code>) cleared none of the five
+                instances in this alert and never could — they are different pages. Recorded so this
+                alert is not mistaken for one that a past change was supposed to close.
+              </span>
+            </div>
+          </article>
+        </div>
+      </section>
+
+      <section>
+        <h2>What shipped</h2>
+        <p class="lede">
+          All five commits are on <code>main</code> and deployed to production. Production was
+          fast-forwarded to <code>77821ae</code>, the hub restarted, and the smoke check passed
+          <b>29 of 29</b> probes.
+        </p>
+        <div class="scroll">
+          <table>
+            <thead>
+              <tr>
+                <th>Commit</th>
+                <th>Change</th>
+                <th>Closes</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td class="m">e89180d</td>
+                <td>Stop <code>serve-static</code> overwriting the CSP on directory redirects</td>
+                <td>CSP: no fallback</td>
+              </tr>
+              <tr>
+                <td class="m">8b39869</td>
+                <td>Move the promo page's editing rules out of the served bytes</td>
+                <td>Suspicious Comments</td>
+              </tr>
+              <tr>
+                <td class="m">1423cbb</td>
+                <td>
+                  Drop <code>style-src 'unsafe-inline'</code> by de-inlining 32 style attributes
+                </td>
+                <td>style-src unsafe-inline</td>
+              </tr>
+              <tr>
+                <td class="m">06ce3cb</td>
+                <td>Give the SprintSight promo page its missing security headers</td>
+                <td>CSP not set · Clickjacking · HSTS · nosniff</td>
+              </tr>
+              <tr>
+                <td class="m">f84d94e</td>
+                <td>POST the notify form so a no-JS submit cannot leak the address</td>
+                <td>Sensitive information in URL</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </section>
+
+      <section>
+        <h2>What this scan could not tell us</h2>
+        <p class="lede">
+          A clean result is only as wide as the scan that produced it. Four limits are worth
+          carrying into the next one.
+        </p>
+        <div class="card">
+          <ul>
+            <li>
+              <b>It ran signed out.</b> The report records
+              <i>No Authentication Statistics Found</i>: every page behind sign-in was probed only
+              as an anonymous visitor. The dashboard, the admin console and the company console were
+              never seen as a logged-in user, so
+              <b>the absence of findings there is absence of testing, not evidence of safety</b>.
+            </li>
+            <li>
+              <b>It is a snapshot of the morning.</b> Six of eleven alerts were already closed when
+              the report was written. Any future scan should be read against the deploy log before
+              any of it is treated as current.
+            </li>
+            <li>
+              <b>The spider may not have reached everything.</b> ZAP's own
+              <i>Modern Web Application</i>
+              alert says links revealed by JavaScript can be missed.
+            </li>
+            <li>
+              <b>Two state-changing GET routes were never exercised.</b>
+              <code>GET /logout</code> and <code>GET /launch/:app</code> sit outside the CSRF guard
+              by design. ZAP did not flag them because it does not know they change state.
+            </li>
+          </ul>
+        </div>
+      </section>
+    </div>
+
+    <footer>
+      Sprint Suite · reconciliation of the ZAP scan of 25 August 2026 · production verified at
+      <span class="mono">77821ae</span>
+    </footer>
+  </body>
+</html>
