@@ -2,7 +2,7 @@
    Layer 2 of 2. instrument-core.css (synced, never hand-edited) is layer 1.
    Everything here is scoped to .ins[data-app="sight"] so it cannot leak into
    another surface. No @font-face here: the faces are declared canonically.
-   Spec: ~/suite-archive/marketing/docs/sprintsight-promo-BUILD-SPEC.md */
+   Editing rules: marketing/docs/sprintsight-promo-EDITING.md — read it before changing this page. */
 
 .ins[data-app="sight"] {
   /* radii — this page is sharper than Instrument's 10px default */
