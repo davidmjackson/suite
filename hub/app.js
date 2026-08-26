@@ -83,7 +83,11 @@ export function createAppShell({ config, db, logger }) {
   );
 
   configureViews(app, { cache: config.nodeEnv === 'production' });
-  app.use(express.static(path.join(__dirname, 'public')));
+  // redirect:false — serve-static's directory redirect (GET /img -> 301 /img/)
+  // writes its own `Content-Security-Policy: default-src 'none'` over ours, and
+  // public/ has no directory index, so the 301 only ever leads to a 404 anyway.
+  // Off, the path falls through to middleware/notFound.js under the hub CSP.
+  app.use(express.static(path.join(__dirname, 'public'), { redirect: false }));
   // Request logging (skips the static assets above; wraps all dynamic routes)
   app.use(makeRequestLogger(logger));
   app.use(express.urlencoded({ extended: false }));

@@ -24,6 +24,20 @@ test('the 404 carries the hub CSP, not finalhandler default-src none', async () 
   assert.doesNotMatch(res.headers['content-security-policy'], /default-src 'none'/);
 });
 
+// A static DIRECTORY path is the one response that used to escape the hub's CSP.
+// serve-static answers GET /img with its own 301 to /img/ and sets `default-src
+// 'none'` on it, overwriting the policy the shell had already set. public/ has no
+// directory index, so that redirect only ever led here anyway. Asserting the CSP
+// alone would pass against the 301 too, so pin the status first.
+test('a static directory path 404s under the hub CSP, with no serve-static 301', async () => {
+  const { app } = await buildRealApp();
+  const res = await request(app).get('/img');
+  assert.equal(res.status, 404, 'serve-static is still redirecting directories');
+  assert.equal(res.headers.location, undefined);
+  assert.match(res.headers['content-security-policy'], /default-src 'self'/);
+  assert.doesNotMatch(res.headers['content-security-policy'], /default-src 'none'/);
+});
+
 // The discriminating test. An implementation that renders the path into the page —
 // `message: req.originalUrl`, the obvious first draft — passes both tests above and
 // fails only this one. Eta escapes on output, so the marker would land escaped
