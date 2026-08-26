@@ -1,6 +1,5 @@
 /* sight.js — Sprintsight promo page behaviour.
-   Spec: ~/suite-archive/marketing/docs/sprintsight-promo-BUILD-SPEC.md §8 (motion), §10 (open
-   items), §11.4 (tab a11y). */
+   Editing rules: marketing/docs/sprintsight-promo-EDITING.md — read it before changing this page. */
 (() => {
   'use strict';
 
@@ -20,8 +19,8 @@
      Detector console
      ---------------------------------------------------------------------
      The four payloads are the content source of truth for the console.
-     JSON shape tracks sight/docs/evals/watermelon-eval.md §2.
-     Evidence ids track sight/docs/data/data-strategy.md §6 — do not invent ids.
+     JSON shape and evidence ids both track a source document — do not invent
+     ids, and see marketing/docs/sprintsight-promo-EDITING.md.
      ===================================================================== */
   const V = {
     atlas: {
@@ -288,7 +287,7 @@
           // Open item 1. Never let this look like it worked.
           console.warn(
             '[sprintsight] NOTIFY_ENDPOINT is not set — the signup form cannot ' +
-              'deliver. See sight.js and BUILD-SPEC §10 item 1.',
+              'deliver. See sight.js and marketing/docs/sprintsight-promo-EDITING.md.',
           );
           throw new Error('NOTIFY_ENDPOINT not configured');
         }

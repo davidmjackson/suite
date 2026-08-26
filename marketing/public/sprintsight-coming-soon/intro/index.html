@@ -1,18 +1,5 @@
 <!DOCTYPE html>
-<!--
-  Sprintsight promo page. Built to ~/suite-archive/marketing/docs/sprintsight-promo-BUILD-SPEC.md.
-  Visual target: ~/suite-archive/marketing/docs/reference/sprintsight-C-evidence-desk.html
-
-  Two rules that are correctness, not style (spec §9.5):
-    1. The rail and the "coming soon" chip stay while the product does not exist.
-       Present tense is only honest because the page says it is in build.
-    2. The eval scorecard shows TARGET figures from sight/docs/evals/watermelon-eval.md
-       §8. If a real run scores lower, this page changes before launch. A page
-       claiming perfect scores for a detector that has not run is itself a watermelon.
-
-  Console JSON tracks sight/docs/evals/watermelon-eval.md §2.
-  Evidence ids track sight/docs/data/data-strategy.md §6. Do not invent ids.
--->
+<!-- Editing rules: marketing/docs/sprintsight-promo-EDITING.md — read it before changing this page. -->
 <html lang="en-GB">
 <head>
 <meta charset="utf-8">
@@ -335,7 +322,7 @@
     </div>
   </div>
 
-  <!-- LOCKED scope guardrail (moat-behaviours.md §2). Stops the page over-promising
+  <!-- LOCKED scope guardrail. Stops the page over-promising
        a dependency-graph engine that is explicitly out of scope. Do not remove. -->
   <div class="callout">
     <b>Scope, stated plainly.</b> Sprintsight reconciles dependencies that are actually named somewhere in an artifact, like the Atlas chat message naming Draco's auth API. It does not invent links between teams that nobody wrote down.
@@ -403,7 +390,7 @@
     </div>
   </div>
 
-  <!-- TARGET figures (watermelon-eval.md §8), not results. See the header comment. -->
+  <!-- Governed values — do not edit in place. See marketing/docs/sprintsight-promo-EDITING.md. -->
   <div class="score">
     <div class="sc"><p class="n" data-n="4">0<span class="suffix">/4</span></p><p class="t">Classification accuracy</p><p class="m">Correct verdict</p><div class="bar"><i data-w="100"></i></div></div>
     <div class="sc"><p class="n" data-n="4">0<span class="suffix">/4</span></p><p class="t">Evidence accuracy</p><p class="m">All required ids cited</p><div class="bar"><i data-w="100"></i></div></div>
