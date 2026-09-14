@@ -7,7 +7,7 @@
   "scripts": {
     "drift": "node ../shared/theme/check-theme-drift.mjs .",
     "og": "bash tools/build-og.sh",
-    "test": "npm run drift && node --test tests/"
+    "test": "npm run drift && node --test tests/*.test.mjs"
   },
   "engines": {
     "node": ">=20"
