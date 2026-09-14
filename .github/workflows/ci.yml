@@ -1,0 +1,89 @@
+name: CI
+
+on:
+  pull_request:
+    branches:
+      - main
+  push:
+    branches:
+      - main
+      - 'feature/**'
+      - 'fix/**'
+
+jobs:
+  checks:
+    name: Node checks
+    runs-on: ubuntu-latest
+    env:
+      FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
+
+    permissions:
+      contents: read
+
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v6
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v6
+        with:
+          node-version: '24'
+          cache: npm
+          cache-dependency-path: |
+            hub/package-lock.json
+            shared/auth-client/package-lock.json
+
+      # Full installs, not --omit=dev: both packages' tests need their dev
+      # dependencies. The audit steps below read the lockfile rather than
+      # node_modules, so they still report on production dependencies only.
+      - name: Install hub dependencies
+        working-directory: hub
+        run: npm ci
+
+      - name: Install auth-client dependencies
+        working-directory: shared/auth-client
+        run: npm ci
+
+      # marketing declares no dependencies ("static pages, no runtime deps"), so
+      # it has no lockfile, needs no install, and cannot be audited. That is the
+      # correct state for it, not an omission.
+
+      - name: Check hub syntax
+        working-directory: hub
+        run: |
+          for file in *.js lib/*.js routes/*.js middleware/*.js scripts/*.js; do
+            node --check "$file"
+          done
+
+      - name: Check auth-client syntax
+        working-directory: shared/auth-client
+        run: |
+          for file in *.js lib/*.js; do
+            node --check "$file"
+          done
+
+      - name: Run hub tests
+        working-directory: hub
+        run: npm test
+
+      - name: Run auth-client tests
+        working-directory: shared/auth-client
+        run: npm test
+
+      # Runs the drift guard against marketing's own synced assets, then its
+      # page tests. The guard is why a theme change cannot land here unnoticed.
+      - name: Run marketing tests
+        working-directory: marketing
+        run: npm test
+
+      - name: Run shared theme tests
+        working-directory: shared/theme
+        run: node --test tests/
+
+      - name: Audit hub production dependencies
+        working-directory: hub
+        run: npm audit --omit=dev
+
+      - name: Audit auth-client production dependencies
+        working-directory: shared/auth-client
+        run: npm audit --omit=dev
